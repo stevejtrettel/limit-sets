@@ -12,8 +12,8 @@
  * mismatch) just log.
  */
 
-import { EXAMPLES, type ExampleGroup } from './examples';
-import { makeGroupAction, computeProximalBasepoint } from './orbit';
+import { type ExampleGroup } from './examples.ts';
+import { makeGroupAction, computeProximalBasepoint } from './orbit.ts';
 
 export interface ValidationResult {
   example: ExampleGroup;
@@ -87,8 +87,10 @@ export function validateExample(ex: ExampleGroup): ValidationResult {
   };
 }
 
-export function validateAllExamples(): ValidationResult[] {
-  const results = EXAMPLES.map(validateExample);
+export function validateAllExamples(
+  examples: readonly ExampleGroup[],
+): ValidationResult[] {
+  const results = examples.map(validateExample);
   const failed = results.filter((r) => !r.passed);
   if (failed.length > 0) {
     console.error(`[sp6] ${failed.length} example(s) failed validation:`);

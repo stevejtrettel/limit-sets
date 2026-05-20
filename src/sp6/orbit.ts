@@ -8,7 +8,7 @@
  * coefficients from f and g respectively.
  */
 
-import { type ExampleGroup } from './examples';
+import { type ExampleGroup } from './examples.ts';
 
 // Inverse generator codes (0 ↔ 1, 2 ↔ 3).
 export const INV = new Uint8Array([1, 0, 3, 2]);
@@ -33,7 +33,7 @@ export function totalNodes(N: number): number {
   return 1 + 2 * (Math.pow(3, N) - 1);
 }
 
-function normalize6InPlace(buf: Float64Array, off: number): void {
+export function normalize6InPlace(buf: Float64Array, off: number): void {
   let s = 0;
   for (let i = 0; i < 6; i++) s += buf[off + i] * buf[off + i];
   if (s === 0) return;

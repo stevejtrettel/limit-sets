@@ -16,7 +16,12 @@
  *                                decomposition.
  */
 
-import type { Orbit } from './orbit';
+import type { Orbit } from './orbit.ts';
+import {
+  schemeForColorDepth,
+  categoryFromOrbit,
+} from '../render/colorScheme.ts';
+import { paletteForScheme } from './palettes.ts';
 
 export const EPS_V0 = 1e-3;
 
@@ -293,61 +298,32 @@ export function fitAutoChartProjection(orbit: Orbit): Projection {
 // ─── Instance attribute packing ─────────────────────────────────────────────
 
 /**
- * Family colors, indexed by generator (0 = A, 1 = A⁻¹, 2 = B, 3 = B⁻¹).
- * Two warm shades for A, a; two cool shades for B, b.
+ * Build per-instance attribute arrays for the live preview shader.
+ *
+ * Each orbit point gets:
+ *   - `aV0`, `aV1` — its 6D representative split into two vec3s for the
+ *                    shader's projective-chart computation
+ *   - `aColor`    — a per-point [R, G, B] color, determined by the
+ *                    `colorDepth` UI selector via the shared color-scheme
+ *                    registry (matches the offline render exactly).
+ *
+ * Points whose chart denominator is below `EPS_V0` are dropped.
+ *
+ * `colorDepth` is the legacy numeric UI value:
+ *   0 → grayscale; 1 → color by last letter; k ≥ 2 → k-th to last.
+ * It is translated to a `ColorScheme` from `@/render/colorScheme` and
+ * the corresponding sp6 palette from `@/sp6/palettes`.
  */
-const FAMILY: readonly (readonly [number, number, number])[] = [
-  [0.65, 0.20, 0.15], // A   — warm red
-  [0.70, 0.40, 0.10], // A⁻¹ — warm amber
-  [0.10, 0.20, 0.55], // B   — cool blue
-  [0.10, 0.40, 0.55], // B⁻¹ — cool teal
-];
-
-const GRAY: readonly [number, number, number] = [0.35, 0.35, 0.35];
-const BASEPOINT: readonly [number, number, number] = [0.95, 0.95, 0.95];
-
-/**
- * Color for orbit node `idx` at the given color depth.
- *
- * colorDepth = 0: grayscale.
- *
- * colorDepth = k ≥ 1: 4-color family palette, keyed off the letter at
- * position (k − 1) back from the end of the word. So:
- *   k = 1 → color by g_n (last letter; outermost contraction).
- *   k = 2 → color by g_{n−1} (second-to-last; contraction applied just
- *           inside the outermost). Within each k=1 blob you should see
- *           the same 4-color pattern repeated at smaller scale — a direct
- *           visual signature of self-similarity.
- *   k = 3 → color by g_{n−2}. Etc.
- *
- * If the word has fewer than k letters (i.e. we hit the basepoint while
- * walking back), the point is colored as the basepoint.
- */
-function colorAt(
-  orbit: Orbit,
-  idx: number,
-  colorDepth: number,
-): readonly [number, number, number] {
-  if (colorDepth === 0) return GRAY;
-
-  // Walk back colorDepth − 1 steps to the ancestor whose lastGen is the
-  // letter at position (colorDepth − 1) back from the end.
-  let cur = idx;
-  for (let k = 1; k < colorDepth; k++) {
-    if (orbit.lastGen[cur] === 255) return BASEPOINT;
-    cur = orbit.parents[cur];
-  }
-  const lg = orbit.lastGen[cur];
-  if (lg === 255) return BASEPOINT;
-  return FAMILY[lg];
-}
-
 export function buildInstanceArrays(
   orbit: Orbit,
   denom: Vec6,
   colorDepth: number,
 ) {
-  const { vecs, count } = orbit;
+  const { vecs, count, lastGen, parents } = orbit;
+  const scheme = schemeForColorDepth(colorDepth);
+  const palette = paletteForScheme(scheme.name);
+  const stepsBack = scheme.stepsBack;
+
   let kept = 0;
   for (let i = 0; i < count; i++) {
     const off = i * 6;
@@ -372,7 +348,10 @@ export function buildInstanceArrays(
     aV1[w * 3]     = vecs[off + 3];
     aV1[w * 3 + 1] = vecs[off + 4];
     aV1[w * 3 + 2] = vecs[off + 5];
-    const col = colorAt(orbit, i, colorDepth);
+    const cat = stepsBack < 0
+      ? 0
+      : categoryFromOrbit(stepsBack, lastGen, parents, i);
+    const col = palette[cat];
     aColor[w * 3]     = col[0];
     aColor[w * 3 + 1] = col[1];
     aColor[w * 3 + 2] = col[2];

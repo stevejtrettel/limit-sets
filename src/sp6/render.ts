@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 import type { App } from '@/app/App';
-import type { Projection } from './projection';
+import type { Projection } from './projection.ts';
 
 const VERT = /* glsl */`
   uniform float uRadius;

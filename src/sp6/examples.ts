@@ -1,7 +1,12 @@
 /**
  * Sp(6,Z) hypergeometric monodromy examples (Bajpai-Dona-Nitsche, Tables 1-2).
  *
- * Each ExampleGroup carries the polynomial data for the two generators:
+ * `ExampleGroup` describes one BDN row: polynomial coefficient lists for the
+ * two generators, plus a loxodromic γ word and its iteration count. `EXAMPLES`
+ * is the curated list shared by every consumer (browser demo, offline render
+ * script).
+ *
+ * ExampleGroup carries polynomial data for the two generators:
  *   coefflistf — palindromic integer coefficients of f(x) = ∏(x - exp(2πi α_j))
  *   coefflistg — palindromic integer coefficients of g(x) = ∏(x - exp(2πi β_j))
  *
@@ -20,9 +25,6 @@
  * B_C are *derived* from coefflistf, coefflistg (no need to hand-type):
  *   B_C   = coefflistg[1..5]
  *   T_COL = (1, c_1, c_2, c_3, c_4, c_5),   c_i = coefflistf[i] - coefflistg[i].
- *
- * Adding a new example requires only the two polynomial coefficient lists,
- * a γ word, and an iteration count.
  */
 
 export interface ExampleGroup {
@@ -39,6 +41,35 @@ export interface ExampleGroup {
   expectedLambdaMax?: number;
 }
 
+export function deriveBC(g: readonly number[]): readonly number[] {
+  return g.slice(1, 6);
+}
+
+export function deriveTCol(
+  f: readonly number[],
+  g: readonly number[],
+): readonly number[] {
+  return [
+    1,
+    f[1] - g[1],
+    f[2] - g[2],
+    f[3] - g[3],
+    f[4] - g[4],
+    f[5] - g[5],
+  ];
+}
+
+export function findExampleById(
+  examples: readonly ExampleGroup[],
+  id: string,
+): ExampleGroup {
+  const ex = examples.find((e) => e.id === id);
+  if (!ex) throw new Error(`unknown sp6 example id: ${id}`);
+  return ex;
+}
+
+// ─── Curated example list ───────────────────────────────────────────────────
+
 export const EXAMPLES: readonly ExampleGroup[] = [
   {
     id: 'A1',
@@ -46,7 +77,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
     nature: 'thin',
     coefflistf: [1, -6, 15, -20, 15, -6, 1], // (x-1)⁶
     coefflistg: [1,  6, 15,  20, 15,  6, 1], // (x+1)⁶
-    gamma: [1, 2, 2, 1, 2], // TBT = A⁻¹·B·B·A⁻¹·B (T = A⁻¹B from Section 2)
+    gamma: [1, 2, 2, 1, 2], // TBT = A⁻¹·B·B·A⁻¹·B  (T = A⁻¹B from Section 2)
     gammaName: 'TBT',
     powerIter: 30,
     alpha: '(0, 0, 0, 0, 0, 0)',
@@ -70,8 +101,8 @@ export const EXAMPLES: readonly ExampleGroup[] = [
     id: 'c2',
     label: 'C-2',
     nature: 'thin',
-    coefflistf: [1, -3, 3, -2, 3, -3, 1],   // (x-1)⁴(x²+x+1)
-    coefflistg: [1,  4, 7,  8, 7,  4, 1],   // (x+1)⁴(x²+1)
+    coefflistf: [1, -3, 3, -2, 3, -3, 1],
+    coefflistg: [1,  4, 7,  8, 7,  4, 1],
     gamma: [1, 2, 2, 1, 2],
     gammaName: 'TBT',
     powerIter: 30,
@@ -83,8 +114,8 @@ export const EXAMPLES: readonly ExampleGroup[] = [
     id: 'c32',
     label: 'C-32',
     nature: 'open',
-    coefflistf: [1, -5, 11, -14, 11, -5, 1], // (x-1)⁴(x²-x+1)
-    coefflistg: [1,  0,  0,   0,  0,  0, 1], // x⁶ + 1
+    coefflistf: [1, -5, 11, -14, 11, -5, 1],
+    coefflistg: [1,  0,  0,   0,  0,  0, 1],
     gamma: [1, 2, 2, 1, 2],
     gammaName: 'TBT',
     powerIter: 30,
@@ -96,8 +127,8 @@ export const EXAMPLES: readonly ExampleGroup[] = [
     id: 'c47',
     label: 'C-47',
     nature: 'arithmetic',
-    coefflistf: [1, -1, 0,  0, 0, -1, 1],    // (x-1)²(x⁴+x³+x²+x+1)
-    coefflistg: [1,  4, 8, 10, 8,  4, 1],    // (x+1)²(x²+x+1)²
+    coefflistf: [1, -1, 0,  0, 0, -1, 1],
+    coefflistg: [1,  4, 8, 10, 8,  4, 1],
     gamma: [1, 2, 2, 1, 2],
     gammaName: 'TBT',
     powerIter: 30,
@@ -109,8 +140,8 @@ export const EXAMPLES: readonly ExampleGroup[] = [
     id: 'c55',
     label: 'C-55',
     nature: 'arithmetic',
-    coefflistf: [1, -2, 1,  0, 1, -2, 1],    // (x-1)²(x⁴+1)
-    coefflistg: [1,  2, 0, -2, 0,  2, 1],    // (x+1)²(x⁴-x²+1)
+    coefflistf: [1, -2, 1,  0, 1, -2, 1],
+    coefflistg: [1,  2, 0, -2, 0,  2, 1],
     gamma: [1, 2, 2, 1, 2],
     gammaName: 'TBT',
     powerIter: 30,
@@ -120,26 +151,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
   },
 ];
 
-export function deriveBC(g: readonly number[]): readonly number[] {
-  return g.slice(1, 6);
-}
-
-export function deriveTCol(
-  f: readonly number[],
-  g: readonly number[],
-): readonly number[] {
-  return [
-    1,
-    f[1] - g[1],
-    f[2] - g[2],
-    f[3] - g[3],
-    f[4] - g[4],
-    f[5] - g[5],
-  ];
-}
-
+/** Look up an example by id from the shared `EXAMPLES` list. */
 export function exampleById(id: string): ExampleGroup {
-  const ex = EXAMPLES.find((e) => e.id === id);
-  if (!ex) throw new Error(`unknown sp6 example id: ${id}`);
-  return ex;
+  return findExampleById(EXAMPLES, id);
 }
