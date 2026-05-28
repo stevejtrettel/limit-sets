@@ -28,7 +28,7 @@ runner script rewrites the `<script>` tag in `index.html` accordingly.
 
 ```sh
 # 1. open the -render demo, frame your shot, click "copy view JSON for offline render"
-#    (the dev-server middleware writes scripts/view-preset.json)
+#    (the dev-server middleware writes scripts/sp6-view-preset.json)
 # 2. render
 node scripts/sp6-render-limit-set.mjs            # uses DEFAULT_DEPTH from the script
 node scripts/sp6-render-limit-set.mjs 14         # override depth

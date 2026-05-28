@@ -1,67 +1,89 @@
 /**
- * Sp(6,Z) — limit-set viewer with view-export for offline render.
+ * SL(2,C) — quasifuchsian and Kleinian limit-set viewer.
  *
- * Cloned from sp6-limit-sets; adds an "Export view" button that serializes
- * the current camera + projection + example/depth as JSON. The dev server
- * writes it to scripts/view-preset.json; falls back to clipboard otherwise.
- * The offline render script (scripts/sp6-render-limit-set.mjs) consumes
- * that file to produce a high-resolution render matching the previewed view.
+ * Pick an example, BFS depth, scene embedding (stereographic plane by
+ * default, Riemann sphere as alternative), and color scheme. The orbit
+ * auto-fits the camera on every change (top-down for plane, off-axis
+ * perspective for sphere).
  *
- * Behaviors: same as sp6-limit-sets.
+ * The "save view" button serialises the current camera + example/depth +
+ * embedding choice as JSON; the dev-server middleware writes it to
+ * scripts/sl2c-view-preset.json, which the offline render script picks up.
+ *
+ * This demo is the test bed for the post-sp6 generic pipeline: only the
+ * `makeMobiusAction`, the two embeddings, and the example data are
+ * group-specific. Everything else (orbit walker, instanced spheres,
+ * autofit, color schemes) is imported from core / app / render.
  */
 
 import * as THREE from 'three';
 import { App } from '@/app/App';
 import { ControlPanel } from '@/app/ControlPanel';
+import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpheres';
+import { autofitCamera } from '@/app/autofit';
 
+import type { GroupAction } from '@/core/group';
 import {
-  EXAMPLES, exampleById, type ExampleGroup,
-} from '@/sp6/examples';
-import {
-  makeGroupAction, computeProximalBasepoint, generateOrbit,
-  type GroupAction, type Orbit,
-} from '@/sp6/orbit';
-import {
-  type Projection,
-  fitPCAProjection, fitAutoChartProjection, buildInstanceArrays,
-} from '@/sp6/projection';
-import {
-  createMaterial, setProjectionUniforms, makeInstancedMesh, autofitCamera,
-} from '@/sp6/render';
-import { validateAllExamples } from '@/sp6/validate';
+  computeProximalBasepoint, generateOrbit, type Orbit,
+} from '@/core/orbit';
+import type { SceneEmbedding } from '@/core/scene';
+
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
+import { buildOrbitInstances } from '@/render/orbitInstances.ts';
+
+import { makeMobiusAction } from '@/sl2c/action';
+import { sphereEmbedding, planeEmbedding } from '@/sl2c/embedding';
+import {
+  EXAMPLES, exampleById, type MobiusExample,
+} from '@/sl2c/examples';
+import { paletteForScheme } from '@/sl2c/palettes';
+import { validateAllExamples } from '@/sl2c/validate';
+import type { EmbeddingName, ViewPreset } from '@/sl2c/viewPreset';
 
 validateAllExamples(EXAMPLES);
 
 const app = new App({ antialias: true });
-app.scene.background = new THREE.Color(0xf2f2f2);
+app.scene.background = new THREE.Color(0xffffff);
 
-const { material, uniforms } = createMaterial();
+const { material, uniforms } = createSphereMaterial();
 
-const DEFAULT_EXAMPLE_ID = 'A15';
-const DEFAULT_DEPTH = 12;
-const DEFAULT_RADIUS = 0.025;
+const DEFAULT_EXAMPLE_ID = 'riley-2i';
+const DEFAULT_DEPTH       = 12;
+const DEFAULT_RADIUS      = 0.005;
+const DEFAULT_EMBEDDING: EmbeddingName = 'plane';
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
-let currentExample!:   ExampleGroup;
+let currentExample!:   MobiusExample;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentOrbit!:     Orbit;
-let currentProj!:      Projection;
+let currentEmbedding!: SceneEmbedding;
+let currentEmbeddingName: EmbeddingName = DEFAULT_EMBEDDING;
 let currentMesh: THREE.Mesh | null = null;
 let depth = DEFAULT_DEPTH;
 let colorDepth = 0;
 let stats = { kept: 0, totalWords: 0 };
 
+const EMBEDDINGS: Record<EmbeddingName, SceneEmbedding> = {
+  sphere: sphereEmbedding,
+  plane:  planeEmbedding,
+};
+
+/** Top-down for plane (curve is flat in z=0); off-axis perspective for sphere. */
+const AUTOFIT_DIR: Record<EmbeddingName, readonly [number, number, number]> = {
+  sphere: [0.4, 0.4, 1],
+  plane:  [0, 0, 1],
+};
+
 function loadExample(id: string): void {
   currentExample = exampleById(id);
-  currentAction = makeGroupAction(currentExample);
-  const r = computeProximalBasepoint(currentExample, currentAction);
+  currentAction = makeMobiusAction(currentExample.generators);
+  const r = computeProximalBasepoint(currentAction, currentExample.gamma, currentExample.powerIter);
   currentBasepoint = r.basepoint;
   console.log(
-    `[sp6-${currentExample.id}] loaded: |λ_max(${currentExample.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}` +
-    `, drift = ${r.drift.toFixed(4)}`,
+    `[sl2c-${currentExample.id}] loaded: |λ_max(${currentExample.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, ` +
+    `drift = ${r.drift.toFixed(4)}`,
   );
 }
 
@@ -70,14 +92,18 @@ function regenerateOrbit(N: number): void {
   currentOrbit = generateOrbit(currentAction, currentBasepoint, N);
   const t1 = performance.now();
   console.log(
-    `[sp6-${currentExample.id}] BFS depth=${N}  words=${currentOrbit.count}  (${(t1 - t0).toFixed(0)}ms)`,
+    `[sl2c-${currentExample.id}] BFS depth=${N}  words=${currentOrbit.count}  (${(t1 - t0).toFixed(0)}ms)`,
   );
 }
 
 function rebuildMesh(autofit: boolean): void {
-  const { aV0, aV1, aColor, kept } = buildInstanceArrays(currentOrbit, currentProj.denom, colorDepth);
+  const scheme = schemeForColorDepth(colorDepth);
+  const palette = paletteForScheme(scheme.name);
+  const { aPos, aColor, kept } = buildOrbitInstances(
+    currentEmbedding, currentOrbit, scheme, palette,
+  );
 
-  const mesh = makeInstancedMesh(material, aV0, aV1, aColor);
+  const mesh = makeInstancedSpheres(material, aPos, aColor);
   if (currentMesh) {
     app.scene.remove(currentMesh);
     currentMesh.geometry.dispose();
@@ -85,45 +111,36 @@ function rebuildMesh(autofit: boolean): void {
   app.scene.add(mesh);
   currentMesh = mesh;
 
-  setProjectionUniforms(uniforms, currentProj);
-  if (autofit) autofitCamera(app, aV0, aV1, currentProj);
+  if (autofit) autofitCamera(app, aPos, kept, { dir: AUTOFIT_DIR[currentEmbeddingName] });
 
   stats = { kept, totalWords: currentOrbit.count };
 }
 
-/**
- * Apply the chart selector's current value: a numeric "0".."5" picks
- * v_k as the chart denominator with PCA axes; "auto" runs the overall PCA.
- */
-function applyChartSelection(value: string): void {
-  if (value === 'auto') {
-    currentProj = fitAutoChartProjection(currentOrbit);
-  } else {
-    currentProj = fitPCAProjection(currentOrbit, parseInt(value, 10));
-  }
+function setEmbedding(name: EmbeddingName): void {
+  currentEmbeddingName = name;
+  currentEmbedding = EMBEDDINGS[name];
 }
 
 // ─── Initial load ───────────────────────────────────────────────────────────
 
+setEmbedding(DEFAULT_EMBEDDING);
 loadExample(DEFAULT_EXAMPLE_ID);
 regenerateOrbit(depth);
-currentProj = fitPCAProjection(currentOrbit, 0);  // v₁ chart with PCA axes
 rebuildMesh(true);
 
 // ─── HUD ────────────────────────────────────────────────────────────────────
 
-const panel = new ControlPanel({ title: 'Sp(6,Z) — limit sets' });
+const panel = new ControlPanel({ title: 'SL(2,C) — limit sets' });
 
 panel.select({
   label: 'example',
-  options: EXAMPLES.map((e) => ({ value: e.id, label: `${e.label} (${e.nature})` })),
+  options: EXAMPLES.map((e) => ({ value: e.id, label: e.label })),
   value: DEFAULT_EXAMPLE_ID,
   onChange: (id) => {
     loadExample(id);
     slDepth.set(DEFAULT_DEPTH);
     depth = DEFAULT_DEPTH;
     regenerateOrbit(depth);
-    applyChartSelection(selChart.value);
     rebuildMesh(true);
     updateUI();
   },
@@ -134,7 +151,7 @@ panel.separator();
 
 const slDepth = panel.slider({
   label: 'depth N',
-  min: 4, max: 13, step: 1, value: depth,
+  min: 4, max: 14, step: 1, value: depth,
   onChange: (v) => {
     depth = v;
     regenerateOrbit(v);
@@ -145,8 +162,8 @@ const slDepth = panel.slider({
 
 panel.slider({
   label: 'ball radius',
-  min: 0.001, max: 0.06, step: 0.0005, value: DEFAULT_RADIUS,
-  format: (v) => v.toFixed(3),
+  min: 0.0005, max: 0.05, step: 0.0005, value: DEFAULT_RADIUS,
+  format: (v) => v.toFixed(4),
   event: 'input',
   onChange: (v) => { uniforms.uRadius.value = v; },
 });
@@ -165,20 +182,15 @@ const slFov = panel.slider({
 
 panel.separator();
 
-const selChart = panel.select({
-  label: 'chart',
+const selEmbedding = panel.select({
+  label: 'view',
   options: [
-    { value: '0', label: 'v₁ chart (PCA axes)' },
-    { value: '1', label: 'v₂ chart (PCA axes)' },
-    { value: '2', label: 'v₃ chart (PCA axes)' },
-    { value: '3', label: 'v₄ chart (PCA axes)' },
-    { value: '4', label: 'v₅ chart (PCA axes)' },
-    { value: '5', label: 'v₆ chart (PCA axes)' },
-    { value: 'auto', label: 'auto-chart (overall PCA)' },
+    { value: 'plane',  label: 'stereographic plane' },
+    { value: 'sphere', label: 'Riemann sphere' },
   ],
-  value: '0',
+  value: DEFAULT_EMBEDDING,
   onChange: (v) => {
-    applyChartSelection(v);
+    setEmbedding(v as EmbeddingName);
     rebuildMesh(true);
     updateUI();
   },
@@ -207,12 +219,12 @@ panel.button({
   onClick: () => {
     depth = DEFAULT_DEPTH;
     slDepth.set(DEFAULT_DEPTH);
-    selChart.set('0');
+    selEmbedding.set(DEFAULT_EMBEDDING);
     slFov.set(DEFAULT_FOV);
     app.camera.fov = DEFAULT_FOV;
     app.camera.updateProjectionMatrix();
+    setEmbedding(DEFAULT_EMBEDDING);
     regenerateOrbit(depth);
-    applyChartSelection('0');
     rebuildMesh(true);
     updateUI();
   },
@@ -225,7 +237,7 @@ panel.button({
   label: 'screenshot',
   onClick: () => {
     app.screenshot(
-      `sp6-${currentExample.id}_${currentProj.label}_${stats.kept}pts_${shotTimestamp()}.png`,
+      `sl2c-${currentExample.id}_${currentEmbedding.label}_${stats.kept}pts_${shotTimestamp()}.png`,
     );
   },
 });
@@ -247,36 +259,28 @@ function updateUI(): void {
     `${stats.totalWords.toLocaleString()} words, ` +
     `${stats.kept.toLocaleString()} drawn`,
   );
-  modeEl.text(`view: ${currentProj.pretty}`);
+  modeEl.text(`view: ${currentEmbedding.pretty}`);
   exMeta.html(
-    `α = ${currentExample.alpha}<br>` +
-    `β = ${currentExample.beta}<br>` +
+    `${currentExample.description}<br>` +
     `γ = ${currentExample.gammaName}`,
   );
 }
 
 // ─── Export view for offline render ─────────────────────────────────────────
 //
-// Serialize current state to a JSON object that the offline render script
-// (scripts/sp6-render-limit-set.mjs) can consume verbatim. The chart matrix
-// (denom + 3 rows) is captured so the offline render uses the *same*
-// projection axes even though it'll BFS at a different depth.
+// Serialises the current state to a JSON object that scripts/sl2c-render-
+// limit-set.ts can consume verbatim. The chosen embedding is named (sphere
+// or plane); the offline script looks up the same embedding object.
 
 async function exportView(): Promise<void> {
   const cam = app.camera as THREE.PerspectiveCamera;
   const tgt = app.controls.target;
   const canvas = app.renderManager.renderer.domElement;
-  const bundle = {
+  const bundle: ViewPreset = {
     exampleId:    currentExample.id,
     previewDepth: depth,
     colorScheme:  schemeForColorDepth(colorDepth).name,
-    projection: {
-      denom: Array.from(currentProj.denom),
-      rowX:  Array.from(currentProj.rows[0]),
-      rowY:  Array.from(currentProj.rows[1]),
-      rowZ:  Array.from(currentProj.rows[2]),
-      label: currentProj.label,
-    },
+    embedding:    currentEmbeddingName,
     camera: {
       position: [cam.position.x, cam.position.y, cam.position.z],
       target:   [tgt.x, tgt.y, tgt.z],
@@ -292,14 +296,11 @@ async function exportView(): Promise<void> {
     },
   };
   const json = JSON.stringify(bundle, null, 2);
-  console.log('[sp6-render] view JSON:\n' + json);
+  console.log('[sl2c-render] view JSON:\n' + json);
 
-  // Primary path: POST to the Vite dev-server middleware, which writes the
-  // JSON straight to scripts/view-preset.json. Falls back to clipboard if
-  // the middleware is unavailable (e.g. running the built bundle).
   let saved = false;
   try {
-    const r = await fetch('/__save-view', {
+    const r = await fetch('/__save-view/sl2c', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: json,
@@ -307,7 +308,7 @@ async function exportView(): Promise<void> {
     if (r.ok) {
       saved = true;
       exportStatus.flash(
-        'saved to scripts/view-preset.json — run `node scripts/sp6-render-limit-set.mjs`',
+        'saved to scripts/sl2c-view-preset.json — run `node scripts/sl2c-render-limit-set.ts`',
         2500, '#9ec79e',
       );
     }

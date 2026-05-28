@@ -13,7 +13,8 @@
  */
 
 import { type ExampleGroup } from './examples.ts';
-import { makeGroupAction, computeProximalBasepoint } from './orbit.ts';
+import { computeProximalBasepoint } from '../core/orbit.ts';
+import { makeSp6Action } from './action.ts';
 
 export interface ValidationResult {
   example: ExampleGroup;
@@ -57,8 +58,8 @@ export function validateExample(ex: ExampleGroup): ValidationResult {
   let lambdaMax = NaN;
   let drift = NaN;
   if (errors.length === 0) {
-    const action = makeGroupAction(ex);
-    const r = computeProximalBasepoint(ex, action);
+    const action = makeSp6Action(ex);
+    const r = computeProximalBasepoint(action, ex.gamma, ex.powerIter);
     lambdaMax = r.lambdaMax;
     drift = r.drift;
     if (!Number.isFinite(lambdaMax) || lambdaMax === 0) {

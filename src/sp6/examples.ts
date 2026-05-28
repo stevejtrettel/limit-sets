@@ -41,33 +41,6 @@ export interface ExampleGroup {
   expectedLambdaMax?: number;
 }
 
-export function deriveBC(g: readonly number[]): readonly number[] {
-  return g.slice(1, 6);
-}
-
-export function deriveTCol(
-  f: readonly number[],
-  g: readonly number[],
-): readonly number[] {
-  return [
-    1,
-    f[1] - g[1],
-    f[2] - g[2],
-    f[3] - g[3],
-    f[4] - g[4],
-    f[5] - g[5],
-  ];
-}
-
-export function findExampleById(
-  examples: readonly ExampleGroup[],
-  id: string,
-): ExampleGroup {
-  const ex = examples.find((e) => e.id === id);
-  if (!ex) throw new Error(`unknown sp6 example id: ${id}`);
-  return ex;
-}
-
 // ─── Curated example list ───────────────────────────────────────────────────
 
 export const EXAMPLES: readonly ExampleGroup[] = [
@@ -153,5 +126,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
 
 /** Look up an example by id from the shared `EXAMPLES` list. */
 export function exampleById(id: string): ExampleGroup {
-  return findExampleById(EXAMPLES, id);
+  const ex = EXAMPLES.find((e) => e.id === id);
+  if (!ex) throw new Error(`unknown sp6 example id: ${id}`);
+  return ex;
 }
