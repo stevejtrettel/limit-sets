@@ -40,12 +40,20 @@ const rfpart = (x: number): number => 1 - fpart(x);
  * Draw an anti-aliased line from (x0, y0) to (x1, y1) into `rgba` using
  * Xiaolin Wu's algorithm. Coordinates are in destination pixel space
  * (floats allowed; sub-pixel positioning gives the AA).
+ *
+ * `opacity` (0..1, default 1) scales every pixel's coverage, for faint /
+ * translucent strokes (e.g. a light hull wireframe). It composites over
+ * whatever is already there, so the stroke reads lighter without changing
+ * its 1-pixel thickness.
  */
 export function drawLineAA(
   rgba: Uint8Array, w: number, h: number,
   x0: number, y0: number, x1: number, y1: number,
-  color: RGB,
+  color: RGB, opacity = 1,
 ): void {
+  const P = (x: number, y: number, cov: number): void =>
+    plot(rgba, w, h, x, y, cov * opacity, color);
+
   const steep = Math.abs(y1 - y0) > Math.abs(x1 - x0);
   if (steep) {
     [x0, y0] = [y0, x0];
@@ -66,11 +74,11 @@ export function drawLineAA(
   const xpxl1 = xend;
   const ypxl1 = ipart(yend);
   if (steep) {
-    plot(rgba, w, h, ypxl1,     xpxl1, rfpart(yend) * xgap, color);
-    plot(rgba, w, h, ypxl1 + 1, xpxl1, fpart(yend)  * xgap, color);
+    P(ypxl1,     xpxl1, rfpart(yend) * xgap);
+    P(ypxl1 + 1, xpxl1, fpart(yend)  * xgap);
   } else {
-    plot(rgba, w, h, xpxl1, ypxl1,     rfpart(yend) * xgap, color);
-    plot(rgba, w, h, xpxl1, ypxl1 + 1, fpart(yend)  * xgap, color);
+    P(xpxl1, ypxl1,     rfpart(yend) * xgap);
+    P(xpxl1, ypxl1 + 1, fpart(yend)  * xgap);
   }
   let intery = yend + gradient;
 
@@ -81,24 +89,24 @@ export function drawLineAA(
   const xpxl2 = xend;
   const ypxl2 = ipart(yend);
   if (steep) {
-    plot(rgba, w, h, ypxl2,     xpxl2, rfpart(yend) * xgap, color);
-    plot(rgba, w, h, ypxl2 + 1, xpxl2, fpart(yend)  * xgap, color);
+    P(ypxl2,     xpxl2, rfpart(yend) * xgap);
+    P(ypxl2 + 1, xpxl2, fpart(yend)  * xgap);
   } else {
-    plot(rgba, w, h, xpxl2, ypxl2,     rfpart(yend) * xgap, color);
-    plot(rgba, w, h, xpxl2, ypxl2 + 1, fpart(yend)  * xgap, color);
+    P(xpxl2, ypxl2,     rfpart(yend) * xgap);
+    P(xpxl2, ypxl2 + 1, fpart(yend)  * xgap);
   }
 
   // main loop
   if (steep) {
     for (let x = xpxl1 + 1; x < xpxl2; x++) {
-      plot(rgba, w, h, ipart(intery),     x, rfpart(intery), color);
-      plot(rgba, w, h, ipart(intery) + 1, x, fpart(intery),  color);
+      P(ipart(intery),     x, rfpart(intery));
+      P(ipart(intery) + 1, x, fpart(intery));
       intery += gradient;
     }
   } else {
     for (let x = xpxl1 + 1; x < xpxl2; x++) {
-      plot(rgba, w, h, x, ipart(intery),     rfpart(intery), color);
-      plot(rgba, w, h, x, ipart(intery) + 1, fpart(intery),  color);
+      P(x, ipart(intery),     rfpart(intery));
+      P(x, ipart(intery) + 1, fpart(intery));
       intery += gradient;
     }
   }

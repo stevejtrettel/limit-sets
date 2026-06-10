@@ -9,7 +9,7 @@ import { writeFileSync } from 'node:fs';
 //
 // Whitelist of allowed group names keeps this safe — we only ever write into
 // scripts/<known-group>-view-preset.json, never an attacker-supplied path.
-const ALLOWED_GROUPS = new Set(['sp6', 'sl2c', 'sl3r', 'sl4r', 'james-marit', 'schwartz-pappus', 'marked-boxes']);
+const ALLOWED_GROUPS = new Set(['sp6', 'sp6c32', 'sl2c', 'sl3r', 'sl4r', 'james-marit', 'james-marit-new', 'schwartz-pappus', 'marked-boxes']);
 
 function viewPresetWriter(): PluginOption {
   return {

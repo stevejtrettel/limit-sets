@@ -222,6 +222,37 @@ function fitPCAInChart(
   return { rows: rows as [number[], number[], number[]] };
 }
 
+/**
+ * Like {@link fitPCAChartEmbedding} but with an arbitrary denominator covector
+ * (not restricted to a coordinate axis). The 3 projection rows are the top-3
+ * PCA axes of the affine cloud inside that denominator's chart. Returns null
+ * if no orbit point survives the chart-singular filter. Use this when the
+ * chart denominator is a fixed hyperplane in space (e.g. a cone's dominant
+ * functional expressed in the current basis) rather than a coordinate index.
+ */
+export function fitPCAChartEmbeddingWithDenom(
+  orbit: Orbit,
+  denom: readonly number[],
+  label = 'pca',
+  pretty = 'PCA chart',
+): ChartEmbedding | null {
+  if (denom.length !== orbit.stateDim) {
+    throw new Error(`denom length ${denom.length} != stateDim ${orbit.stateDim}`);
+  }
+  const pca = fitPCAInChart(orbit, denom);
+  if (!pca) return null;
+  return makeChart({
+    stateDim: orbit.stateDim,
+    denom: denom.slice(),
+    rows: pca.rows,
+    label,
+    pretty,
+    denomIdx: -1,
+    isPca: true,
+    isAutoChart: false,
+  });
+}
+
 export function fitPCAChartEmbedding(
   orbit: Orbit,
   denomIdx: number,
