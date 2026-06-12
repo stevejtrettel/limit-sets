@@ -129,6 +129,12 @@ let showInterior = DEFAULT_SHOW_INTERIOR;   // false ⇒ only the 3D-hull bounda
 let activeCopies: { copy: Copy; raysC: Float64Array; test: ConeTest }[] = [];
 let domainObjs: { group: THREE.Group; dispose(): void }[] = [];
 let domainNote: { text(s: string): void } | null = null;
+// Δ₀ dominance box: in the u-basis e₀ chart, dominance (y₀ > |yᵢ|) is exactly
+// |out coord| < 1, so Δ₀ projects to the cube [−1,1]³ regardless of axes. ℙ(K)
+// must sit inside it (verify.md, check 1). Only meaningful in that chart.
+let showBox = false;
+let boxObj: THREE.LineSegments | null = null;
+let boxNote: { text(s: string): void } | null = null;
 const showWire = (): boolean => domainMode === 'wire' || domainMode === 'wire+body';
 const showBody = (): boolean => domainMode === 'body' || domainMode === 'wire+body';
 const coloring = (): boolean => domainMode === 'coloring';
@@ -274,10 +280,32 @@ function rebuildDomains(): void {
   }
 }
 
+/** The Δ₀ dominance box — the cube [−1,1]³, valid only in the u-basis e₀ chart. */
+function rebuildBox(): void {
+  if (boxObj) {
+    app.scene.remove(boxObj);
+    boxObj.geometry.dispose();
+    (boxObj.material as THREE.Material).dispose();
+    boxObj = null;
+  }
+  if (!showBox) { boxNote?.text(''); return; }
+  if (coordId !== 'u' || denomIdx !== 0) {
+    boxNote?.text('Δ₀ box needs u-basis + patch z₁');
+    return;
+  }
+  const cube = new THREE.BoxGeometry(2, 2, 2);
+  const edges = new THREE.EdgesGeometry(cube);
+  cube.dispose();
+  boxObj = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x555555 }));
+  app.scene.add(boxObj);
+  boxNote?.text('Δ₀ dominance box: |yᵢ| < 1');
+}
+
 /** Rebuild both layers after a chart change (re-frame on Λ). */
 function rebuildAll(autofit: boolean): void {
   rebuildMesh(autofit);
   rebuildDomains();
+  rebuildBox();
 }
 
 // ─── HUD ──────────────────────────────────────────────────────────────────────
@@ -400,6 +428,17 @@ const slDomainSize = domainsFolder.slider({
 
 domainNote = domainsFolder.text({ variant: 'meta' });
 
+const selBox = domainsFolder.select({
+  label: 'Δ₀ dominance box',
+  options: [
+    { value: 'off', label: 'off' },
+    { value: 'on', label: 'on (cube containing ℙ(K))' },
+  ],
+  value: showBox ? 'on' : 'off',
+  onChange: (v) => { showBox = v === 'on'; rebuildBox(); },
+});
+boxNote = domainsFolder.text({ variant: 'meta' });
+
 panel.separator();
 
 // ─── View folder (depth, ball radius, fov) ───────────────────────────────────
@@ -436,11 +475,13 @@ panel.button({
     coordId = DEFAULT_COORD; denomIdx = DEFAULT_DENOM; axes = [...DEFAULT_AXES];
     domainMode = 'wire+body'; copyMode = 'base';
     domainSize = DOMAIN_DEFAULT_SIZE; showInterior = DEFAULT_SHOW_INTERIOR;
+    showBox = false;
     slDepth.set(DEFAULT_DEPTH);
     selCoord.set(DEFAULT_COORD); selPatch.set(String(DEFAULT_DENOM));
     populateAxes();
     selDomain.set(domainMode); selCopies.set(copyMode);
     selInterior.set(showInterior ? 'show' : 'hide'); slDomainSize.set(domainSize);
+    selBox.set('off');
     rebuildCopyRays();
     slFov.set(DEFAULT_FOV); app.camera.fov = DEFAULT_FOV; app.camera.updateProjectionMatrix();
     applyChart();

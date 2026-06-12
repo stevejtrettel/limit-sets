@@ -7,7 +7,8 @@
     "dev": "node scripts/run-demo.mjs dev",
     "build": "node scripts/run-demo.mjs build",
     "preview": "node scripts/run-demo.mjs preview",
-    "render": "node scripts/sp6-render-limit-set.ts"
+    "render": "node scripts/sp6-render-limit-set.ts",
+    "verify-c32": "node demos/c32/verify.ts"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

@@ -1,0 +1,132 @@
+# C-32 cone certificate — what `verify.ts` computes
+
+Run: `npm run verify-c32` (or `node demos/c32/verify.ts`). All arithmetic is over
+integers; exit code 0 iff every check passes. Paper = `background/c-32-5-30.pdf`.
+
+Everything is in the **u-basis** (where the rays and facets live).
+
+## Two inputs: a group and a domain
+
+- **The maps** are the eleven cone-certificate maps `G₀…G₁₀` (the paper's "branch
+  maps"), *words* in three generators `S, T⁻¹, E` (`group.ts`
+  `coneCertificateMaps(S, T⁻¹, E)`): `G₀ = T⁻¹`; for `k = 1..5` with
+  `εₖ = (−1)^{k+1}`: `εₖ T⁻¹Sᵏ` and `εₖ T⁻¹SᵏE`. The generators are **derived from the
+  group's defining polynomials** `f = x⁶−5x⁵+11x⁴−14x³+11x²−5x+1`, `g = x⁶+1` by
+  `buildHyperGroup` (companion → `P` → conjugation, paper §1) — so the only
+  hand-entered data are `f, g`, the rays, and the facets.
+- **The convex body K**, in both views:
+  - `rays` — its 254 extreme rays (`background/c32_extremal_rays.json`);
+  - `facets` (`FACETS_H`, `facets.ts`) — its 77 bounding hyperplanes; `K = { y : H·y ≥ 0 }`.
+  (We also build the **cube `Δ̄₀`** as a body for check 1, and `translate` K by each
+  map for check 2.)
+
+**Dependency split:** checks 0 and 1 use the **bodies only**; check 2 (the "do we
+win") also needs the **group's maps**.
+
+## Convex bodies, containment, and translation
+
+A **convex body** (here a cone) carries two dual views at once: its extreme **rays**
+and its bounding **hyperplanes** (half-spaces `{ y : h·y ≥ 0 }`). Either view
+determines it; the containment test uses the convenient one from each.
+
+**Containment `inside(Y, X)`.** Choose the convenient view of each: describe `X` by
+its hyperplanes and `Y` by its extreme rays. Then `Y ⊆ X` iff every extreme point of
+`Y` is on the nonnegative side of every hyperplane of `X`:
+```
+inside(Y, X)  =  every ray r of Y has  h·r ≥ 0  for every hyperplane h of X.
+```
+All three checks are this one boolean, applied to different bodies.
+
+**Translation `translate(X, G)`.** Applying a group element `G` to a body moves the
+two views *dually*, so the pairing `h·v` is preserved (`v` on the `+` side of `h`
+⟺ `G·v` on the `+` side of `h·G⁻¹`):
+- each ray/vertex by the **left action**:   `v ↦ G·v`;
+- each hyperplane by the **inverse**:         `h ↦ h·G⁻¹`.
+
+Because `G·X = { Gy : h·y ≥ 0 } = { w : (h·G⁻¹)·w ≥ 0 }`, and indeed
+`(h·G⁻¹)·(G·v) = h·v`. (Equivalently, a hyperplane stored as a normal *column* `n`
+transforms by the inverse-transpose `G⁻ᵀ·n`.)
+
+## Check 0 — consistency: every extremal ray is inside K
+Test `inside(r, K)` for every `r ∈ RAYS`. This is a **sanity check on our two data
+files**, not a theorem about the group — and it cannot fail for correct data: the
+rays are (by construction, from `cdd`) the extremal rays of `K = {H·y ≥ 0}`, so
+they satisfy `H·y ≥ 0` by definition (in fact `margin = 0`: they sit on `∂K`). It
+fails only if `RAYS` (the JSON) and `FACETS_H` (`facets.ts`) **disagree** — a
+transcription error, wrong/corrupted JSON, or rays from a different cone.
+Checks 1–2 below are the actual mathematical content of the certificate.
+
+## Check 1 — dominance: K lives in the cube Δ₀ (domain only, paper §3)
+`Δ₀ = { |y₀| > |yᵢ| }` is the dominance chamber; in the `y₀ = 1` chart it is the cube
+`|yᵢ| < 1`. Its closure is itself a cone — **the cube is a domain**, cut out by ten
+half-spaces:
+```
+Δ̄₀ = { y :  y₀ − yᵢ ≥ 0  and  y₀ + yᵢ ≥ 0,  i = 1..5 }  =  { y : y₀ ≥ |yᵢ| }.
+```
+We want the ping-pong set `X⁺ = ℙ(K°)` inside the **open** chamber `Δ₀`. Two parts:
+1. **K is inside the closed cube** — `inside(K, cube)`: every extreme ray of K
+   satisfies `y₀ ≥ |yᵢ|`. Since `K = cone(rays)`, this gives `K ⊆ Δ̄₀`. (Boundary rays
+   like `q = [1,−1,1,−1,1,−1]` sit *on* a cube face — the corner in the box picture.)
+2. **K is full-dimensional**, so `K°` is a genuine open region (not a degenerate
+   sliver). We exhibit a point strictly inside K — the witness `z = (47,−1,−1,−1,−1,−1)`,
+   with every hyperplane to spare (`h·z > 0`). Then `K°` is open and nonempty, and **an
+   open set inside the closed cube `Δ̄₀` must lie inside its interior, the open cube
+   `Δ₀`**. With part 1, `X⁺ = ℙ(K°) ⊆ Δ₀`.
+
+(This is the geometric form of the paper's argument: the paper notes the ten
+inequalities are *among the rows of H*; equivalently, every ray satisfies them.)
+
+## Check 2 — branch containments `GᵢK ⊆ K`, i = 0..10 (paper §3–§4)
+The eleven branch maps, written out exactly as the paper lists them (§4, p.4):
+
+```
+G0  =  T⁻¹
+G1  =  T⁻¹S        G2  =  T⁻¹SE
+G3  = −T⁻¹S²       G4  = −T⁻¹S²E
+G5  =  T⁻¹S³       G6  =  T⁻¹S³E
+G7  = −T⁻¹S⁴       G8  = −T⁻¹S⁴E
+G9  =  T⁻¹S⁵       G10 =  T⁻¹S⁵E
+```
+
+The minus signs are projectively irrelevant — they only keep each image in the
+`y₀ > 0` chart (paper p.4). In code these are built by `group.ts` from the
+polynomials `f, g` (verified to reproduce exactly this list for C-32).
+
+**How we test `Gᵢ K ⊆ K`.** `K` is the cone *generated by* its 254 extremal rays,
+`K = { Σⱼ λⱼ rⱼ : λⱼ ≥ 0 }`. A **linear** map distributes over that sum,
+`Gᵢ(Σ λⱼ rⱼ) = Σ λⱼ (Gᵢ rⱼ)`, so `Gᵢ` sends all of `K` into `K` **exactly when it
+sends every extremal ray into `K`**. And a vector is in `K` exactly when every
+facet value is `≥ 0`. So the test is:
+
+```
+Gᵢ K ⊆ K   ⟺   for every ray r,   minₕ h·(Gᵢ r) ≥ 0.
+```
+
+That is `11 × 254 × 77` integer checks. (`verify.ts` reports, per map, the minimum
+facet value over all 254 images — `≥ 0` ⟺ contained.)
+
+This is the paper's certificate in **primal form** — the same check as
+`background/c32_dual_cone_certificate_verifier.py`. (Dual form, paper App. B:
+`h·Gᵢ ∈ Cone_{ℚ≥0}{rows of H}`, `77 × 11` checks.)
+
+**What the printed worst value means (0 vs 1).** It is `min` over *every* ray and
+*every* facet of `h·(Gᵢr)` — an integer because everything is integer. Only the
+sign matters for the certificate (`≥ 0` ⇒ contained); the magnitude is geometry:
+- `worst = 0` — some image ray lands exactly on a facet, so `GᵢK` **touches `∂K`**.
+  This is the generic case here, and it is the paper's delicate feature: `T⁻¹S`
+  fixes `q = [1:−1:1:−1:1:−1] ∈ ∂K`, forcing `0`. (Same reason check 0 is `0`: the
+  extremal rays lie on `∂K`.)
+- `worst = 1` (here only `T⁻¹S⁴`, `T⁻¹S⁴E`) — every image ray is strictly inside,
+  so `GᵢK ⊆ K°` with **no boundary contact** (smallest positive integer gap is 1).
+
+Either way `GᵢK ⊆ K`. The paper gets strict interior `GᵢK° ⊆ K°` for all maps
+anyway, from invertibility + full-dimensionality (§3).
+
+## Why these two checks give ping-pong (paper §4)
+Check 2 gives (projectively) `T⁻¹(Y ∪ X⁺) ⊆ X⁺` with `X⁻ = E X⁺`; check 1 gives
+`X ∩ Y = ∅`. Together that is the ping-pong.
+
+## Picture for check 1
+The demo's "Δ₀ dominance box" toggle draws `Δ₀` = the cube `[−1,1]³` (u-basis e₀
+chart). `ℙ(K)` sits inside it, with the boundary ray `q = [1,−1,1,−1,1,−1]` on a
+corner.

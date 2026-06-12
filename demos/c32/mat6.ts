@@ -28,6 +28,23 @@ export function matvec6(M: Mat, v: readonly number[]): number[] {
   });
 }
 
+/** Transpose of a 6×6. */
+export function transpose6(M: Mat): number[][] {
+  return Array.from({ length: 6 }, (_, i) => Array.from({ length: 6 }, (_, j) => M[j][i]));
+}
+
+/** Exact determinant by cofactor (Laplace) expansion — integer-safe, for small n. */
+export function det(M: Mat): number {
+  const n = M.length;
+  if (n === 1) return M[0][0];
+  let s = 0;
+  for (let j = 0; j < n; j++) {
+    const minor = M.slice(1).map((row) => row.filter((_, k) => k !== j));
+    s += (j % 2 ? -1 : 1) * M[0][j] * det(minor);
+  }
+  return s;
+}
+
 /** Gauss–Jordan inverse of a 6×6 (partial pivoting). */
 export function invert6(M: Mat): number[][] {
   const n = 6;

@@ -18,7 +18,7 @@
  * nested copies all sit inside K and are bounded.
  */
 
-import { I6, matmul6 } from './mat6';
+import { I6, matmul6 } from './mat6.ts';
 
 /** Signed cyclic shift S (u-basis): S eᵢ = −e_{i+1}, S e₅ = e₀, S⁶ = −I. */
 export const S_U: readonly (readonly number[])[] = [
@@ -38,6 +38,16 @@ export const T_INV_U: readonly (readonly number[])[] = [
   [0,  0,   0,   1,   0,  0],
   [0,  0,   0,   0,   1,  0],
   [0,  0,   0,   0,   0,  1],
+];
+
+/** Involution E (u-basis, paper §1): E² = I, ESE = S⁻¹, ETE = T⁻¹. */
+export const E_U: readonly (readonly number[])[] = [
+  [1,  0,  0,  0,  0,  0],
+  [0,  0,  0,  0,  0, -1],
+  [0,  0,  0,  0, -1,  0],
+  [0,  0,  0, -1,  0,  0],
+  [0,  0, -1,  0,  0,  0],
+  [0, -1,  0,  0,  0,  0],
 ];
 
 /** Mᵏ for k ≥ 0 (M⁰ = I). */
