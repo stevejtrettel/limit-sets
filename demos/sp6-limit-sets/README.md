@@ -1,6 +1,6 @@
 # Sp(6,ℤ) — limit-set viewer with view-export for offline render
 
-Clone of `sp6-limit-sets` (A-1, A-15, C-2, C-32, C-47, C-55) with one extra
+Clone of `sp6-limit-sets` (A-1, A-17, C-2, C-32, C-47, C-55) with one extra
 button: **copy view JSON for offline render**. Position the camera, click the
 button, paste the JSON into the `VIEW_PRESET` constant of
 `scripts/sp6-render-limit-set.mjs`, run that script — and you get a

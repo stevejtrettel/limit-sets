@@ -41,7 +41,7 @@ app.scene.background = new THREE.Color(0xf2f2f2);
 
 const { material, uniforms } = createSphereMaterial();
 
-const DEFAULT_EXAMPLE_ID = 'A15';
+const DEFAULT_EXAMPLE_ID = 'A17';
 const DEFAULT_DEPTH = 12;
 const DEFAULT_RADIUS = 0.025;
 

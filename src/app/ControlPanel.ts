@@ -7,7 +7,7 @@
  * so reset flows don't double-invoke handlers).
  *
  *   const panel = new ControlPanel({ title: 'Sp(6,Z) — limit sets' });
- *   const sel = panel.select({ label: 'example', options: [...], value: 'A15', onChange: ... });
+ *   const sel = panel.select({ label: 'example', options: [...], value: 'A17', onChange: ... });
  *   panel.separator();
  *   const sl  = panel.slider({ label: 'depth N', min: 4, max: 13, step: 1, value: 12, onChange: ... });
  *   panel.button({ label: 'reset', onClick: () => sl.set(12) });

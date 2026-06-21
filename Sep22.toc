@@ -1,0 +1,79 @@
+\contentsline {section}{\tocsection {}{1}{Introduction}}{1}{section.1}%
+\contentsline {subsection}{\tocsubsection {}{1.1}{Methods}}{2}{subsection.1.1}%
+\contentsline {subsection}{\tocsubsection {}{1.2}{Results}}{3}{subsection.1.2}%
+\contentsline {section}{\tocsection {}{2}{Tables of $\mathrm {Sp}(4)$ and $\mathrm {Sp}(6)$ hypergeometric groups}}{4}{section.2}%
+\contentsline {section}{\tocsection {}{3}{Ping pong: methodology and code}}{7}{section.3}%
+\contentsline {subsection}{\tocsubsection {}{3.1}{Ping-pong}}{7}{subsection.3.1}%
+\contentsline {subsection}{\tocsubsection {}{3.2}{Construction of the cones}}{9}{subsection.3.2}%
+\contentsline {subsection}{\tocsubsection {}{3.3}{SageMath code}}{10}{subsection.3.3}%
+\contentsline {section}{\tocsection {}{4}{Ping pong tables for maximally unipotent $\mathrm {Sp}(6)$ hypergeometric groups}}{13}{section.4}%
+\contentsline {subsection}{\tocsubsection {}{4.1}{Thinness of case A-1}}{13}{subsection.4.1}%
+\contentsline {subsection}{\tocsubsection {}{4.2}{Thinness of case A-2}}{13}{subsection.4.2}%
+\contentsline {subsection}{\tocsubsection {}{4.3}{Thinness of case A-3}}{14}{subsection.4.3}%
+\contentsline {subsection}{\tocsubsection {}{4.4}{Thinness of case A-4}}{14}{subsection.4.4}%
+\contentsline {subsection}{\tocsubsection {}{4.5}{Thinness of case A-5}}{14}{subsection.4.5}%
+\contentsline {subsection}{\tocsubsection {}{4.6}{Thinness of case A-6}}{14}{subsection.4.6}%
+\contentsline {subsection}{\tocsubsection {}{4.7}{Thinness of case A-7}}{14}{subsection.4.7}%
+\contentsline {subsection}{\tocsubsection {}{4.8}{Thinness of case A-8}}{15}{subsection.4.8}%
+\contentsline {subsection}{\tocsubsection {}{4.9}{Thinness of case A-9}}{15}{subsection.4.9}%
+\contentsline {subsection}{\tocsubsection {}{4.10}{Thinness of case A-10}}{15}{subsection.4.10}%
+\contentsline {subsection}{\tocsubsection {}{4.11}{Thinness of case A-11}}{15}{subsection.4.11}%
+\contentsline {subsection}{\tocsubsection {}{4.12}{Thinness of case A-12}}{15}{subsection.4.12}%
+\contentsline {subsection}{\tocsubsection {}{4.13}{Thinness of case A-13}}{16}{subsection.4.13}%
+\contentsline {subsection}{\tocsubsection {}{4.14}{Thinness of case A-14}}{16}{subsection.4.14}%
+\contentsline {subsection}{\tocsubsection {}{4.15}{Thinness of case A-31}}{16}{subsection.4.15}%
+\contentsline {subsection}{\tocsubsection {}{4.16}{Thinness of case A-37}}{16}{subsection.4.16}%
+\contentsline {subsection}{\tocsubsection {}{4.17}{Thinness of case A-38}}{16}{subsection.4.17}%
+\contentsline {section}{\tocsection {}{5}{Ping pong tables for more $\mathrm {Sp}(6)$ hypergeometric groups}}{16}{section.5}%
+\contentsline {subsection}{\tocsubsection {}{5.1}{Thinness of case C-2}}{17}{subsection.5.1}%
+\contentsline {subsection}{\tocsubsection {}{5.2}{Thinness of case C-3}}{17}{subsection.5.2}%
+\contentsline {subsection}{\tocsubsection {}{5.3}{Thinness of case C-4}}{17}{subsection.5.3}%
+\contentsline {subsection}{\tocsubsection {}{5.4}{Thinness of case C-5}}{17}{subsection.5.4}%
+\contentsline {subsection}{\tocsubsection {}{5.5}{Thinness of case C-6}}{17}{subsection.5.5}%
+\contentsline {subsection}{\tocsubsection {}{5.6}{Thinness of case C-7}}{18}{subsection.5.6}%
+\contentsline {subsection}{\tocsubsection {}{5.7}{Thinness of case C-8}}{18}{subsection.5.7}%
+\contentsline {subsection}{\tocsubsection {}{5.8}{Thinness of case C-11}}{18}{subsection.5.8}%
+\contentsline {subsection}{\tocsubsection {}{5.9}{Thinness of case C-12}}{18}{subsection.5.9}%
+\contentsline {subsection}{\tocsubsection {}{5.10}{Thinness of case C-13}}{18}{subsection.5.10}%
+\contentsline {subsection}{\tocsubsection {}{5.11}{Thinness of case C-14}}{19}{subsection.5.11}%
+\contentsline {subsection}{\tocsubsection {}{5.12}{Thinness of case C-15}}{19}{subsection.5.12}%
+\contentsline {subsection}{\tocsubsection {}{5.13}{Thinness of case C-16}}{19}{subsection.5.13}%
+\contentsline {subsection}{\tocsubsection {}{5.14}{Thinness of case C-17}}{19}{subsection.5.14}%
+\contentsline {subsection}{\tocsubsection {}{5.15}{Thinness of case C-18}}{19}{subsection.5.15}%
+\contentsline {subsection}{\tocsubsection {}{5.16}{Thinness of case C-19}}{19}{subsection.5.16}%
+\contentsline {subsection}{\tocsubsection {}{5.17}{Thinness of case C-20}}{20}{subsection.5.17}%
+\contentsline {subsection}{\tocsubsection {}{5.18}{Thinness of case C-21}}{20}{subsection.5.18}%
+\contentsline {subsection}{\tocsubsection {}{5.19}{Thinness of case C-22}}{20}{subsection.5.19}%
+\contentsline {subsection}{\tocsubsection {}{5.20}{Thinness of case C-23}}{20}{subsection.5.20}%
+\contentsline {subsection}{\tocsubsection {}{5.21}{Thinness of case C-24}}{20}{subsection.5.21}%
+\contentsline {subsection}{\tocsubsection {}{5.22}{Thinness of case C-25}}{20}{subsection.5.22}%
+\contentsline {subsection}{\tocsubsection {}{5.23}{Thinness of case C-26}}{21}{subsection.5.23}%
+\contentsline {subsection}{\tocsubsection {}{5.24}{Thinness of case C-27}}{21}{subsection.5.24}%
+\contentsline {subsection}{\tocsubsection {}{5.25}{Thinness of case C-28}}{21}{subsection.5.25}%
+\contentsline {subsection}{\tocsubsection {}{5.26}{Thinness of case C-33}}{21}{subsection.5.26}%
+\contentsline {subsection}{\tocsubsection {}{5.27}{Thinness of case C-34}}{21}{subsection.5.27}%
+\contentsline {subsection}{\tocsubsection {}{5.28}{Thinness of case C-35}}{21}{subsection.5.28}%
+\contentsline {subsection}{\tocsubsection {}{5.29}{Thinness of case C-36}}{22}{subsection.5.29}%
+\contentsline {subsection}{\tocsubsection {}{5.30}{Thinness of case C-37}}{22}{subsection.5.30}%
+\contentsline {subsection}{\tocsubsection {}{5.31}{Thinness of case C-38}}{22}{subsection.5.31}%
+\contentsline {subsection}{\tocsubsection {}{5.32}{Thinness of case C-40}}{22}{subsection.5.32}%
+\contentsline {subsection}{\tocsubsection {}{5.33}{Thinness of case C-41}}{22}{subsection.5.33}%
+\contentsline {subsection}{\tocsubsection {}{5.34}{Thinness of case C-43}}{23}{subsection.5.34}%
+\contentsline {subsection}{\tocsubsection {}{5.35}{Thinness of case C-44}}{23}{subsection.5.35}%
+\contentsline {subsection}{\tocsubsection {}{5.36}{Thinness of case C-45}}{23}{subsection.5.36}%
+\contentsline {subsection}{\tocsubsection {}{5.37}{Thinness of case C-46}}{23}{subsection.5.37}%
+\contentsline {subsection}{\tocsubsection {}{5.38}{Thinness of case C-48}}{23}{subsection.5.38}%
+\contentsline {subsection}{\tocsubsection {}{5.39}{Thinness of case C-49}}{23}{subsection.5.39}%
+\contentsline {subsection}{\tocsubsection {}{5.40}{Thinness of case C-50}}{23}{subsection.5.40}%
+\contentsline {subsection}{\tocsubsection {}{5.41}{Thinness of case C-52}}{24}{subsection.5.41}%
+\contentsline {subsection}{\tocsubsection {}{5.42}{Thinness of case C-53}}{24}{subsection.5.42}%
+\contentsline {subsection}{\tocsubsection {}{5.43}{Thinness of case C-54}}{24}{subsection.5.43}%
+\contentsline {subsection}{\tocsubsection {}{5.44}{Thinness of case C-56}}{24}{subsection.5.44}%
+\contentsline {subsection}{\tocsubsection {}{5.45}{Thinness of case C-57}}{24}{subsection.5.45}%
+\contentsline {subsection}{\tocsubsection {}{5.46}{Thinness of case C-58}}{25}{subsection.5.46}%
+\contentsline {section}{\tocsection {}{6}{Ping pong tables for $\mathrm {Sp}(4)$ hypergeometric groups}}{25}{section.6}%
+\contentsline {subsection}{\tocsubsection {}{6.1}{Thinness of case 27}}{25}{subsection.6.1}%
+\contentsline {subsection}{\tocsubsection {}{6.2}{Thinness of case 35}}{25}{subsection.6.2}%
+\contentsline {subsection}{\tocsubsection {}{6.3}{Thinness of case 39}}{25}{subsection.6.3}%
+\contentsline {section}{\tocsection {}{7}{Remarks on open cases}}{25}{section.7}%
+\contentsline {section}{\tocsection {}{}{Acknowledgements}}{26}{section*.3}%

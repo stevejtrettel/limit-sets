@@ -71,7 +71,7 @@ import type { ViewPreset } from '../src/sp6/viewPreset.ts';
 
 // Pick which BDN example to render. Ignored when VIEW_PRESET is set
 // (the preset's exampleId wins).
-const EXAMPLE_ID = 'c32'; // 'A1' | 'A15' | 'c2' | 'c32' | 'c47' | 'c55'
+const EXAMPLE_ID = 'c32'; // 'A1' | 'A17' | 'c2' | 'c32' | 'c47' | 'c55'
 
 // Orbit
 const DEFAULT_DEPTH    = 13;

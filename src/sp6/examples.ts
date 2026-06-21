@@ -58,8 +58,8 @@ export const EXAMPLES: readonly ExampleGroup[] = [
     expectedLambdaMax: 29.607,
   },
   {
-    id: 'A15',
-    label: 'A-15',
+    id: 'A17',
+    label: 'A-17',  // was mislabeled 'A-15'; this β/g is BDN Table 1 A-17.
     nature: 'arithmetic',
     coefflistf: [1, -6, 15, -20, 15, -6, 1], // (x-1)⁶
     coefflistg: [1,  1,  2,   1,  2,  1, 1], // (x²+x+1)²(x²-x+1)
