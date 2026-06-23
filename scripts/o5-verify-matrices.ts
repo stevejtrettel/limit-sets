@@ -13,19 +13,21 @@
  *      the dominant eigenvalue is real or a complex pair.
  */
 
-import { CATALOG_EXAMPLES } from '../src/o5/catalog.ts';
-import { buildO5Matrices, makeO5Action, mul5, type Mat5 } from '../src/o5/action.ts';
-import { findLoxodromicWord } from '../src/o5/seed.ts';
+import { CATALOG_EXAMPLES } from '../src/examples/hypergeometric/degree5-orthogonal.ts';
+import { companion, matInverse, matMul, type Mat } from '../src/core/matrix.ts';
+import { cyclotomicProduct } from '../src/core/polynomial.ts';
+import { hypergeometricAction } from '../src/examples/hypergeometric/recipe.ts';
+import { findLoxodromicWord, formatWord } from '../src/core/seed.ts';
 import { jacobiSymmetricEig, charPoly, polyRoots, type Complex } from '../src/core/linalg.ts';
 
 const N = 5;
 
-function transpose(M: Mat5): Mat5 {
+function transpose(M: Mat): Mat {
   const T = new Float64Array(25);
   for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) T[j * N + i] = M[i * N + j];
   return T;
 }
-function det5(M: Mat5): number {
+function det5(M: Mat): number {
   const sub = (rows: number[], cols: number[]): number => {
     if (rows.length === 1) return M[rows[0] * N + cols[0]];
     let s = 0;
@@ -37,12 +39,12 @@ function det5(M: Mat5): number {
   };
   return sub([0, 1, 2, 3, 4], [0, 1, 2, 3, 4]);
 }
-function maxIntErr(M: Mat5): number {
+function maxIntErr(M: Mat): number {
   let e = 0;
   for (let i = 0; i < 25; i++) e = Math.max(e, Math.abs(M[i] - Math.round(M[i])));
   return e;
 }
-function isIdentity(M: Mat5, eps = 1e-9): boolean {
+function isIdentity(M: Mat, eps = 1e-9): boolean {
   for (let i = 0; i < N; i++) for (let j = 0; j < N; j++)
     if (Math.abs(M[i * N + j] - (i === j ? 1 : 0)) > eps) return false;
   return true;
@@ -56,25 +58,25 @@ const PARAMS: [number, number][] = [];
 for (let i = 0; i < N; i++) for (let j = i; j < N; j++) PARAMS.push([i, j]);
 const P = PARAMS.length; // 15
 
-function basisE(p: number): Mat5 {
+function basisE(p: number): Mat {
   const [i, j] = PARAMS[p];
   const E = new Float64Array(25);
   E[i * N + j] = 1; E[j * N + i] = 1;
   return E;
 }
-function upperTri(M: Mat5): number[] {
+function upperTri(M: Mat): number[] {
   return PARAMS.map(([i, j]) => M[i * N + j]);
 }
 
 /** Solve for the (1-dim) space of forms with GᵀQG = Q for every G. */
-function invariantForm(gens: Mat5[]): { Q: number[][]; residual: number; eigGap: number } {
+function invariantForm(gens: Mat[]): { Q: number[][]; residual: number; eigGap: number } {
   // Build constraint matrix M (rows = gens × upper-tri entries, cols = params).
   const rows: number[][] = [];
   for (const G of gens) {
     const Gt = transpose(G);
     const cols: number[][] = PARAMS.map((_, p) => {
       const E = basisE(p);
-      const D = mul5(Gt, mul5(E, G)); // GᵀEG
+      const D = matMul(Gt, matMul(E, G)); // GᵀEG
       for (let k = 0; k < 25; k++) D[k] -= E[k];
       return upperTri(D);
     });
@@ -119,11 +121,11 @@ function signature(Q: number[][]): { pos: number; neg: number; zero: number } {
 
 // ─── Eigenvalues of a 5×5 (char poly + complex roots, from @/core/linalg) ─────
 
-/** Mat5 (row-major Float64) → number[][] for the linalg spectrum routines. */
-const rows5 = (M: Mat5): number[][] =>
+/** Mat (row-major Float64) → number[][] for the linalg spectrum routines. */
+const rows5 = (M: Mat): number[][] =>
   Array.from({ length: N }, (_, i) => Array.from({ length: N }, (_, j) => M[i * N + j]));
 /** Full complex spectrum of a 5×5, descending modulus. */
-const eigenvalues = (M: Mat5): Complex[] => polyRoots(charPoly(rows5(M)));
+const eigenvalues = (M: Mat): Complex[] => polyRoots(charPoly(rows5(M)));
 
 function fmtRoots(rs: Complex[]): string {
   return rs.map((r) => Math.abs(r.im) < 1e-7
@@ -141,31 +143,32 @@ const targets = ARGS.length > 0
   : CATALOG_EXAMPLES.filter((e) => ELLIPTIC_TB.includes(e.id));
 
 for (const ex of targets) {
-  const { A, B, T } = buildO5Matrices(ex.coefflistf, ex.coefflistg);
+  const f = cyclotomicProduct(ex.alpha), g = cyclotomicProduct(ex.beta);
+  const A = companion(f), B = companion(g), T = matMul(B, matInverse(A));
   console.log(`\n=== ${ex.id}  (${ex.label}, ${ex.type}) ===`);
   console.log(`  integer-entry err: A ${maxIntErr(A).toExponential(1)}, B ${maxIntErr(B).toExponential(1)}`);
-  console.log(`  det A = ${det5(A).toFixed(4)}, det B = ${det5(B).toFixed(4)}, T²=I: ${isIdentity(mul5(T, T))}`);
+  console.log(`  det A = ${det5(A).toFixed(4)}, det B = ${det5(B).toFixed(4)}, T²=I: ${isIdentity(matMul(T, T))}`);
 
   // Definitive companion check: charpoly(A) = f, charpoly(B) = g (the whole
   // point of a companion matrix). Robust regardless of conditioning.
   const cpA = charPoly(rows5(A)).map(Math.round), cpB = charPoly(rows5(B)).map(Math.round);
   const eq = (x: number[], y: readonly number[]): boolean => x.length === y.length && x.every((v, i) => v === y[i]);
-  console.log(`  charpoly(A) = f: ${eq(cpA, ex.coefflistf)}   charpoly(B) = g: ${eq(cpB, ex.coefflistg)}`);
+  console.log(`  charpoly(A) = f: ${eq(cpA, f)}   charpoly(B) = g: ${eq(cpB, g)}`);
 
   const { Q, residual, eigGap } = invariantForm([A, B]);
   const sig = signature(Q);
   console.log(`  invariant form Q: residual ${residual.toExponential(1)}, null-space gap ${eigGap.toExponential(1)} (≫1 ⇒ unique)`);
   console.log(`  signature(Q) = (${sig.pos}, ${sig.neg})  [claimed ${ex.type}]`);
 
-  const TB = mul5(T, B);
+  const TB = matMul(T, B);
   console.log(`  eig(TB):  ${fmtRoots(eigenvalues(TB))}`);
 
   // The loxodromic seed word the pipeline actually uses; build its matrix.
-  const lox = findLoxodromicWord(makeO5Action(ex.coefflistf, ex.coefflistg));
+  const lox = findLoxodromicWord(hypergeometricAction(ex.alpha, ex.beta, 'free-product'));
   if (lox) {
-    let W = new Float64Array(25); for (let i = 0; i < N; i++) W[i * N + i] = 1;
-    const mats = [T, B, buildO5Matrices(ex.coefflistf, ex.coefflistg).Binv];
-    for (const g of lox.word) W = mul5(mats[g], W); // apply-order ⇒ left-multiply
-    console.log(`  eig(γ=${lox.name}):  ${fmtRoots(eigenvalues(W))}`);
+    let W: Mat = new Float64Array(25); for (let i = 0; i < N; i++) W[i * N + i] = 1;
+    const mats = [T, B, matInverse(B)];
+    for (const code of lox.word) W = matMul(mats[code], W); // apply-order ⇒ left-multiply
+    console.log(`  eig(γ=${formatWord(lox.word, ['T', 'B', 'B⁻¹'])}):  ${fmtRoots(eigenvalues(W))}`);
   }
 }

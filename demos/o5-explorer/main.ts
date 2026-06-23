@@ -19,19 +19,20 @@ import { createSphereMaterial } from '@/app/instancedSpheres';
 import { buildLimitSetMesh } from '@/app/limitSetMesh';
 import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
-import { CATALOG_EXAMPLES } from '@/o5/catalog';
-import type { O5Example } from '@/o5/types';
-import { validateExample } from '@/o5/validate';
-import { makeO5Action } from '@/o5/action';
-import { loxodromicSeed } from '@/o5/seed';
+import {
+  CATALOG_EXAMPLES, ORTHOGONAL_DEGREE5_WALK, type OrthogonalExample,
+} from '@/examples/hypergeometric/degree5-orthogonal';
+import { hypergeometricAction, WALK_LABELS, WALK_FALLBACK } from '@/examples/hypergeometric/recipe';
+import { validateOrthogonalExample } from '@/examples/hypergeometric/validate';
+import { paletteForOrthogonal as paletteForScheme } from '@/examples/hypergeometric/palette';
+import type { ViewPreset } from '@/examples/hypergeometric/viewPreset';
 import type { GroupAction } from '@/core/group';
+import { seedFromLoxodromic } from '@/core/seed';
 import { generateOrbit, type Orbit } from '@/core/orbit';
 import {
   type ChartEmbedding, fitPCAChartEmbedding, fitAutoChartEmbedding,
 } from '@/core/chart';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
-import { paletteForScheme } from '@/o5/palettes.ts';
-import type { ViewPreset } from '@/o5/viewPreset';
 
 const app = new App({ antialias: true });
 app.scene.background = new THREE.Color(0xf2f2f2);
@@ -55,7 +56,7 @@ const STATUS_ORDER: Record<string, number> = { thin: 0, arithmetic: 1, open: 2, 
  *  Monodromy in O(5)" (those carry a bdnLabel — thin + open), the 7 thin O(4,1)
  *  proven by Fuchs–Meiri–Sarnak, and everything else (all 37 arithmetic + 4
  *  finite) tabulated in Bajpai–Singh. */
-function paperOf(e: O5Example): string {
+function paperOf(e: OrthogonalExample): string {
   if (e.bdnLabel) return 'Bajpai–Nitsche';
   if (e.source === 'Fuchs–Meiri–Sarnak') return 'Fuchs–Meiri–Sarnak';
   return 'Bajpai–Singh';
@@ -66,7 +67,7 @@ function paperOf(e: O5Example): string {
 const byId = new Map(CATALOG_EXAMPLES.map((e) => [e.id, e]));
 
 let paper: Paper = DEFAULT_PAPER;
-let currentExample!:   O5Example;
+let currentExample!:   OrthogonalExample;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentLambda = NaN;
@@ -84,7 +85,7 @@ let stats = { kept: 0, totalWords: 0 };
 
 /** Groups in a paper (or all), ordered so the dropdown's <optgroup>s are
  *  contiguous: by status within a paper, by paper order when browsing all. */
-function groupsInPaper(p: Paper): O5Example[] {
+function groupsInPaper(p: Paper): OrthogonalExample[] {
   const list = p === 'all'
     ? [...CATALOG_EXAMPLES]
     : CATALOG_EXAMPLES.filter((e) => paperOf(e) === p);
@@ -107,15 +108,18 @@ function loadExample(id: string): void {
   const ex = byId.get(id);
   if (!ex) throw new Error(`unknown o5 catalog group id: ${id}`);
   currentExample = ex;
-  currentAction = makeO5Action(ex.coefflistf, ex.coefflistg);
+  currentAction = hypergeometricAction(ex.alpha, ex.beta, ORTHOGONAL_DEGREE5_WALK);
 
-  const v = validateExample(ex);
+  const v = validateOrthogonalExample(ex);
   for (const w of v.warnings) console.warn(`[o5-explorer ${ex.label}] ⚠ ${w}`);
   if (!v.passed) console.error(`[o5-explorer ${ex.label}] ✗ ${v.errors.join('; ')}`);
 
   // Seed from a loxodromic word. If the search fails (finite groups, or any case
   // we haven't cracked yet), draw nothing and say so — never an arbitrary picture.
-  const s = loxodromicSeed(currentAction);
+  const s = seedFromLoxodromic(currentAction, {
+    labels: WALK_LABELS[ORTHOGONAL_DEGREE5_WALK],
+    fallbackWord: WALK_FALLBACK[ORTHOGONAL_DEGREE5_WALK],
+  });
   currentSeedFound = !s.fallback;
   currentBasepoint = s.basepoint;
   currentLambda = currentSeedFound ? s.lambdaMax : NaN;
@@ -204,7 +208,7 @@ const selGroup = groupFolder.select({
   onChange: (id) => selectGroup(id),
 });
 
-function groupOption(e: O5Example): { value: string; label: string } {
+function groupOption(e: OrthogonalExample): { value: string; label: string } {
   // For groups in the Thin Monodromy paper, show that label (it already names
   // the type); otherwise the signature type. Append status only when browsing
   // all papers (then the <optgroup> is by paper, not status).
@@ -214,7 +218,7 @@ function groupOption(e: O5Example): { value: string; label: string } {
 
 /** Which <optgroup> a row belongs to: by status within a chosen paper, by paper
  *  when browsing all. */
-function groupHeader(e: O5Example): string {
+function groupHeader(e: OrthogonalExample): string {
   if (paper === 'all') return paperOf(e);
   return { thin: 'thin', arithmetic: 'arithmetic',
            open: 'open', finite: 'finite (no limit set)' }[e.status];

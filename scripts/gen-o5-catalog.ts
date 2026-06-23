@@ -18,7 +18,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const CSV = fileURLToPath(new URL('./orthogonal_hypergeometric_group_tables.csv', import.meta.url));
-const OUT = fileURLToPath(new URL('../src/o5/catalog.ts', import.meta.url));
+const OUT = fileURLToPath(new URL('../src/examples/hypergeometric/degree5-orthogonal.ts', import.meta.url));
 
 const BDN = 'Bajpai–Nitsche (this O(5) paper)';
 // BS Table 6 (48–67) and Table 7 (68–77) split by what the Bajpai–Nitsche paper
@@ -94,8 +94,9 @@ const file = `/**
  * O(5) paper. Edit the generator, not this file.
  *
  * Each group is a pair (α, β) of five rotation numbers; the generators are the
- * companion matrices of f = ∏(x − e^{2πiαⱼ}) and g = ∏(x − e^{2πiβⱼ}). We store
- * (α, β) and DERIVE the integer polynomials via hypergeometric.ts.
+ * companion matrices of f = ∏(x − e^{2πiαⱼ}) and g = ∏(x − e^{2πiβⱼ}) — built
+ * from (α, β) on demand by the hypergeometric recipe (./recipe.ts). This file
+ * is pure data + the row→example derivation; no matrices are stored here.
  *
  *   No. 1–7    O(4,1) thin        (Fuchs–Meiri–Sarnak)
  *   No. 8–43   O(3,2) arithmetic  (Venkataramana / Singh / Bajpai–Singh)
@@ -106,15 +107,21 @@ const file = `/**
  * lattices, so their orbit closure is the whole boundary (dense, not fractal).
  */
 
-import type { O5Example, O5Status, O5Type } from './types.ts';
-import { polynomialFromRotationStrings } from '../sp6/hypergeometric.ts';
+import type { Walk } from './recipe.ts';
 
-export interface CatalogRow {
+export type O5FormType = 'O(3,2)' | 'O(4,1)' | 'O(5)';
+export type O5Status = 'thin' | 'arithmetic' | 'open' | 'finite';
+
+/** This atlas's natural generating set: the free product {T, B} with T = B·A⁻¹
+ *  an involution (Bajpai–Nitsche "Thin Monodromy in O(5)", Thm 1). */
+export const ORTHOGONAL_DEGREE5_WALK: Walk = 'free-product';
+
+export interface OrthogonalRow {
   /** Bajpai–Singh global numbering, 1–77. */
   bsNo: number;
   /** Source table in arXiv:1706.08791 (1–7). */
   table: number;
-  type: O5Type;
+  type: O5FormType;
   status: O5Status;
   source: string;
   alpha: readonly string[];
@@ -124,11 +131,25 @@ export interface CatalogRow {
   bdn?: string;
 }
 
-export const CATALOG: readonly CatalogRow[] = [
+export interface OrthogonalExample {
+  id: string;
+  label: string;
+  bsNo: number;
+  type: O5FormType;
+  status: O5Status;
+  source: string;
+  bdnLabel?: string;
+  /** True if B = companion(g) has infinite order (β has a repeated rotation). */
+  bInfinite: boolean;
+  alpha: readonly string[];
+  beta: readonly string[];
+}
+
+export const ROWS: readonly OrthogonalRow[] = [
 ${body}
 ];
 
-// ─── Row → O5Example ─────────────────────────────────────────────────────────
+// ─── Row → OrthogonalExample ────────────────────────────────────────────────
 
 function gcd(a: number, b: number): number { return b === 0 ? a : gcd(b, a % b); }
 
@@ -152,7 +173,7 @@ function betaInfiniteOrder(beta: readonly string[]): boolean {
   return new Set(reduced).size < reduced.length;
 }
 
-export function rowToExample(row: CatalogRow): O5Example {
+export function rowToExample(row: OrthogonalRow): OrthogonalExample {
   return {
     id: \`g\${row.bsNo}\`,
     label: \`№\${row.bsNo}\`,
@@ -164,13 +185,11 @@ export function rowToExample(row: CatalogRow): O5Example {
     bInfinite: betaInfiniteOrder(row.beta),
     alpha: row.alpha,
     beta: row.beta,
-    coefflistf: polynomialFromRotationStrings(row.alpha),
-    coefflistg: polynomialFromRotationStrings(row.beta),
   };
 }
 
-/** The full atlas as ready-to-use O5Examples (Bajpai–Singh order, No. 1–77). */
-export const CATALOG_EXAMPLES: readonly O5Example[] = CATALOG.map(rowToExample);
+/** The full atlas as ready-to-use examples (Bajpai–Singh order, No. 1–77). */
+export const CATALOG_EXAMPLES: readonly OrthogonalExample[] = ROWS.map(rowToExample);
 `;
 
 writeFileSync(OUT, file);

@@ -9,9 +9,10 @@
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { polynomialFromRotationStrings } from '../src/sp6/hypergeometric.ts';
-import { makeO5Action, buildO5Matrices, mul5, type Mat5 } from '../src/o5/action.ts';
-import { findLoxodromicWord } from '../src/core/loxodromic.ts';
+import { cyclotomicProduct } from '../src/core/polynomial.ts';
+import { companion, matInverse, matMul, matDet, type Mat } from '../src/core/matrix.ts';
+import { hypergeometricAction } from '../src/examples/hypergeometric/recipe.ts';
+import { findLoxodromicWord } from '../src/core/seed.ts';
 
 const CSV = fileURLToPath(new URL('./orthogonal_hypergeometric_group_tables.csv', import.meta.url));
 
@@ -25,16 +26,7 @@ function parseRow(line: string): { table: number; number: number; alpha: string[
   return { table: +m[1], number: +m[2], alpha: parseTuple(m[3]), beta: parseTuple(m[4]) };
 }
 
-function det5(M: Mat5): number {
-  const sub = (rows: number[], cols: number[]): number => {
-    if (rows.length === 1) return M[rows[0] * 5 + cols[0]];
-    let s = 0;
-    for (let j = 0; j < cols.length; j++) s += (j % 2 ? -1 : 1) * M[rows[0] * 5 + cols[j]] * sub(rows.slice(1), cols.filter((_, t) => t !== j));
-    return s;
-  };
-  return sub([0, 1, 2, 3, 4], [0, 1, 2, 3, 4]);
-}
-function isId(M: Mat5, eps = 1e-9): boolean {
+function isId(M: Mat, eps = 1e-9): boolean {
   for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if (Math.abs(M[i * 5 + j] - (i === j ? 1 : 0)) > eps) return false;
   return true;
 }
@@ -46,19 +38,19 @@ let badPoly = 0, badT = 0, badDet = 0, noLox = [] as number[];
 for (const r of rows) {
   let f: number[], g: number[];
   try {
-    f = polynomialFromRotationStrings(r.alpha);
-    g = polynomialFromRotationStrings(r.beta);
+    f = cyclotomicProduct(r.alpha);
+    g = cyclotomicProduct(r.beta);
   } catch (e) {
     console.log(`  #${r.number} (table ${r.table}): POLY FAIL — ${(e as Error).message}`);
     badPoly++; continue;
   }
-  const { A, B, T } = buildO5Matrices(f, g);
-  const tOk = isId(mul5(T, T));
-  const dA = det5(A), dB = det5(B);
+  const A = companion(f), B = companion(g), T = matMul(B, matInverse(A));
+  const tOk = isId(matMul(T, T));
+  const dA = matDet(A), dB = matDet(B);
   const detOk = Math.abs(Math.abs(dA) - 1) < 1e-6 && Math.abs(Math.abs(dB) - 1) < 1e-6;
   if (!tOk) { console.log(`  #${r.number} (table ${r.table}): T² ≠ I`); badT++; }
   if (!detOk) { console.log(`  #${r.number} (table ${r.table}): det A=${dA.toFixed(3)} det B=${dB.toFixed(3)}`); badDet++; }
-  const lox = findLoxodromicWord(makeO5Action(f, g));
+  const lox = findLoxodromicWord(hypergeometricAction(r.alpha, r.beta, 'free-product'));
   if (!lox) noLox.push(r.number);
 }
 console.log(`\npoly fails: ${badPoly}   T²≠I: ${badT}   det≠±1: ${badDet}`);
