@@ -7,6 +7,7 @@
  * index out of range; entry 4 is unused.
  */
 
+import { makePaletteSelector } from '../render/paletteSelector.ts';
 import type { Palette } from '../render/tone.ts';
 
 /** T = warm red, B = cool blue, B⁻¹ = cool teal; basepoint near-white. */
@@ -22,10 +23,4 @@ export const o5GrayscalePalette: Palette = [
   [0.35, 0.35, 0.35],
 ];
 
-export function paletteForScheme(schemeName: string): Palette {
-  if (schemeName === 'grayscale') return o5GrayscalePalette;
-  if (schemeName === 'last-gen' || schemeName.startsWith('kth-last:')) {
-    return o5FamilyPalette;
-  }
-  return o5GrayscalePalette;
-}
+export const paletteForScheme = makePaletteSelector(o5FamilyPalette, o5GrayscalePalette);

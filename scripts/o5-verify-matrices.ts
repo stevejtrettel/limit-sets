@@ -16,7 +16,7 @@
 import { CATALOG_EXAMPLES } from '../src/o5/catalog.ts';
 import { buildO5Matrices, makeO5Action, mul5, type Mat5 } from '../src/o5/action.ts';
 import { findLoxodromicWord } from '../src/o5/seed.ts';
-import { jacobiSymmetricEig } from '../src/core/linalg.ts';
+import { jacobiSymmetricEig, charPoly, polyRoots, type Complex } from '../src/core/linalg.ts';
 
 const N = 5;
 
@@ -117,59 +117,15 @@ function signature(Q: number[][]): { pos: number; neg: number; zero: number } {
   return { pos, neg, zero };
 }
 
-// ─── Eigenvalues of a general 5×5 (Faddeev–LeVerrier + Durand–Kerner) ─────────
+// ─── Eigenvalues of a 5×5 (char poly + complex roots, from @/core/linalg) ─────
 
-type Cx = { re: number; im: number };
-const cAdd = (a: Cx, b: Cx): Cx => ({ re: a.re + b.re, im: a.im + b.im });
-const cSub = (a: Cx, b: Cx): Cx => ({ re: a.re - b.re, im: a.im - b.im });
-const cMul = (a: Cx, b: Cx): Cx => ({ re: a.re * b.re - a.im * b.im, im: a.re * b.im + a.im * b.re });
-const cDiv = (a: Cx, b: Cx): Cx => {
-  const d = b.re * b.re + b.im * b.im;
-  return { re: (a.re * b.re + a.im * b.im) / d, im: (a.im * b.re - a.re * b.im) / d };
-};
-const cAbs = (a: Cx): number => Math.hypot(a.re, a.im);
+/** Mat5 (row-major Float64) → number[][] for the linalg spectrum routines. */
+const rows5 = (M: Mat5): number[][] =>
+  Array.from({ length: N }, (_, i) => Array.from({ length: N }, (_, j) => M[i * N + j]));
+/** Full complex spectrum of a 5×5, descending modulus. */
+const eigenvalues = (M: Mat5): Complex[] => polyRoots(charPoly(rows5(M)));
 
-/** Monic characteristic polynomial coeffs [1, c1, …, c5] (high-degree first). */
-function charPoly(M: Mat5): number[] {
-  let Mk = new Float64Array(25); for (let i = 0; i < N; i++) Mk[i * N + i] = 1; // I
-  const c = [1];
-  for (let k = 1; k <= N; k++) {
-    Mk = mul5(M, Mk);
-    let tr = 0; for (let i = 0; i < N; i++) tr += Mk[i * N + i];
-    const ck = -tr / k;
-    c.push(ck);
-    for (let i = 0; i < N; i++) Mk[i * N + i] += ck; // Mk = M·(Mk) + ck·I  (next iter multiplies by M)
-  }
-  return c;
-}
-
-function roots(coef: number[]): Cx[] {
-  const n = coef.length - 1;
-  const evalP = (z: Cx): Cx => {
-    let r: Cx = { re: coef[0], im: 0 };
-    for (let i = 1; i <= n; i++) r = cAdd(cMul(r, z), { re: coef[i], im: 0 });
-    return r;
-  };
-  let z: Cx[] = [];
-  for (let i = 0; i < n; i++) {
-    const ang = (2 * Math.PI * i) / n + 0.4;
-    z.push({ re: 0.7 * Math.cos(ang), im: 0.7 * Math.sin(ang) });
-  }
-  for (let it = 0; it < 500; it++) {
-    let maxStep = 0;
-    for (let i = 0; i < n; i++) {
-      let denom: Cx = { re: 1, im: 0 };
-      for (let j = 0; j < n; j++) if (j !== i) denom = cMul(denom, cSub(z[i], z[j]));
-      const step = cDiv(evalP(z[i]), denom);
-      z[i] = cSub(z[i], step);
-      maxStep = Math.max(maxStep, cAbs(step));
-    }
-    if (maxStep < 1e-13) break;
-  }
-  return z.sort((a, b) => cAbs(b) - cAbs(a));
-}
-
-function fmtRoots(rs: Cx[]): string {
+function fmtRoots(rs: Complex[]): string {
   return rs.map((r) => Math.abs(r.im) < 1e-7
     ? `${r.re.toFixed(4)}`
     : `${r.re.toFixed(4)}${r.im >= 0 ? '+' : '−'}${Math.abs(r.im).toFixed(4)}i`).join(',  ');
@@ -179,7 +135,7 @@ function fmtRoots(rs: Cx[]): string {
 
 const ARGS = process.argv.slice(2);
 // Default: the α=(0,1/10,…) family, where TB is elliptic (10th roots of unity).
-const ELLIPTIC_TB = ['o32-open-7', 'o41-open-1'];
+const ELLIPTIC_TB = ['g66', 'g77'];
 const targets = ARGS.length > 0
   ? CATALOG_EXAMPLES.filter((e) => ARGS.includes(e.id))
   : CATALOG_EXAMPLES.filter((e) => ELLIPTIC_TB.includes(e.id));
@@ -192,7 +148,7 @@ for (const ex of targets) {
 
   // Definitive companion check: charpoly(A) = f, charpoly(B) = g (the whole
   // point of a companion matrix). Robust regardless of conditioning.
-  const cpA = charPoly(A).map(Math.round), cpB = charPoly(B).map(Math.round);
+  const cpA = charPoly(rows5(A)).map(Math.round), cpB = charPoly(rows5(B)).map(Math.round);
   const eq = (x: number[], y: readonly number[]): boolean => x.length === y.length && x.every((v, i) => v === y[i]);
   console.log(`  charpoly(A) = f: ${eq(cpA, ex.coefflistf)}   charpoly(B) = g: ${eq(cpB, ex.coefflistg)}`);
 
@@ -202,7 +158,7 @@ for (const ex of targets) {
   console.log(`  signature(Q) = (${sig.pos}, ${sig.neg})  [claimed ${ex.type}]`);
 
   const TB = mul5(T, B);
-  console.log(`  eig(TB):  ${fmtRoots(roots(charPoly(TB)))}`);
+  console.log(`  eig(TB):  ${fmtRoots(eigenvalues(TB))}`);
 
   // The loxodromic seed word the pipeline actually uses; build its matrix.
   const lox = findLoxodromicWord(makeO5Action(ex.coefflistf, ex.coefflistg));
@@ -210,6 +166,6 @@ for (const ex of targets) {
     let W = new Float64Array(25); for (let i = 0; i < N; i++) W[i * N + i] = 1;
     const mats = [T, B, buildO5Matrices(ex.coefflistf, ex.coefflistg).Binv];
     for (const g of lox.word) W = mul5(mats[g], W); // apply-order ⇒ left-multiply
-    console.log(`  eig(γ=${lox.name}):  ${fmtRoots(roots(charPoly(W)))}`);
+    console.log(`  eig(γ=${lox.name}):  ${fmtRoots(eigenvalues(W))}`);
   }
 }

@@ -13,9 +13,10 @@
  * Failures throw; soft anomalies (non-converged drift) are warnings.
  */
 
-import type { O5Example } from './examples.ts';
+import type { O5Example } from './types.ts';
 import { makeO5Action } from './action.ts';
 import { loxodromicSeed } from './seed.ts';
+import { runValidation } from '../core/validation.ts';
 
 export interface ValidationResult {
   example: O5Example;
@@ -61,7 +62,9 @@ export function validateExample(ex: O5Example): ValidationResult {
   structuralCheck(ex, errors);
 
   let lambdaMax = NaN, drift = NaN, gammaName = '—';
-  if (errors.length === 0) {
+  // Finite groups (positive-definite form) have no limit set, hence no
+  // loxodromic seed — that's expected, not a failure. Only validate structure.
+  if (errors.length === 0 && ex.status !== 'finite') {
     const action = makeO5Action(ex.coefflistf, ex.coefflistg);
     const s = loxodromicSeed(action);
     lambdaMax = s.lambdaMax;
@@ -78,17 +81,8 @@ export function validateExample(ex: O5Example): ValidationResult {
 }
 
 export function validateAllExamples(examples: readonly O5Example[]): ValidationResult[] {
-  const results = examples.map(validateExample);
-  const failed = results.filter((r) => !r.passed);
-  if (failed.length > 0) {
-    console.error(`[o5] ${failed.length} example(s) failed validation:`);
-    for (const r of failed) console.error(`  ${r.example.label}: ${r.errors.join('; ')}`);
-    throw new Error('o5 example validation failed');
-  }
-  console.log('[o5] example validation:');
-  for (const r of results) {
-    const warns = r.warnings.length > 0 ? `  ⚠ ${r.warnings.join('; ')}` : '';
-    console.log(`       ${r.example.label.padEnd(16)}  γ=${r.gammaName.padEnd(8)} λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}${warns}`);
-  }
-  return results;
+  return runValidation('o5', examples.map(validateExample), {
+    idOf: (r) => r.example.label,
+    summaryOf: (r) => `γ=${r.gammaName.padEnd(8)} λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`,
+  });
 }
