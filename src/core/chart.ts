@@ -3,8 +3,10 @@
  *
  * A chart is a pair (R, d) where R is 3×n, d is an n-vector, and
  *   π(v) = (R · v) / (d · v)   ∈ R³.
- * The chart-singular hyperplane is {v : |d · v| < EPS_CHART}; points in it
- * are filtered out at `embed` time.
+ * In the code, the covector d is the `denom` field and the three rows of R are
+ * `rows`. The chart-singular hyperplane is {v : |d · v| < EPS_CHART} (where the
+ * projective point goes to infinity in this chart); points in it are filtered
+ * out at `embed` time.
  *
  * Three fitters:
  *   - axis chart           : d = e_k, R picks 3 of the other (n-1) axes
@@ -16,8 +18,11 @@
  * Plus a no-fit constructor `makeChartFromData` for round-tripping from
  * serialised data (view presets, hand-picked charts).
  *
- * Dimension-agnostic: any group whose state vectors live in R^n (typically
- * normalised to S^{n-1}) can reuse all of this. The embed loop is a plain
+ * Dimension-agnostic: any group whose state vectors live in R^n can reuse all of
+ * this. The auto-chart and chart-PCA fitters assume the orbit vectors are
+ * NORMALIZED to S^{n-1} (which the projective matrix actions do via
+ * GroupAction.normalize); fitting on un-normalized vectors would skew the
+ * covariance and give a meaningless chart. The embed loop is a plain
  * `for (let j = 0; j < stateDim; j++)` — V8 inlines it cleanly for small n.
  */
 
@@ -25,6 +30,8 @@ import type { Orbit } from './orbit.ts';
 import type { SceneEmbedding } from './scene.ts';
 import { jacobiSymmetricEig } from './linalg.ts';
 
+/** Singular-chart tolerance: a point with |d · v| below this is treated as
+ *  lying on the chart's hyperplane at infinity and dropped at embed time. */
 export const EPS_CHART = 1e-3;
 
 export interface ChartEmbedding extends SceneEmbedding {

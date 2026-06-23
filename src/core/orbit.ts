@@ -163,9 +163,11 @@ function applyWord(
 }
 
 /**
- * Deterministic seed with mixed signs and irrational-looking magnitudes so
- * it has a nonzero projection onto a generic top eigenvector. Replaceable
- * via `seed` parameter on `computeProximalBasepoint`.
+ * Deterministic seed with mixed signs and irrational-looking magnitudes.
+ * Power iteration converges to the dominant eigendirection only if the seed has
+ * a nonzero component along it; a generic (non-axis-aligned) vector ensures that
+ * for essentially any γ. Replaceable via the `seed` parameter on
+ * `computeProximalBasepoint`.
  */
 function defaultSeed(stateDim: number): Float64Array {
   const v = new Float64Array(stateDim);

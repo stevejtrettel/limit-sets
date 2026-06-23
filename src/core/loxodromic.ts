@@ -26,9 +26,7 @@
  */
 
 import type { GroupAction } from './group.ts';
-
-export interface Cx { re: number; im: number; }
-const cAbs = (z: Cx): number => Math.hypot(z.re, z.im);
+import { type Complex, complexAbs as cAbs, charPoly, polyRoots } from './linalg.ts';
 
 // ─── Word matrix + spectrum ──────────────────────────────────────────────────
 
@@ -50,60 +48,9 @@ export function wordMatrix(action: GroupAction, word: readonly number[]): number
   return M;
 }
 
-/** Monic characteristic-polynomial coeffs [1, c₁, …, cₙ] via Faddeev–LeVerrier. */
-export function charPoly(M: number[][]): number[] {
-  const n = M.length;
-  let Mk: number[][] = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)));
-  const c = [1];
-  const matmul = (A: number[][], B: number[][]): number[][] => {
-    const R: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
-    for (let i = 0; i < n; i++) for (let k = 0; k < n; k++) { const a = A[i][k]; if (a) for (let j = 0; j < n; j++) R[i][j] += a * B[k][j]; }
-    return R;
-  };
-  for (let k = 1; k <= n; k++) {
-    Mk = matmul(M, Mk);
-    let tr = 0; for (let i = 0; i < n; i++) tr += Mk[i][i];
-    const ck = -tr / k;
-    c.push(ck);
-    for (let i = 0; i < n; i++) Mk[i][i] += ck;
-  }
-  return c;
-}
-
-/** Complex roots of a monic real polynomial via Durand–Kerner, sorted by
- *  descending modulus. */
-export function polyRoots(coef: number[]): Cx[] {
-  const n = coef.length - 1;
-  const evalP = (z: Cx): Cx => {
-    let r: Cx = { re: coef[0], im: 0 };
-    for (let i = 1; i <= n; i++) r = { re: r.re * z.re - r.im * z.im + coef[i], im: r.re * z.im + r.im * z.re };
-    return r;
-  };
-  const z: Cx[] = Array.from({ length: n }, (_, i) => {
-    const a = (2 * Math.PI * i) / n + 0.4;
-    return { re: 0.7 * Math.cos(a), im: 0.7 * Math.sin(a) };
-  });
-  for (let it = 0; it < 600; it++) {
-    let step = 0;
-    for (let i = 0; i < n; i++) {
-      let d: Cx = { re: 1, im: 0 };
-      for (let j = 0; j < n; j++) if (j !== i) {
-        const dx = { re: z[i].re - z[j].re, im: z[i].im - z[j].im };
-        d = { re: d.re * dx.re - d.im * dx.im, im: d.re * dx.im + d.im * dx.re };
-      }
-      const p = evalP(z[i]);
-      const den = d.re * d.re + d.im * d.im;
-      const q = { re: (p.re * d.re + p.im * d.im) / den, im: (p.im * d.re - p.re * d.im) / den };
-      z[i] = { re: z[i].re - q.re, im: z[i].im - q.im };
-      step = Math.max(step, cAbs(q));
-    }
-    if (step < 1e-13) break;
-  }
-  return z.sort((a, b) => cAbs(b) - cAbs(a));
-}
-
-/** Eigenvalues of `word` under `action`, sorted by descending modulus. */
-export function wordEigenvalues(action: GroupAction, word: readonly number[]): Cx[] {
+/** Eigenvalues of `word` under `action`, sorted by descending modulus
+ *  (char poly + complex roots, both from @/core/linalg). */
+export function wordEigenvalues(action: GroupAction, word: readonly number[]): Complex[] {
   return polyRoots(charPoly(wordMatrix(action, word)));
 }
 
@@ -111,7 +58,7 @@ export function wordEigenvalues(action: GroupAction, word: readonly number[]): C
 
 /** Given eigenvalues sorted by descending modulus, return |λ_dominant| if the
  *  word qualifies as loxodromic-for-seeding, else null. */
-export type LoxodromicCriterion = (eigs: Cx[]) => number | null;
+export type LoxodromicCriterion = (eigs: Complex[]) => number | null;
 
 const EXPAND = 1.001;   // |λ| must exceed this to count as expanding
 const ISO = 1e-4;       // dominant must beat the next modulus by this margin
@@ -141,14 +88,13 @@ export const complexDominantCriterion: LoxodromicCriterion = (eigs) => {
 
 // ─── Word enumeration + search ───────────────────────────────────────────────
 
-/** All non-backtracking words of length 1..maxLen over the action's alphabet
+/** Non-backtracking words of EXACTLY `len` letters over the action's alphabet
  *  (never g followed by g⁻¹, using `action.inverse`). */
-function* reducedWords(action: GroupAction, maxLen: number): Generator<number[]> {
+function* wordsOfLength(action: GroupAction, len: number): Generator<number[]> {
   const { numGenerators, inverse } = action;
   const stack: number[] = [];
   function* rec(): Generator<number[]> {
-    if (stack.length >= 1) yield stack.slice();
-    if (stack.length === maxLen) return;
+    if (stack.length === len) { yield stack.slice(); return; }
     const last = stack.length > 0 ? stack[stack.length - 1] : -1;
     for (let g = 0; g < numGenerators; g++) {
       if (last >= 0 && g === inverse[last]) continue;
@@ -168,20 +114,24 @@ export interface LoxodromicWord {
 /**
  * Shortest loxodromic word for `action` under `criterion`; among words of equal
  * length the strongest (largest |λ|) wins. Returns null if none up to `maxLen`.
+ *
+ * Breadth-first by length with early exit: as soon as some length yields a
+ * loxodromic we return the strongest at that length, so groups with a short
+ * loxodromic (most) stop almost immediately and only the rare deep cases (e.g.
+ * BS #12, #18 need length 9) pay for the full search.
  */
 export function findLoxodromicWord(
   action: GroupAction,
-  { maxLen = 7, criterion = realDominantCriterion }: { maxLen?: number; criterion?: LoxodromicCriterion } = {},
+  { maxLen = 10, criterion = realDominantCriterion }: { maxLen?: number; criterion?: LoxodromicCriterion } = {},
 ): LoxodromicWord | null {
-  let best: LoxodromicWord | null = null;
-  for (const word of reducedWords(action, maxLen)) {
-    const lam = criterion(wordEigenvalues(action, word));
-    if (lam === null) continue;
-    if (best === null
-        || word.length < best.word.length
-        || (word.length === best.word.length && lam > best.lambdaMax)) {
-      best = { word, lambdaMax: lam };
+  for (let len = 1; len <= maxLen; len++) {
+    let best: LoxodromicWord | null = null;
+    for (const word of wordsOfLength(action, len)) {
+      const lam = criterion(wordEigenvalues(action, word));
+      if (lam === null) continue;
+      if (best === null || lam > best.lambdaMax) best = { word, lambdaMax: lam };
     }
+    if (best) return best;
   }
-  return best;
+  return null;
 }
