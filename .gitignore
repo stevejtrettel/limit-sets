@@ -39,3 +39,9 @@ scripts/cache/
 # Rendered output images
 *.png
 *.jpg
+
+# Script render outputs (scripts write PNGs here)
+outputs/
+
+# Holding area for root cleanup (papers / pics / tex to sort or discard)
+archive/
