@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(node scripts/o5-validate-catalog.ts)"
+    ]
+  }
+}
