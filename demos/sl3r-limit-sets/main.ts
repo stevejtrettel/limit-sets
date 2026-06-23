@@ -32,14 +32,14 @@ import type { SceneEmbedding } from '@/core/scene';
 
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
 
-import { makeMat3Action } from '@/sl3r/action';
-import { sphereEmbedding, planeEmbedding } from '@/sl3r/embedding';
+import { makeMatrixAction, asInvolutions, pairWithInverses } from '@/core/matrixAction';
+import { sphereEmbedding, planeEmbedding } from '@/examples/projective/triangle-groups/embeddings';
 import {
-  EXAMPLES, exampleById, makeLiveTri334, type SL3RExample,
-} from '@/sl3r/examples';
-import { paletteForScheme } from '@/sl3r/palettes';
-import { validateAllExamples } from '@/sl3r/validate';
-import type { EmbeddingName, ViewPreset } from '@/sl3r/viewPreset';
+  EXAMPLES, exampleById, makeLiveTri334, type MatrixGroupExample,
+} from '@/examples/projective/triangle-groups/data';
+import { paletteForScheme } from '@/examples/projective/triangle-groups/palette';
+import { validateAllExamples } from '@/examples/projective/triangle-groups/validate';
+import type { EmbeddingName, ViewPreset } from '@/examples/projective/triangle-groups/viewPreset';
 
 /** Sentinel dropdown id that means "live triangle, driven by the d slider". */
 const LIVE_TRI_ID = 'tri-334-live';
@@ -62,7 +62,7 @@ const DEFAULT_EMBEDDING: EmbeddingName = 'plane';
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
-let currentExample!:   SL3RExample;
+let currentExample!:   MatrixGroupExample;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentOrbit!:     Orbit;
@@ -93,9 +93,11 @@ function loadExample(id: string): void {
   currentExample = id === LIVE_TRI_ID
     ? makeLiveTri334(currentD)
     : exampleById(id);
-  currentAction = makeMat3Action(currentExample.generators, {
-    involutions: currentExample.involutions,
-  });
+  currentAction = makeMatrixAction(
+    currentExample.involutions
+      ? asInvolutions(currentExample.generators)
+      : pairWithInverses(currentExample.generators),
+  );
   const r = computeProximalBasepoint(currentAction, currentExample.gamma, currentExample.powerIter);
   currentBasepoint = r.basepoint;
   console.log(
