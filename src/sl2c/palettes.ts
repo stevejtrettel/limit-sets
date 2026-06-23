@@ -11,6 +11,7 @@
  * registry's hard 5; not needed for Riley.
  */
 
+import { makePaletteSelector } from '../render/paletteSelector.ts';
 import type { Palette } from '../render/tone.ts';
 
 export const sl2cFamilyPalette: Palette = [
@@ -25,10 +26,4 @@ export const sl2cGrayscalePalette: Palette = [
   [0.35, 0.35, 0.35],
 ];
 
-export function paletteForScheme(schemeName: string): Palette {
-  if (schemeName === 'grayscale') return sl2cGrayscalePalette;
-  if (schemeName === 'last-gen' || schemeName.startsWith('kth-last:')) {
-    return sl2cFamilyPalette;
-  }
-  return sl2cGrayscalePalette;
-}
+export const paletteForScheme = makePaletteSelector(sl2cFamilyPalette, sl2cGrayscalePalette);

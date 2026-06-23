@@ -34,6 +34,7 @@ import {
 } from '../src/render/accumulator.ts';
 import { accumulatorToRGBA, type Bg, type Palette } from '../src/render/tone.ts';
 import { writePng } from '../src/render/png.ts';
+import { outputPath } from '../src/render/outputPath.ts';
 import { createProgress, formatCount } from '../src/render/progress.ts';
 import { getScheme } from '../src/render/colorScheme.ts';
 import {
@@ -375,8 +376,7 @@ log(`  nonzero entries ${scale.nzCount.toLocaleString()}  clip = ${scale.clip.to
 const splatTag = SPLAT_RADIUS > 0 ? `-splat${SPLAT_RADIUS}` : '';
 const paramTag =
   `c${pC.toFixed(3)}-d${pD.toFixed(3)}-b${pB.toFixed(3)}`;
-const outputFile =
-  `schwartz-pappus-${paramTag}-${EMBEDDING_NAME}-depth${DEPTH}-${imgW}x${imgH}${splatTag}.png`;
+const outputFile = outputPath('schwartz-pappus', `schwartz-pappus-${paramTag}-${EMBEDDING_NAME}-depth${DEPTH}-${imgW}x${imgH}${splatTag}.png`);
 log(`Writing ${outputFile}...`);
 const te = Date.now();
 await writePng(outputFile, imgW, imgH, rgba);

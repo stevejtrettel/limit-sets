@@ -4,6 +4,7 @@
  * fifth padding slot used by the categoryCount=5 `last-gen` scheme.
  */
 
+import { makePaletteSelector } from '../render/paletteSelector.ts';
 import type { Palette } from '../render/tone.ts';
 
 export const sl4rFamilyPalette: Palette = [
@@ -18,10 +19,4 @@ export const sl4rGrayscalePalette: Palette = [
   [0.35, 0.35, 0.35],
 ];
 
-export function paletteForScheme(schemeName: string): Palette {
-  if (schemeName === 'grayscale') return sl4rGrayscalePalette;
-  if (schemeName === 'last-gen' || schemeName.startsWith('kth-last:')) {
-    return sl4rFamilyPalette;
-  }
-  return sl4rGrayscalePalette;
-}
+export const paletteForScheme = makePaletteSelector(sl4rFamilyPalette, sl4rGrayscalePalette);

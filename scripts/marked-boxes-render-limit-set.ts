@@ -25,6 +25,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { writePng } from '../src/render/png.ts';
+import { outputPath } from '../src/render/outputPath.ts';
 import { drawLineAA, fillBackground, type RGB } from '../src/render/lineRaster.ts';
 import {
   subdivideTree, type DepthState,
@@ -244,8 +245,7 @@ log(`  drew ${drawnBoxes.toLocaleString()} boxes, skipped ${skippedAtInfinity} a
 
 const cTag = `c${c.toFixed(3)}`;
 const dTag = `d${d.toFixed(3)}`;
-const outputFile =
-  `marked-boxes-${cTag}-${dTag}-depth${DEPTH}-${imgW}x${imgH}${BG === 'black' ? '-black' : ''}.png`;
+const outputFile = outputPath('marked-boxes', `marked-boxes-${cTag}-${dTag}-depth${DEPTH}-${imgW}x${imgH}${BG === 'black' ? '-black' : ''}.png`);
 log(`Writing ${outputFile}...`);
 const tWrite = Date.now();
 await writePng(outputFile, imgW, imgH, rgba);

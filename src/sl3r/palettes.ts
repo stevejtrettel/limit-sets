@@ -6,6 +6,7 @@
  * `last-gen` color scheme still has somewhere to point.
  */
 
+import { makePaletteSelector } from '../render/paletteSelector.ts';
 import type { Palette } from '../render/tone.ts';
 
 export const sl3rTrianglePalette: Palette = [
@@ -20,10 +21,4 @@ export const sl3rGrayscalePalette: Palette = [
   [0.35, 0.35, 0.35],
 ];
 
-export function paletteForScheme(schemeName: string): Palette {
-  if (schemeName === 'grayscale') return sl3rGrayscalePalette;
-  if (schemeName === 'last-gen' || schemeName.startsWith('kth-last:')) {
-    return sl3rTrianglePalette;
-  }
-  return sl3rGrayscalePalette;
-}
+export const paletteForScheme = makePaletteSelector(sl3rTrianglePalette, sl3rGrayscalePalette);

@@ -11,6 +11,7 @@
  * category counts, so swapping palette is render-cheap.
  */
 
+import { makePaletteSelector } from '../render/paletteSelector.ts';
 import type { Palette } from '../render/tone.ts';
 
 /**
@@ -36,11 +37,4 @@ export const sp6GrayscalePalette: Palette = [
   [0.35, 0.35, 0.35],
 ];
 
-/** Pick the right sp6 palette for a given scheme name. */
-export function paletteForScheme(schemeName: string): Palette {
-  if (schemeName === 'grayscale') return sp6GrayscalePalette;
-  if (schemeName === 'last-gen' || schemeName.startsWith('kth-last:')) {
-    return sp6FamilyPalette;
-  }
-  return sp6GrayscalePalette;
-}
+export const paletteForScheme = makePaletteSelector(sp6FamilyPalette, sp6GrayscalePalette);

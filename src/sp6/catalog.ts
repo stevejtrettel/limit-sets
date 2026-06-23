@@ -6,7 +6,7 @@
  * (arXiv:2112.12111v3), Tables 1 and 2. Each group is a pair of hypergeometric
  * parameter tuples (α, β) of rotation numbers in ℚ/ℤ; its two generators are the
  * companion matrices of  f(x) = ∏(x − e^{2πiαⱼ})  and  g(x) = ∏(x − e^{2πiβⱼ}).
- * We store (α, β, nature) and DERIVE the integer polynomials via
+ * We store (α, β, status) and DERIVE the integer polynomials via
  * `hypergeometric.ts` (one round-trip, integer-snapped, conjugate-closure
  * checked) rather than hand-typing coefficient lists.
  *
@@ -16,7 +16,7 @@
  *   Table 2 — 46 more groups C-2…C-58 (gaps in the numbering match [3, Table C]),
  *             with α ≠ 0; ALL thin (Theorem 4).
  *   Table 3 — 3 open cases C-32, C-47, C-55 (α ≠ 0) whose thinness/arithmeticity
- *             is unknown; carried with nature 'open'.
+ *             is unknown; carried with status 'open'.
  *
  * The degree-4 Sp(4) family (Table 4) is excluded — it needs a degree-4
  * companion action, not the degree-6 makeSp6Action this catalog targets.
@@ -26,7 +26,7 @@
  * row predates this catalog and uses a different β).
  */
 
-import type { ExampleGroup } from './examples.ts';
+import type { Sp6Example } from './examples.ts';
 import { polynomialFromRotationStrings } from './hypergeometric.ts';
 
 export interface CatalogRow {
@@ -34,7 +34,7 @@ export interface CatalogRow {
   label: string;
   /** Which table it came from (1 = maximally unipotent, 2 = more thin, 3 = open). */
   table: 1 | 2 | 3;
-  nature: 'thin' | 'arithmetic' | 'open';
+  status: 'thin' | 'arithmetic' | 'open';
   /** Six rotation numbers as compact strings ('0', '1/2', '5/12', …). */
   alpha: readonly string[];
   beta: readonly string[];
@@ -47,46 +47,46 @@ const ZERO6: readonly string[] = ['0', '0', '0', '0', '0', '0'];
 // α = (0,0,0,0,0,0) for all; only β varies. Thin: A-1…A-14, A-31, A-37, A-38.
 
 const TABLE1: readonly CatalogRow[] = [
-  { label: 'A-1',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/2','1/2'] },
-  { label: 'A-2',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/3','2/3'] },
-  { label: 'A-3',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/4','3/4'] },
-  { label: 'A-4',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/6','5/6'] },
-  { label: 'A-5',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
-  { label: 'A-6',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/3','2/3','1/4','3/4'] },
-  { label: 'A-7',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/3','2/3','1/6','5/6'] },
-  { label: 'A-8',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
-  { label: 'A-9',  table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/4','3/4','1/6','5/6'] },
-  { label: 'A-10', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'A-11', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/6','1/6','5/6','5/6'] },
-  { label: 'A-12', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
-  { label: 'A-13', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
-  { label: 'A-14', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
-  { label: 'A-15', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','1/3','1/3','2/3','2/3','2/3'] },
-  { label: 'A-16', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','1/3','2/3','2/3','1/4','3/4'] },
-  { label: 'A-17', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','1/3','2/3','2/3','1/6','5/6'] },
-  { label: 'A-18', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/4','1/4','3/4','3/4'] },
-  { label: 'A-19', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/4','3/4','1/6','5/6'] },
-  { label: 'A-20', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/6','5/6','1/6','5/6'] },
-  { label: 'A-21', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/5','2/5','3/5','4/5'] },
-  { label: 'A-22', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/8','3/8','5/8','7/8'] },
-  { label: 'A-23', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/10','3/10','7/10','9/10'] },
-  { label: 'A-24', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/12','5/12','7/12','11/12'] },
-  { label: 'A-25', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/4','1/4','1/4','3/4','3/4','3/4'] },
-  { label: 'A-26', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/4','1/4','3/4','3/4','1/6','5/6'] },
-  { label: 'A-27', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/5','2/5','3/5','4/5'] },
-  { label: 'A-28', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/6','5/6','1/6','5/6'] },
-  { label: 'A-29', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/8','3/8','5/8','7/8'] },
-  { label: 'A-30', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/10','3/10','7/10','9/10'] },
-  { label: 'A-31', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/4','3/4','1/12','5/12','7/12','11/12'] },
-  { label: 'A-32', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/5','2/5','3/5','4/5','1/6','5/6'] },
-  { label: 'A-33', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/6','5/6','1/6','5/6'] },
-  { label: 'A-34', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/8','3/8','5/8','7/8'] },
-  { label: 'A-35', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/10','3/10','7/10','9/10'] },
-  { label: 'A-36', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/12','5/12','7/12','11/12'] },
-  { label: 'A-37', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
-  { label: 'A-38', table: 1, nature: 'thin',       alpha: ZERO6, beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
-  { label: 'A-39', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/14','3/14','5/14','9/14','11/14','13/14'] },
-  { label: 'A-40', table: 1, nature: 'arithmetic', alpha: ZERO6, beta: ['1/18','5/18','7/18','11/18','13/18','17/18'] },
+  { label: 'A-1',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/2','1/2'] },
+  { label: 'A-2',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/3','2/3'] },
+  { label: 'A-3',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/4','3/4'] },
+  { label: 'A-4',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/2','1/2','1/6','5/6'] },
+  { label: 'A-5',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
+  { label: 'A-6',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/3','2/3','1/4','3/4'] },
+  { label: 'A-7',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/3','2/3','1/6','5/6'] },
+  { label: 'A-8',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
+  { label: 'A-9',  table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/4','3/4','1/6','5/6'] },
+  { label: 'A-10', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'A-11', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/6','1/6','5/6','5/6'] },
+  { label: 'A-12', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
+  { label: 'A-13', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
+  { label: 'A-14', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
+  { label: 'A-15', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','1/3','1/3','2/3','2/3','2/3'] },
+  { label: 'A-16', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','1/3','2/3','2/3','1/4','3/4'] },
+  { label: 'A-17', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','1/3','2/3','2/3','1/6','5/6'] },
+  { label: 'A-18', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/4','1/4','3/4','3/4'] },
+  { label: 'A-19', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/4','3/4','1/6','5/6'] },
+  { label: 'A-20', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/6','5/6','1/6','5/6'] },
+  { label: 'A-21', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/5','2/5','3/5','4/5'] },
+  { label: 'A-22', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/8','3/8','5/8','7/8'] },
+  { label: 'A-23', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/10','3/10','7/10','9/10'] },
+  { label: 'A-24', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/3','2/3','1/12','5/12','7/12','11/12'] },
+  { label: 'A-25', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/4','1/4','1/4','3/4','3/4','3/4'] },
+  { label: 'A-26', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/4','1/4','3/4','3/4','1/6','5/6'] },
+  { label: 'A-27', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/5','2/5','3/5','4/5'] },
+  { label: 'A-28', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/6','5/6','1/6','5/6'] },
+  { label: 'A-29', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/8','3/8','5/8','7/8'] },
+  { label: 'A-30', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/4','3/4','1/10','3/10','7/10','9/10'] },
+  { label: 'A-31', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/4','3/4','1/12','5/12','7/12','11/12'] },
+  { label: 'A-32', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/5','2/5','3/5','4/5','1/6','5/6'] },
+  { label: 'A-33', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/6','5/6','1/6','5/6'] },
+  { label: 'A-34', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/8','3/8','5/8','7/8'] },
+  { label: 'A-35', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/10','3/10','7/10','9/10'] },
+  { label: 'A-36', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/6','5/6','1/12','5/12','7/12','11/12'] },
+  { label: 'A-37', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
+  { label: 'A-38', table: 1, status: 'thin',       alpha: ZERO6, beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
+  { label: 'A-39', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/14','3/14','5/14','9/14','11/14','13/14'] },
+  { label: 'A-40', table: 1, status: 'arithmetic', alpha: ZERO6, beta: ['1/18','5/18','7/18','11/18','13/18','17/18'] },
 ];
 
 // ─── Table 2 — more thin Sp(6) groups (C-…) ──────────────────────────────────
@@ -96,54 +96,54 @@ const TABLE1: readonly CatalogRow[] = [
 // C-39, C-42, C-47, C-51, C-55, …) match the paper / [3, Table C].
 
 const TABLE2: readonly CatalogRow[] = [
-  { label: 'C-2',      table: 2, nature: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/2','1/2','1/4','3/4'] },
-  { label: 'C-3',      table: 2, nature: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/2','1/2','1/6','5/6'] },
-  { label: 'C-4',      table: 2, nature: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
-  { label: 'C-5',      table: 2, nature: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-6',      table: 2, nature: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
-  { label: 'C-7',      table: 2, nature: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
-  { label: 'C-8',      table: 2, nature: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
-  { label: 'C-11',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/2','1/2','1/3','2/3'] },
-  { label: 'C-12',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
-  { label: 'C-13',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/3','2/3','1/6','5/6'] },
-  { label: 'C-14',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-2',      table: 2, status: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/2','1/2','1/4','3/4'] },
+  { label: 'C-3',      table: 2, status: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/2','1/2','1/6','5/6'] },
+  { label: 'C-4',      table: 2, status: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
+  { label: 'C-5',      table: 2, status: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-6',      table: 2, status: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
+  { label: 'C-7',      table: 2, status: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
+  { label: 'C-8',      table: 2, status: 'thin', alpha: ['0','0','0','0','1/3','2/3'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
+  { label: 'C-11',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/2','1/2','1/3','2/3'] },
+  { label: 'C-12',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
+  { label: 'C-13',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/3','2/3','1/6','5/6'] },
+  { label: 'C-14',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
   // C-15 OMITTED — paper's β = (1/2,1/2,1/6,5/6,5/6,5/6) is not conjugate-closed
   // (1/6 once, 5/6 thrice) ⇒ no real polynomial. Suspected typo for A-11's β
   // (1/2,1/2,1/6,1/6,5/6,5/6). See C15_TYPO; restore once confirmed.
-  { label: 'C-16',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
-  { label: 'C-17',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
-  { label: 'C-18',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
-  { label: 'C-19',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
-  { label: 'C-20',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
-  { label: 'C-21',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/2','1/2','1/3','2/3'] },
-  { label: 'C-22',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
-  { label: 'C-23',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/3','2/3','1/4','3/4'] },
-  { label: 'C-24',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
-  { label: 'C-25',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-26',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
-  { label: 'C-27',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
-  { label: 'C-28',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
-  { label: 'C-33',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
-  { label: 'C-34',     table: 2, nature: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
-  { label: 'C-35',     table: 2, nature: 'thin', alpha: ['0','0','1/3','2/3','1/4','3/4'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-36',     table: 2, nature: 'thin', alpha: ['0','0','1/3','2/3','1/6','5/6'], beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
-  { label: 'C-37',     table: 2, nature: 'thin', alpha: ['0','0','1/3','2/3','1/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-38',     table: 2, nature: 'thin', alpha: ['0','0','1/3','2/3','1/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
-  { label: 'C-40',     table: 2, nature: 'thin', alpha: ['0','0','1/4','1/4','3/4','3/4'], beta: ['1/2','1/2','1/3','2/3','1/3','2/3'] },
-  { label: 'C-41',     table: 2, nature: 'thin', alpha: ['0','0','1/4','1/4','3/4','3/4'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-43',     table: 2, nature: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
-  { label: 'C-44',     table: 2, nature: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-45',     table: 2, nature: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
-  { label: 'C-46',     table: 2, nature: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
-  { label: 'C-48',     table: 2, nature: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
-  { label: 'C-49',     table: 2, nature: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-50',     table: 2, nature: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
-  { label: 'C-52',     table: 2, nature: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
-  { label: 'C-53',     table: 2, nature: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
-  { label: 'C-54',     table: 2, nature: 'thin', alpha: ['0','0','1/8','3/8','5/8','7/8'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-56',     table: 2, nature: 'thin', alpha: ['0','0','1/10','3/10','7/10','9/10'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
-  { label: 'C-57',     table: 2, nature: 'thin', alpha: ['0','0','1/10','3/10','7/10','9/10'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
-  { label: 'C-58',     table: 2, nature: 'thin', alpha: ['0','0','1/10','3/10','7/10','9/10'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
+  { label: 'C-16',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
+  { label: 'C-17',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
+  { label: 'C-18',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
+  { label: 'C-19',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
+  { label: 'C-20',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/4','3/4'], beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
+  { label: 'C-21',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/2','1/2','1/3','2/3'] },
+  { label: 'C-22',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
+  { label: 'C-23',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/3','2/3','1/4','3/4'] },
+  { label: 'C-24',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
+  { label: 'C-25',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-26',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
+  { label: 'C-27',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/10','3/10','7/10','9/10'] },
+  { label: 'C-28',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
+  { label: 'C-33',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
+  { label: 'C-34',     table: 2, status: 'thin', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
+  { label: 'C-35',     table: 2, status: 'thin', alpha: ['0','0','1/3','2/3','1/4','3/4'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-36',     table: 2, status: 'thin', alpha: ['0','0','1/3','2/3','1/6','5/6'], beta: ['1/2','1/2','1/4','1/4','3/4','3/4'] },
+  { label: 'C-37',     table: 2, status: 'thin', alpha: ['0','0','1/3','2/3','1/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-38',     table: 2, status: 'thin', alpha: ['0','0','1/3','2/3','1/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
+  { label: 'C-40',     table: 2, status: 'thin', alpha: ['0','0','1/4','1/4','3/4','3/4'], beta: ['1/2','1/2','1/3','2/3','1/3','2/3'] },
+  { label: 'C-41',     table: 2, status: 'thin', alpha: ['0','0','1/4','1/4','3/4','3/4'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-43',     table: 2, status: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
+  { label: 'C-44',     table: 2, status: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-45',     table: 2, status: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
+  { label: 'C-46',     table: 2, status: 'thin', alpha: ['0','0','1/4','3/4','1/6','5/6'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
+  { label: 'C-48',     table: 2, status: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
+  { label: 'C-49',     table: 2, status: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-50',     table: 2, status: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/2','1/2','1/8','3/8','5/8','7/8'] },
+  { label: 'C-52',     table: 2, status: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
+  { label: 'C-53',     table: 2, status: 'thin', alpha: ['0','0','1/6','1/6','5/6','5/6'], beta: ['1/9','2/9','4/9','5/9','7/9','8/9'] },
+  { label: 'C-54',     table: 2, status: 'thin', alpha: ['0','0','1/8','3/8','5/8','7/8'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-56',     table: 2, status: 'thin', alpha: ['0','0','1/10','3/10','7/10','9/10'], beta: ['1/2','1/2','1/5','2/5','3/5','4/5'] },
+  { label: 'C-57',     table: 2, status: 'thin', alpha: ['0','0','1/10','3/10','7/10','9/10'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
+  { label: 'C-58',     table: 2, status: 'thin', alpha: ['0','0','1/10','3/10','7/10','9/10'], beta: ['1/7','2/7','3/7','4/7','5/7','6/7'] },
 ];
 
 /**
@@ -166,15 +166,15 @@ export const C15_TYPO = {
 // All α ≠ 0. Drawable like any other group; their classification is just open.
 // (C-32 has since been shown thin in a separate note, but the paper lists it here.)
 const TABLE3: readonly CatalogRow[] = [
-  { label: 'C-32',     table: 3, nature: 'open', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/4','3/4','1/12','5/12','7/12','11/12'] },
-  { label: 'C-47',     table: 3, nature: 'open', alpha: ['0','0','1/5','2/5','3/5','4/5'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
-  { label: 'C-55',     table: 3, nature: 'open', alpha: ['0','0','1/8','3/8','5/8','7/8'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
+  { label: 'C-32',     table: 3, status: 'open', alpha: ['0','0','0','0','1/6','5/6'], beta: ['1/4','3/4','1/12','5/12','7/12','11/12'] },
+  { label: 'C-47',     table: 3, status: 'open', alpha: ['0','0','1/5','2/5','3/5','4/5'], beta: ['1/2','1/2','1/3','1/3','2/3','2/3'] },
+  { label: 'C-55',     table: 3, status: 'open', alpha: ['0','0','1/8','3/8','5/8','7/8'], beta: ['1/2','1/2','1/12','5/12','7/12','11/12'] },
 ];
 
 /** The full catalog (Table 1, then Table 2, then Table 3 open cases), in paper order. */
 export const CATALOG: readonly CatalogRow[] = [...TABLE1, ...TABLE2, ...TABLE3];
 
-// ─── Row → ExampleGroup ──────────────────────────────────────────────────────
+// ─── Row → Sp6Example ──────────────────────────────────────────────────────
 
 /** TBT (= A⁻¹·B·B·A⁻¹·B) in the action's generator codes (0=A,1=A⁻¹,2=B,3=B⁻¹).
  *  Loxodromic for every group in the family — the proximal basepoint comes from
@@ -184,14 +184,14 @@ const TBT: readonly number[] = [1, 2, 2, 1, 2];
 const display = (rots: readonly string[]): string => `(${rots.join(', ')})`;
 const idFromLabel = (label: string): string => label.replace(/-/g, '');
 
-/** Derive the full `ExampleGroup` (companion-matrix data + display strings) from
+/** Derive the full `Sp6Example` (companion-matrix data + display strings) from
  *  a catalog row. Throws (via `polynomialFromRotationStrings`) if α or β is not
  *  conjugate-closed — i.e. a transcription error that yields a non-integer poly. */
-export function rowToExample(row: CatalogRow): ExampleGroup {
+export function rowToExample(row: CatalogRow): Sp6Example {
   return {
     id: idFromLabel(row.label),
     label: row.label,
-    nature: row.nature,
+    status: row.status,
     coefflistf: polynomialFromRotationStrings(row.alpha),
     coefflistg: polynomialFromRotationStrings(row.beta),
     gamma: TBT,
@@ -202,5 +202,5 @@ export function rowToExample(row: CatalogRow): ExampleGroup {
   };
 }
 
-/** The catalog as ready-to-use `ExampleGroup`s. */
-export const CATALOG_EXAMPLES: readonly ExampleGroup[] = CATALOG.map(rowToExample);
+/** The catalog as ready-to-use `Sp6Example`s. */
+export const CATALOG_EXAMPLES: readonly Sp6Example[] = CATALOG.map(rowToExample);

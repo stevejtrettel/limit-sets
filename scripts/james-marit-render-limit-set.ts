@@ -38,6 +38,7 @@ import {
 } from '../src/render/accumulator.ts';
 import { accumulatorToRGBA, type Bg, type Palette } from '../src/render/tone.ts';
 import { writePng } from '../src/render/png.ts';
+import { outputPath } from '../src/render/outputPath.ts';
 import {
   drawText, measureText, fillRect, pickFontSize, type TextStyle,
 } from '../src/render/textOverlay.ts';
@@ -506,8 +507,7 @@ const aTag = params
   : '';
 const splatTag = SPLAT_RADIUS > 0 ? `-splat${SPLAT_RADIUS}` : '';
 const modeTag  = RENDER_MODE === 'points' ? '' : `-${RENDER_MODE}`;
-const outputFile =
-  `james-marit${repTag}${sTag}${aTag}-depth${DEPTH}-${imgW}x${imgH}${splatTag}${modeTag}.png`;
+const outputFile = outputPath('james-marit', `james-marit${repTag}${sTag}${aTag}-depth${DEPTH}-${imgW}x${imgH}${splatTag}${modeTag}.png`);
 
 if (params) {
   log(`Drawing metadata overlay (A, B, s) in upper-right corner...`);

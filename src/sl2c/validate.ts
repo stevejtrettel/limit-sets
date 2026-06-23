@@ -13,6 +13,7 @@ import { type ComplexMat2 } from './action.ts';
 import { type MobiusExample } from './examples.ts';
 import { makeMobiusAction } from './action.ts';
 import { computeProximalBasepoint } from '../core/orbit.ts';
+import { runValidation } from '../core/validation.ts';
 
 export interface ValidationResult {
   example: MobiusExample;
@@ -154,20 +155,8 @@ export function validateExample(ex: MobiusExample): ValidationResult {
 export function validateAllExamples(
   examples: readonly MobiusExample[],
 ): ValidationResult[] {
-  const results = examples.map(validateExample);
-  const failed = results.filter((r) => !r.passed);
-  if (failed.length > 0) {
-    console.error(`[sl2c] ${failed.length} example(s) failed validation:`);
-    for (const r of failed) {
-      console.error(`  ${r.example.id}: ${r.errors.join('; ')}`);
-    }
-    throw new Error('sl2c example validation failed');
-  }
-  console.log('[sl2c] example validation:');
-  for (const r of results) {
-    const summary = `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`;
-    const warns = r.warnings.length > 0 ? `  ⚠ ${r.warnings.join('; ')}` : '';
-    console.log(`         ${r.example.id.padEnd(12)}  ${summary}${warns}`);
-  }
-  return results;
+  return runValidation('sl2c', examples.map(validateExample), {
+    idOf: (r) => r.example.id,
+    summaryOf: (r) => `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`,
+  });
 }

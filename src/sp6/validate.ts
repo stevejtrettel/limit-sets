@@ -12,12 +12,13 @@
  * mismatch) just log.
  */
 
-import { type ExampleGroup } from './examples.ts';
+import { type Sp6Example } from './examples.ts';
 import { computeProximalBasepoint } from '../core/orbit.ts';
 import { makeSp6Action } from './action.ts';
+import { runValidation } from '../core/validation.ts';
 
 export interface ValidationResult {
-  example: ExampleGroup;
+  example: Sp6Example;
   passed: boolean;
   errors: string[];
   warnings: string[];
@@ -25,7 +26,7 @@ export interface ValidationResult {
   drift: number;
 }
 
-function structuralCheck(ex: ExampleGroup, errors: string[]): void {
+function structuralCheck(ex: Sp6Example, errors: string[]): void {
   const checks: [string, readonly number[]][] = [
     ['coefflistf', ex.coefflistf],
     ['coefflistg', ex.coefflistg],
@@ -50,7 +51,7 @@ function structuralCheck(ex: ExampleGroup, errors: string[]): void {
   }
 }
 
-export function validateExample(ex: ExampleGroup): ValidationResult {
+export function validateExample(ex: Sp6Example): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
   structuralCheck(ex, errors);
@@ -89,23 +90,11 @@ export function validateExample(ex: ExampleGroup): ValidationResult {
 }
 
 export function validateAllExamples(
-  examples: readonly ExampleGroup[],
+  examples: readonly Sp6Example[],
 ): ValidationResult[] {
-  const results = examples.map(validateExample);
-  const failed = results.filter((r) => !r.passed);
-  if (failed.length > 0) {
-    console.error(`[sp6] ${failed.length} example(s) failed validation:`);
-    for (const r of failed) {
-      console.error(`  ${r.example.id}: ${r.errors.join('; ')}`);
-    }
-    throw new Error('sp6 example validation failed');
-  }
-  console.log('[sp6] example validation:');
-  for (const r of results) {
-    const summary =
-      `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`;
-    const warns = r.warnings.length > 0 ? `  ⚠ ${r.warnings.join('; ')}` : '';
-    console.log(`         ${r.example.id.padEnd(4)}  ${summary}${warns}`);
-  }
-  return results;
+  return runValidation('sp6', examples.map(validateExample), {
+    idOf: (r) => r.example.id,
+    summaryOf: (r) => `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`,
+    padId: 4,
+  });
 }

@@ -25,7 +25,7 @@ import { ControlPanel } from '@/app/ControlPanel';
 import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpheres';
 import { autofitCamera } from '@/app/autofit';
 
-import { exampleById, type ExampleGroup } from '@/sp6/examples';
+import { exampleById, type Sp6Example } from '@/sp6/examples';
 import { makeSp6Action } from '@/sp6/action';
 import { validateExample } from '@/sp6/validate';
 import type { GroupAction } from '@/core/group';
@@ -44,7 +44,7 @@ import { makeConeTest, buildMembershipInstances, hexToRgb, type ConeTest } from 
 
 // ─── This demo is C-32, period ───────────────────────────────────────────────
 
-const C32: ExampleGroup = exampleById('c32');
+const C32: Sp6Example = exampleById('c32');
 {
   const v = validateExample(C32);
   if (!v.passed) throw new Error(`[c32] validation failed: ${v.errors.join('; ')}`);
@@ -507,7 +507,7 @@ function updateUI(): void {
   statsEl.text(`${stats.totalWords.toLocaleString()} words, ${stats.kept.toLocaleString()} drawn`);
   modeEl.text(`view: ${proj.pretty}`);
   exMeta.html(
-    `example: ${C32.label} (${C32.nature})<br>` +
+    `example: ${C32.label} (${C32.status})<br>` +
     `α = ${C32.alpha}<br>β = ${C32.beta}<br>γ = ${C32.gammaName}`,
   );
 }

@@ -1,12 +1,12 @@
 /**
  * Sp(6,Z) hypergeometric monodromy examples (Bajpai-Dona-Nitsche, Tables 1-2).
  *
- * `ExampleGroup` describes one BDN row: polynomial coefficient lists for the
+ * `Sp6Example` describes one BDN row: polynomial coefficient lists for the
  * two generators, plus a loxodromic γ word and its iteration count. `EXAMPLES`
  * is the curated list shared by every consumer (browser demo, offline render
  * script).
  *
- * ExampleGroup carries polynomial data for the two generators:
+ * Sp6Example carries polynomial data for the two generators:
  *   coefflistf — palindromic integer coefficients of f(x) = ∏(x - exp(2πi α_j))
  *   coefflistg — palindromic integer coefficients of g(x) = ∏(x - exp(2πi β_j))
  *
@@ -27,10 +27,10 @@
  *   T_COL = (1, c_1, c_2, c_3, c_4, c_5),   c_i = coefflistf[i] - coefflistg[i].
  */
 
-export interface ExampleGroup {
+export interface Sp6Example {
   id: string;
   label: string;
-  nature: 'thin' | 'arithmetic' | 'open';
+  status: 'thin' | 'arithmetic' | 'open';
   coefflistf: readonly number[];
   coefflistg: readonly number[];
   gamma: readonly number[];
@@ -43,11 +43,11 @@ export interface ExampleGroup {
 
 // ─── Curated example list ───────────────────────────────────────────────────
 
-export const EXAMPLES: readonly ExampleGroup[] = [
+export const EXAMPLES: readonly Sp6Example[] = [
   {
     id: 'A1',
     label: 'A-1',
-    nature: 'thin',
+    status: 'thin',
     coefflistf: [1, -6, 15, -20, 15, -6, 1], // (x-1)⁶
     coefflistg: [1,  6, 15,  20, 15,  6, 1], // (x+1)⁶
     gamma: [1, 2, 2, 1, 2], // TBT = A⁻¹·B·B·A⁻¹·B  (T = A⁻¹B from Section 2)
@@ -60,7 +60,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
   {
     id: 'A17',
     label: 'A-17',  // was mislabeled 'A-15'; this β/g is BDN Table 1 A-17.
-    nature: 'arithmetic',
+    status: 'arithmetic',
     coefflistf: [1, -6, 15, -20, 15, -6, 1], // (x-1)⁶
     coefflistg: [1,  1,  2,   1,  2,  1, 1], // (x²+x+1)²(x²-x+1)
     gamma: [1, 2, 2, 1, 2],
@@ -73,7 +73,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
   {
     id: 'c2',
     label: 'C-2',
-    nature: 'thin',
+    status: 'thin',
     coefflistf: [1, -3, 3, -2, 3, -3, 1],
     coefflistg: [1,  4, 7,  8, 7,  4, 1],
     gamma: [1, 2, 2, 1, 2],
@@ -86,7 +86,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
   {
     id: 'c32',
     label: 'C-32',
-    nature: 'open',
+    status: 'open',
     coefflistf: [1, -5, 11, -14, 11, -5, 1],
     coefflistg: [1,  0,  0,   0,  0,  0, 1],
     gamma: [1, 2, 2, 1, 2],
@@ -99,7 +99,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
   {
     id: 'c47',
     label: 'C-47',
-    nature: 'arithmetic',
+    status: 'arithmetic',
     coefflistf: [1, -1, 0,  0, 0, -1, 1],
     coefflistg: [1,  4, 8, 10, 8,  4, 1],
     gamma: [1, 2, 2, 1, 2],
@@ -112,7 +112,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
   {
     id: 'c55',
     label: 'C-55',
-    nature: 'arithmetic',
+    status: 'arithmetic',
     coefflistf: [1, -2, 1,  0, 1, -2, 1],
     coefflistg: [1,  2, 0, -2, 0,  2, 1],
     gamma: [1, 2, 2, 1, 2],
@@ -125,7 +125,7 @@ export const EXAMPLES: readonly ExampleGroup[] = [
 ];
 
 /** Look up an example by id from the shared `EXAMPLES` list. */
-export function exampleById(id: string): ExampleGroup {
+export function exampleById(id: string): Sp6Example {
   const ex = EXAMPLES.find((e) => e.id === id);
   if (!ex) throw new Error(`unknown sp6 example id: ${id}`);
   return ex;

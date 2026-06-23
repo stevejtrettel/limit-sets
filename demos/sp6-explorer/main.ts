@@ -23,7 +23,7 @@ import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpher
 import { autofitCamera } from '@/app/autofit';
 
 import { CATALOG_EXAMPLES } from '@/sp6/catalog';
-import type { ExampleGroup } from '@/sp6/examples';
+import type { Sp6Example } from '@/sp6/examples';
 import { validateExample } from '@/sp6/validate';
 import { makeSp6Action } from '@/sp6/action';
 import type { GroupAction } from '@/core/group';
@@ -51,7 +51,7 @@ const DEFAULT_RADIUS = 0.025;
 const byId = new Map(CATALOG_EXAMPLES.map((e) => [e.id, e]));
 
 let family: Family = DEFAULT_FAMILY;
-let currentExample!:   ExampleGroup;
+let currentExample!:   Sp6Example;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentLambda = NaN;
@@ -63,8 +63,8 @@ let colorDepth = 0;
 let stats = { kept: 0, totalWords: 0 };
 
 /** Catalog groups in the active family, in catalog order. */
-function groupsInFamily(f: Family): ExampleGroup[] {
-  return f === 'all' ? [...CATALOG_EXAMPLES] : CATALOG_EXAMPLES.filter((e) => e.nature === f);
+function groupsInFamily(f: Family): Sp6Example[] {
+  return f === 'all' ? [...CATALOG_EXAMPLES] : CATALOG_EXAMPLES.filter((e) => e.status === f);
 }
 
 function loadExample(id: string): void {
@@ -82,7 +82,7 @@ function loadExample(id: string): void {
   currentBasepoint = r.basepoint;
   currentLambda = r.lambdaMax;
   console.log(
-    `[sp6-explorer ${ex.label}] loaded (${ex.nature}): |λ_max(${ex.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, drift = ${r.drift.toFixed(4)}`,
+    `[sp6-explorer ${ex.label}] loaded (${ex.status}): |λ_max(${ex.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, drift = ${r.drift.toFixed(4)}`,
   );
 }
 
@@ -173,13 +173,13 @@ const selGroup = groupFolder.select({
 });
 
 /** Dropdown label for a group: "A-1 — thin" in 'all', else just "A-1". */
-function groupOption(e: ExampleGroup): { value: string; label: string } {
-  return { value: e.id, label: family === 'all' ? `${e.label} — ${e.nature}` : e.label };
+function groupOption(e: Sp6Example): { value: string; label: string } {
+  return { value: e.id, label: family === 'all' ? `${e.label} — ${e.status}` : e.label };
 }
 
 /** Which <optgroup> a row belongs to — by source table (paper structure). */
-function tableHeader(e: ExampleGroup): string {
-  if (e.nature === 'open') return 'Table 3 · open (unclassified)';
+function tableHeader(e: Sp6Example): string {
+  if (e.status === 'open') return 'Table 3 · open (unclassified)';
   return e.label.startsWith('A-')
     ? 'Table 1 · maximally unipotent (α = 0)'
     : 'Table 2 · more thin';
@@ -301,7 +301,7 @@ function shotTimestamp(): string {
 function updateUI(): void {
   statsEl.text(`${stats.totalWords.toLocaleString()} words, ${stats.kept.toLocaleString()} drawn`);
   exMeta.html(
-    `${currentExample.label} — <b>${currentExample.nature}</b><br>` +
+    `${currentExample.label} — <b>${currentExample.status}</b><br>` +
     `α = ${currentExample.alpha}<br>` +
     `β = ${currentExample.beta}<br>` +
     `γ = ${currentExample.gammaName}, |λ_max| ≈ ${currentLambda.toFixed(3)}`,

@@ -47,6 +47,7 @@ import { composeProjector } from '../src/core/scene.ts';
 import { createAccumulator } from '../src/render/accumulator.ts';
 import { accumulatorToRGBA, type Bg } from '../src/render/tone.ts';
 import { writePng } from '../src/render/png.ts';
+import { outputPath } from '../src/render/outputPath.ts';
 import { drawLineAA, type RGB } from '../src/render/lineRaster.ts';
 import { fillTriangleAlpha } from '../src/render/polyFill.ts';
 import { createProgress, formatCount } from '../src/render/progress.ts';
@@ -428,7 +429,7 @@ for (const v of vertSet) {
 // ─── Write PNG ──────────────────────────────────────────────────────────────
 
 const clipTag = CLIP_TO_CONE ? '-coneclip' : '-full';
-const outputFile = `c32-hull-depth${DEPTH}-${imgW}x${imgH}${clipTag}.png`;
+const outputFile = outputPath('sp6-c32', `c32-hull-depth${DEPTH}-${imgW}x${imgH}${clipTag}.png`);
 log(`[sp6-c32-hull] writing ${outputFile}...`);
 await writePng(outputFile, imgW, imgH, rgba);
 log('[sp6-c32-hull] done.');

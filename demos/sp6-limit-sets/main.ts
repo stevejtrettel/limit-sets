@@ -13,11 +13,12 @@
 import * as THREE from 'three';
 import { App } from '@/app/App';
 import { ControlPanel } from '@/app/ControlPanel';
-import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpheres';
-import { autofitCamera } from '@/app/autofit';
+import { createSphereMaterial } from '@/app/instancedSpheres';
+import { buildLimitSetMesh } from '@/app/limitSetMesh';
+import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
 import {
-  EXAMPLES, exampleById, type ExampleGroup,
+  EXAMPLES, exampleById, type Sp6Example,
 } from '@/sp6/examples';
 import { makeSp6Action } from '@/sp6/action';
 import type { GroupAction } from '@/core/group';
@@ -30,7 +31,6 @@ import {
 } from '@/core/chart';
 import { validateAllExamples } from '@/sp6/validate';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
-import { buildOrbitInstances } from '@/render/orbitInstances.ts';
 import { paletteForScheme } from '@/sp6/palettes.ts';
 import type { ViewPreset } from '@/sp6/viewPreset.ts';
 
@@ -47,7 +47,7 @@ const DEFAULT_RADIUS = 0.025;
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
-let currentExample!:   ExampleGroup;
+let currentExample!:   Sp6Example;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentOrbit!:     Orbit;
@@ -78,20 +78,11 @@ function regenerateOrbit(N: number): void {
 }
 
 function rebuildMesh(autofit: boolean): void {
-  const scheme = schemeForColorDepth(colorDepth);
-  const palette = paletteForScheme(scheme.name);
-  const { aPos, aColor, kept } = buildOrbitInstances(currentProj, currentOrbit, scheme, palette);
-
-  const mesh = makeInstancedSpheres(material, aPos, aColor);
-  if (currentMesh) {
-    app.scene.remove(currentMesh);
-    currentMesh.geometry.dispose();
-  }
-  app.scene.add(mesh);
+  const { mesh, kept } = buildLimitSetMesh({
+    app, material, embedding: currentProj, orbit: currentOrbit,
+    colorDepth, paletteForScheme, previous: currentMesh, autofit,
+  });
   currentMesh = mesh;
-
-  if (autofit) autofitCamera(app, aPos, kept);
-
   stats = { kept, totalWords: currentOrbit.count };
 }
 
@@ -120,7 +111,7 @@ const panel = new ControlPanel({ title: 'Sp(6,Z) — limit sets' });
 
 panel.select({
   label: 'example',
-  options: EXAMPLES.map((e) => ({ value: e.id, label: `${e.label} (${e.nature})` })),
+  options: EXAMPLES.map((e) => ({ value: e.id, label: `${e.label} (${e.status})` })),
   value: DEFAULT_EXAMPLE_ID,
   onChange: (id) => {
     loadExample(id);
@@ -267,9 +258,6 @@ function updateUI(): void {
 // projection axes even though it'll BFS at a different depth.
 
 async function exportView(): Promise<void> {
-  const cam = app.camera as THREE.PerspectiveCamera;
-  const tgt = app.controls.target;
-  const canvas = app.renderManager.renderer.domElement;
   const bundle: ViewPreset = {
     exampleId:    currentExample.id,
     previewDepth: depth,
@@ -281,50 +269,11 @@ async function exportView(): Promise<void> {
       rowZ:  Array.from(currentProj.rows[2]),
       label: currentProj.label,
     },
-    camera: {
-      position: [cam.position.x, cam.position.y, cam.position.z],
-      target:   [tgt.x, tgt.y, tgt.z],
-      up:       [cam.up.x, cam.up.y, cam.up.z],
-      fov:      cam.fov,
-      aspect:   cam.aspect,
-      near:     cam.near,
-      far:      cam.far,
-    },
-    viewport: {
-      width:  canvas.clientWidth,
-      height: canvas.clientHeight,
-    },
+    camera:   cameraSpecFromApp(app),
+    viewport: viewportFromApp(app),
   };
-  const json = JSON.stringify(bundle, null, 2);
-  console.log('[sp6-render] view JSON:\n' + json);
-
-  // Primary path: POST to the Vite dev-server middleware, which writes the
-  // JSON straight to scripts/sp6-view-preset.json. Falls back to clipboard if
-  // the middleware is unavailable (e.g. running the built bundle).
-  let saved = false;
-  try {
-    const r = await fetch('/__save-view/sp6', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: json,
-    });
-    if (r.ok) {
-      saved = true;
-      exportStatus.flash(
-        'saved to scripts/sp6-view-preset.json — run `node scripts/sp6-render-limit-set.ts`',
-        2500, '#9ec79e',
-      );
-    }
-  } catch { /* fall through to clipboard */ }
-
-  if (!saved) {
-    try {
-      await navigator.clipboard.writeText(json);
-      exportStatus.flash('dev server unavailable — copied to clipboard instead', 2500, '#d9a55c');
-    } catch {
-      exportStatus.flash('clipboard blocked — see console for JSON', 2500, '#d9a55c');
-    }
-  }
+  await saveViewPreset('sp6', bundle, (msg, ok) =>
+    exportStatus.flash(msg, 2500, ok ? '#9ec79e' : '#d9a55c'));
 }
 
 updateUI();

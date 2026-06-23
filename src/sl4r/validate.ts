@@ -16,6 +16,7 @@
 import { type SL4RExample } from './types.ts';
 import { makeMat4Action, mat4Det } from './action.ts';
 import { computeProximalBasepoint } from '../core/orbit.ts';
+import { runValidation } from '../core/validation.ts';
 
 export interface ValidationResult {
   example: SL4RExample;
@@ -80,21 +81,9 @@ export function validateExample(ex: SL4RExample): ValidationResult {
 export function validateAllExamples(
   examples: readonly SL4RExample[],
 ): ValidationResult[] {
-  const results = examples.map(validateExample);
-  const failed = results.filter((r) => !r.passed);
-  if (failed.length > 0) {
-    console.error(`[sl4r] ${failed.length} example(s) failed validation:`);
-    for (const r of failed) {
-      console.error(`  ${r.example.id}: ${r.errors.join('; ')}`);
-    }
-    throw new Error('sl4r example validation failed');
-  }
-  console.log('[sl4r] example validation:');
-  for (const r of results) {
-    const detsStr = r.dets.map((d) => d.toFixed(4)).join(', ');
-    const summary = `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}  dets=[${detsStr}]`;
-    const warns = r.warnings.length > 0 ? `  ⚠ ${r.warnings.join('; ')}` : '';
-    console.log(`         ${r.example.id.padEnd(16)}  ${summary}${warns}`);
-  }
-  return results;
+  return runValidation('sl4r', examples.map(validateExample), {
+    idOf: (r) => r.example.id,
+    summaryOf: (r) =>
+      `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}  dets=[${r.dets.map((d) => d.toFixed(4)).join(', ')}]`,
+  });
 }

@@ -20,8 +20,9 @@
 import * as THREE from 'three';
 import { App } from '@/app/App';
 import { ControlPanel } from '@/app/ControlPanel';
-import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpheres';
-import { autofitCamera } from '@/app/autofit';
+import { createSphereMaterial } from '@/app/instancedSpheres';
+import { buildLimitSetMesh } from '@/app/limitSetMesh';
+import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
 import type { GroupAction } from '@/core/group';
 import {
@@ -30,7 +31,6 @@ import {
 import type { SceneEmbedding } from '@/core/scene';
 
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
-import { buildOrbitInstances } from '@/render/orbitInstances.ts';
 
 import { makeMat3Action } from '@/sl3r/action';
 import { sphereEmbedding, planeEmbedding } from '@/sl3r/embedding';
@@ -114,22 +114,12 @@ function regenerateOrbit(N: number): void {
 }
 
 function rebuildMesh(autofit: boolean): void {
-  const scheme = schemeForColorDepth(colorDepth);
-  const palette = paletteForScheme(scheme.name);
-  const { aPos, aColor, kept } = buildOrbitInstances(
-    currentEmbedding, currentOrbit, scheme, palette,
-  );
-
-  const mesh = makeInstancedSpheres(material, aPos, aColor);
-  if (currentMesh) {
-    app.scene.remove(currentMesh);
-    currentMesh.geometry.dispose();
-  }
-  app.scene.add(mesh);
+  const { mesh, kept } = buildLimitSetMesh({
+    app, material, embedding: currentEmbedding, orbit: currentOrbit,
+    colorDepth, paletteForScheme, previous: currentMesh, autofit,
+    autofitDir: AUTOFIT_DIR[currentEmbeddingName],
+  });
   currentMesh = mesh;
-
-  if (autofit) autofitCamera(app, aPos, kept, { dir: AUTOFIT_DIR[currentEmbeddingName] });
-
   stats = { kept, totalWords: currentOrbit.count };
 }
 
@@ -313,55 +303,16 @@ function updateUI(): void {
 // ─── Export view for offline render ─────────────────────────────────────────
 
 async function exportView(): Promise<void> {
-  const cam = app.camera as THREE.PerspectiveCamera;
-  const tgt = app.controls.target;
-  const canvas = app.renderManager.renderer.domElement;
   const bundle: ViewPreset = {
     exampleId:    currentExample.id,
     previewDepth: depth,
     colorScheme:  schemeForColorDepth(colorDepth).name,
     embedding:    currentEmbeddingName,
-    camera: {
-      position: [cam.position.x, cam.position.y, cam.position.z],
-      target:   [tgt.x, tgt.y, tgt.z],
-      up:       [cam.up.x, cam.up.y, cam.up.z],
-      fov:      cam.fov,
-      aspect:   cam.aspect,
-      near:     cam.near,
-      far:      cam.far,
-    },
-    viewport: {
-      width:  canvas.clientWidth,
-      height: canvas.clientHeight,
-    },
+    camera:       cameraSpecFromApp(app),
+    viewport:     viewportFromApp(app),
   };
-  const json = JSON.stringify(bundle, null, 2);
-  console.log('[sl3r-render] view JSON:\n' + json);
-
-  let saved = false;
-  try {
-    const r = await fetch('/__save-view/sl3r', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: json,
-    });
-    if (r.ok) {
-      saved = true;
-      exportStatus.flash(
-        'saved to scripts/sl3r-view-preset.json — run `node scripts/sl3r-render-limit-set.ts`',
-        2500, '#9ec79e',
-      );
-    }
-  } catch { /* fall through to clipboard */ }
-
-  if (!saved) {
-    try {
-      await navigator.clipboard.writeText(json);
-      exportStatus.flash('dev server unavailable — copied to clipboard instead', 2500, '#d9a55c');
-    } catch {
-      exportStatus.flash('clipboard blocked — see console for JSON', 2500, '#d9a55c');
-    }
-  }
+  await saveViewPreset('sl3r', bundle, (msg, ok) =>
+    exportStatus.flash(msg, 2500, ok ? '#9ec79e' : '#d9a55c'));
 }
 
 updateUI();

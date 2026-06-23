@@ -1,7 +1,7 @@
 /**
  * sp6 GroupAction factory.
  *
- * Translates an ExampleGroup's polynomial coefficient lists into the
+ * Translates an Sp6Example's polynomial coefficient lists into the
  * companion matrices A (of f) and B (of g) and their inverses, exposed
  * through the abstract `GroupAction` interface.
  *
@@ -13,7 +13,7 @@
  */
 
 import type { GroupAction } from '../core/group.ts';
-import type { ExampleGroup } from './examples.ts';
+import type { Sp6Example } from './examples.ts';
 
 const SP6_INVERSE = new Uint8Array([1, 0, 3, 2]);
 
@@ -25,7 +25,7 @@ function normalizeS5(buf: Float64Array, off: number): void {
   for (let i = 0; i < 6; i++) buf[off + i] *= inv;
 }
 
-export function makeSp6Action(ex: ExampleGroup): GroupAction {
+export function makeSp6Action(ex: Sp6Example): GroupAction {
   const F_C = ex.coefflistf.slice(1, 6);
   const G_C = ex.coefflistg.slice(1, 6);
   const f1 = F_C[0], f2 = F_C[1], f3 = F_C[2], f4 = F_C[3], f5 = F_C[4];

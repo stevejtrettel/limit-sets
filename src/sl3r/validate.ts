@@ -14,6 +14,7 @@
 import { type SL3RExample } from './examples.ts';
 import { makeMat3Action, mat3Det, type Mat3R } from './action.ts';
 import { computeProximalBasepoint } from '../core/orbit.ts';
+import { runValidation } from '../core/validation.ts';
 
 export interface ValidationResult {
   example: SL3RExample;
@@ -95,20 +96,8 @@ export function validateExample(ex: SL3RExample): ValidationResult {
 export function validateAllExamples(
   examples: readonly SL3RExample[],
 ): ValidationResult[] {
-  const results = examples.map(validateExample);
-  const failed = results.filter((r) => !r.passed);
-  if (failed.length > 0) {
-    console.error(`[sl3r] ${failed.length} example(s) failed validation:`);
-    for (const r of failed) {
-      console.error(`  ${r.example.id}: ${r.errors.join('; ')}`);
-    }
-    throw new Error('sl3r example validation failed');
-  }
-  console.log('[sl3r] example validation:');
-  for (const r of results) {
-    const summary = `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`;
-    const warns = r.warnings.length > 0 ? `  ⚠ ${r.warnings.join('; ')}` : '';
-    console.log(`         ${r.example.id.padEnd(16)}  ${summary}${warns}`);
-  }
-  return results;
+  return runValidation('sl3r', examples.map(validateExample), {
+    idOf: (r) => r.example.id,
+    summaryOf: (r) => `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`,
+  });
 }
