@@ -23,9 +23,13 @@ import { createSphereMaterial } from '@/app/instancedSpheres';
 import { buildLimitSetMesh } from '@/app/limitSetMesh';
 import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
-import type { SL4RExample } from '@/sl4r/types';
-import { EXAMPLES, exampleById } from './pair1';
-import { makeMat4Action } from '@/sl4r/action';
+import {
+  EXAMPLES, exampleById, type RP3Example,
+} from '@/examples/projective/rp3-pairs/data';
+import { validateAllExamples } from '@/examples/projective/rp3-pairs/validate';
+import { paletteForScheme } from '@/examples/projective/rp3-pairs/palette';
+import type { ViewPreset } from '@/examples/projective/rp3-pairs/viewPreset';
+import { makeMatrixAction, asInvolutions, pairWithInverses } from '@/core/matrixAction';
 import type { GroupAction } from '@/core/group';
 import {
   computeProximalBasepoint, generateOrbit, type Orbit,
@@ -34,10 +38,7 @@ import {
   type ChartEmbedding,
   fitPCAChartEmbedding, fitAutoChartEmbedding, makeChartFromData,
 } from '@/core/chart';
-import { validateAllExamples } from '@/sl4r/validate';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
-import { paletteForScheme } from '@/sl4r/palettes.ts';
-import type { ViewPreset } from '@/sl4r/viewPreset.ts';
 
 validateAllExamples(EXAMPLES);
 
@@ -58,7 +59,7 @@ const DEFAULT_CHART = exampleById(DEFAULT_EXAMPLE_ID).customCharts?.[0]?.id ?? '
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
-let currentExample!:   SL4RExample;
+let currentExample!:   RP3Example;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentOrbit!:     Orbit;
@@ -70,9 +71,11 @@ let stats = { kept: 0, totalWords: 0 };
 
 function loadExample(id: string): void {
   currentExample = exampleById(id);
-  currentAction = makeMat4Action(currentExample.generators, {
-    involutions: currentExample.involutions,
-  });
+  currentAction = makeMatrixAction(
+    currentExample.involutions
+      ? asInvolutions(currentExample.generators)
+      : pairWithInverses(currentExample.generators),
+  );
   const r = computeProximalBasepoint(
     currentAction, currentExample.gamma, currentExample.powerIter);
   currentBasepoint = r.basepoint;

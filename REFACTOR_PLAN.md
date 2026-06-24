@@ -602,8 +602,14 @@ single late phase (Phase 7, §12).
     c32 variants to keep, then migrate. `src/o5/` and `src/sp6/` stay in place meanwhile —
     harmless (all demos build), still imported only by the c32 family + parity tests. The
     o5/sp6 dir deletion waits on this.
-- **Phase 3 — Projective RP³ (sl4r) + james-marit.** ◻ Move `pair1.ts` into the library;
-  migrate 6 consumers; parity + spot-check; delete `sl4r/`.
+- **Phase 3 — Projective RP³ (sl4r), CLEAN part only.** ✅ `examples/projective/rp3-pairs/`
+  (data moved out of `demos/sl4r-limit-sets/pair1.ts` + validate + palette + viewPreset);
+  `sl4r-limit-sets` demo + render script migrated to `makeMatrixAction`; bit-identical parity
+  (apply within 1e-13, seed exact); fixed the pre-existing `SL4RExample`-export error.
+  **`src/sl4r/` NOT deleted** — `james-marit` ×2 (+ scripts) are bespoke nested-`Mat4R`
+  research demos (their own repBuilder/cohomology/cocycle libraries), structurally like
+  schwartz-pappus. `demos/sl4r-limit-sets/pair1.ts` is now dead (unimported), safe to delete.
+  → **james-marit migration + `sl4r/` deletion deferred to the bespoke-demos pass (with c32).**
 - **Phase 4 — Kleinian (sl2c).** ◻ Mechanical relocation; migrate 2 consumers. Delete
   `sl2c/`. (Complex loxodromic seeding deferred to Phase 7.)
 - **Phase 5 — Schwartz-Pappus rewire + sl3r teardown.** ◻ Re-point `matrices.ts`/
