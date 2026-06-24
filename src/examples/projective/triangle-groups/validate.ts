@@ -11,10 +11,9 @@
  * structural checks now use the generic core/matrix routines.)
  */
 
-import { type MatrixGroupExample } from './data.ts';
+import { type MatrixGroupExample, seedTriangle } from './data.ts';
 import { matDet, matTrace, matMul, identity, type Mat } from '../../../core/matrix.ts';
 import { makeMatrixAction, asInvolutions, pairWithInverses } from '../../../core/matrixAction.ts';
-import { computeProximalBasepoint } from '../../../core/orbit.ts';
 import { runValidation } from '../../../core/validation.ts';
 
 export interface ValidationResult {
@@ -63,13 +62,13 @@ export function validateExample(ex: MatrixGroupExample): ValidationResult {
   if (errors.length === 0) {
     const action = makeMatrixAction(
       ex.involutions ? asInvolutions(ex.generators) : pairWithInverses(ex.generators));
-    const r = computeProximalBasepoint(action, ex.gamma, ex.powerIter);
-    lambdaMax = r.lambdaMax;
-    drift = r.drift;
+    const s = seedTriangle(action);
+    lambdaMax = s.lambdaMax;
+    drift = s.drift;
     if (!Number.isFinite(lambdaMax) || lambdaMax === 0) {
-      errors.push(`power iteration produced |λ_max| = ${lambdaMax}; γ may be wrong`);
+      errors.push(`no loxodromic seed found; |λ_max| = ${lambdaMax}`);
     } else if (lambdaMax < 1.0 + 1e-3) {
-      warnings.push(`|λ_max(γ)| = ${lambdaMax.toFixed(4)} ≈ 1; γ may not be loxodromic`);
+      warnings.push(`|λ_max(γ)| = ${lambdaMax.toFixed(4)} ≈ 1; group may be non-discrete`);
     }
   }
 

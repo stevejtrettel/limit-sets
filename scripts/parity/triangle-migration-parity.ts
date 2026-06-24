@@ -67,13 +67,13 @@ function compare(label: string, oldA: GroupAction, newA: GroupAction, gamma: rea
 for (const ex of NEW_EXAMPLES) {
   const old = OLD_EXAMPLES.find((e) => e.id === ex.id);
   if (!old) { console.log(`FAIL  ${ex.id}: missing in old EXAMPLES`); failures++; continue; }
-  compare(ex.id, makeMat3Action(old.generators, { involutions: old.involutions }), newAction(ex), ex.gamma, ex.powerIter);
+  compare(ex.id, makeMat3Action(old.generators, { involutions: old.involutions }), newAction(ex), old.gamma, old.powerIter);
 }
 
 // Live-d triangle sweep
 for (const d of [0.6, 0.9, 1.3, 1.8]) {
   const oldEx = oldLiveTri(d), newEx = newLiveTri(d);
-  compare(`live-d=${d}`, makeMat3Action(oldEx.generators, { involutions: true }), newAction(newEx), newEx.gamma, newEx.powerIter);
+  compare(`live-d=${d}`, makeMat3Action(oldEx.generators, { involutions: true }), newAction(newEx), oldEx.gamma, oldEx.powerIter);
 }
 
 console.log(failures === 0 ? `\nPhase-1 parity PASSED (tol ${TOL}).` : `\n${failures} FAILED.`);

@@ -5,11 +5,10 @@
  */
 import { runRender } from './renderDriver.ts';
 import {
-  EXAMPLES, symplecticAction, type SymplecticExample,
+  EXAMPLES, symplecticAction, seedSymplectic, type SymplecticExample,
 } from '../src/examples/hypergeometric/degree6-symplectic.ts';
 import { paletteForSymplectic } from '../src/examples/hypergeometric/palette.ts';
 import type { ViewPreset } from '../src/examples/hypergeometric/viewPreset.ts';
-import { computeProximalBasepoint } from '../src/core/orbit.ts';
 import { embeddingFromPreset } from '../src/core/viewPreset.ts';
 import { fitAutoChartEmbedding } from '../src/core/chart.ts';
 
@@ -19,9 +18,9 @@ await runRender<SymplecticExample>({
   exampleId: (e) => e.id,
   banner: (e) => `${e.label} (${e.status})`,
   makeAction: (e) => symplecticAction(e),
-  findSeed: (action, e) => {
-    const bp = computeProximalBasepoint(action, e.gamma, e.powerIter);
-    return { basepoint: bp.basepoint, note: `|λ_max(${e.gammaName})| ≈ ${bp.lambdaMax.toFixed(3)}, drift = ${bp.drift.toFixed(4)}` };
+  findSeed: (action) => {
+    const s = seedSymplectic(action);
+    return { basepoint: s.basepoint, note: `γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, drift = ${s.drift.toFixed(4)}` };
   },
   paletteForScheme: paletteForSymplectic,
   fitEmbedding: (pilot) => fitAutoChartEmbedding(pilot),

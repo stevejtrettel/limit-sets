@@ -23,12 +23,12 @@ import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpher
 import { autofitCamera } from '@/app/autofit';
 
 import {
-  CATALOG_EXAMPLES, symplecticAction, type SymplecticExample,
+  CATALOG_EXAMPLES, symplecticAction, seedSymplectic, type SymplecticExample,
 } from '@/examples/hypergeometric/degree6-symplectic';
 import { validateSymplecticExample } from '@/examples/hypergeometric/validate';
 import { paletteForSymplectic as paletteForScheme } from '@/examples/hypergeometric/palette';
 import type { GroupAction } from '@/core/group';
-import { computeProximalBasepoint, generateOrbit, type Orbit } from '@/core/orbit';
+import { generateOrbit, type Orbit } from '@/core/orbit';
 import {
   type ChartEmbedding, fitPCAChartEmbedding, fitAutoChartEmbedding,
 } from '@/core/chart';
@@ -55,6 +55,7 @@ let currentExample!:   SymplecticExample;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentLambda = NaN;
+let currentSeedName = 'TBT';
 let currentOrbit!:     Orbit;
 let currentProj!:      ChartEmbedding;
 let currentMesh: THREE.Mesh | null = null;
@@ -78,11 +79,12 @@ function loadExample(id: string): void {
   for (const w of v.warnings) console.warn(`[sp6-explorer ${ex.label}] ⚠ ${w}`);
   if (!v.passed) console.error(`[sp6-explorer ${ex.label}] ✗ ${v.errors.join('; ')}`);
 
-  const r = computeProximalBasepoint(currentAction, ex.gamma, ex.powerIter);
-  currentBasepoint = r.basepoint;
-  currentLambda = r.lambdaMax;
+  const s = seedSymplectic(currentAction);
+  currentBasepoint = s.basepoint;
+  currentLambda = s.lambdaMax;
+  currentSeedName = s.name;
   console.log(
-    `[sp6-explorer ${ex.label}] loaded (${ex.status}): |λ_max(${ex.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, drift = ${r.drift.toFixed(4)}`,
+    `[sp6-explorer ${ex.label}] loaded (${ex.status}): γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, drift = ${s.drift.toFixed(4)}`,
   );
 }
 
@@ -302,9 +304,9 @@ function updateUI(): void {
   statsEl.text(`${stats.totalWords.toLocaleString()} words, ${stats.kept.toLocaleString()} drawn`);
   exMeta.html(
     `${currentExample.label} — <b>${currentExample.status}</b><br>` +
-    `α = ${currentExample.alpha}<br>` +
-    `β = ${currentExample.beta}<br>` +
-    `γ = ${currentExample.gammaName}, |λ_max| ≈ ${currentLambda.toFixed(3)}`,
+    `α = (${currentExample.alpha.join(', ')})<br>` +
+    `β = (${currentExample.beta.join(', ')})<br>` +
+    `γ = ${currentSeedName}, |λ_max| ≈ ${currentLambda.toFixed(3)}`,
   );
 }
 

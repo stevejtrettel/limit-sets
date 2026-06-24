@@ -14,6 +14,16 @@
  */
 
 import { type Mat, mat } from '../../../core/matrix.ts';
+import { seedFromLoxodromic, type Seed } from '../../../core/seed.ts';
+import type { GroupAction } from '../../../core/group.ts';
+
+/** Limit-set basepoint for a convex-projective group: the attracting fixed point
+ *  of the shortest CERTIFIED loxodromic word (Phase-7 uniform auto-seeding).
+ *  Replaces the old fixed-γ seeding. */
+export function seedTriangle(action: GroupAction): Seed {
+  const labels = Array.from({ length: action.numGenerators }, (_, i) => `M${i + 1}`);
+  return seedFromLoxodromic(action, { labels });
+}
 
 export interface MatrixGroupExample {
   id: string;
@@ -23,10 +33,6 @@ export interface MatrixGroupExample {
   generators: readonly Mat[];
   /** True for reflection / involution groups (each generator is its own inverse). */
   involutions: boolean;
-  /** Loxodromic γ word, as a sequence of generator codes (apply order). */
-  gamma: readonly number[];
-  gammaName: string;
-  powerIter: number;
 }
 
 // ─── (3,3,4) Coxeter triangle group + projective deformations ──────────────
@@ -82,9 +88,6 @@ function triangle334Example(
     id, label, description,
     generators: triangle334Matrices(d),
     involutions: true,
-    gamma:     [0, 1, 2],
-    gammaName: 'M₁M₂M₃',
-    powerIter: 40,
   };
 }
 
@@ -149,9 +152,6 @@ function fourReflectionExample(
     id, label, description,
     generators: fourReflectionMatrices(a, s, t, u),
     involutions: true,
-    gamma:     [0, 2],
-    gammaName: 'S₁S₃',
-    powerIter: 40,
   };
 }
 

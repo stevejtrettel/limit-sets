@@ -610,8 +610,12 @@ single late phase (Phase 7, §12).
   research demos (their own repBuilder/cohomology/cocycle libraries), structurally like
   schwartz-pappus. `demos/sl4r-limit-sets/pair1.ts` is now dead (unimported), safe to delete.
   → **james-marit migration + `sl4r/` deletion deferred to the bespoke-demos pass (with c32).**
-- **Phase 4 — Kleinian (sl2c).** ◻ Mechanical relocation; migrate 2 consumers. Delete
-  `sl2c/`. (Complex loxodromic seeding deferred to Phase 7.)
+- **Phase 4 — Kleinian (sl2c).** ✅ Relocated to `examples/kleinian/` (action kept its
+  bespoke complex `apply`, now using core `normalizeSphere`; embedding/examples/validate/
+  palette/viewPreset moved); both consumers migrated; bit-identical parity across all 7.
+  **`src/sl2c/` is fully dead** (only the parity test still imports it) — first clean
+  deletion: remove `src/sl2c/` + `scripts/parity/kleinian-migration-parity.ts` together.
+  (Complex loxodromic seeding still deferred to Phase 7.)
 - **Phase 5 — Schwartz-Pappus rewire + sl3r teardown.** ◻ Re-point `matrices.ts`/
   `validate.ts` to `core/matrix`; migrate the schwartz-pappus demo+script off
   `makeMat3Action`/sl3r embeddings; migrate marked-boxes import paths; run `validatePappus`.
@@ -620,10 +624,18 @@ single late phase (Phase 7, §12).
 - **Phase 6 — Structural cleanup.** ◻ Resolve palette placement; collapse `embeddings.ts`
   wrappers into core chart constructors where possible; remove dead code; update `@/` notes,
   README, developer docs.
-- **Phase 7 — Example format & seeding redesign (§12).** ◻ The one *type-changing,
-  picture-affecting* pass, done across ALL families at once: featured = ref + caption,
-  uniform auto-seeding via the loxodromic machinery, drop derived fields. Verified by
-  before/after spot-checks, NOT bit-parity.
+- **Phase 7 — Example format & seeding redesign (§12).** ✅ Done across all families:
+  - **7a** uniform auto-seeding — every family seeds via `seedFromLoxodromic` (a per-family
+    `seedX(action)` helper); orthogonal already did. Verified: certified loxodromic for
+    every group, fractal limit sets unchanged (bbox spot-checks).
+  - **7b** format cleanup — example types are now minimal (α/β tuples or explicit
+    generators + metadata); dropped `coefflists`/unicode-`α/β`/`expectedLambdaMax`/per-row
+    `gamma`; symplectic curated 6 → `FEATURED` refs (ids pinned for preset compat);
+    symplectic validator unified onto the shared `validateOne`.
+  - **7c** kleinian complex seeding — `seedKleinian` uses `complexDominantCriterion`
+    (Möbius loxodromics have a conjugate pair atop the realified spectrum); power iteration
+    converges projectively (phase-invariant embeddings). All 7 bbox-match the old γ.
+  - All startup validators pass (77+88+6+6+1+7), zero warnings; all demos build.
 
 Rollback at any structural phase = the old family dir still exists until its parity gate
 passes, so a failed phase reverts by not deleting.

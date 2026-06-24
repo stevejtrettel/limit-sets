@@ -53,8 +53,9 @@ for (const ex of EXAMPLES) {
   for (let g = 0; g < newA.numGenerators && !bad; g++) if (newA.inverse[g] !== oldA.inverse[g]) bad = `inverse[${g}]`;
 
   const dA = bad ? NaN : applyMax(oldA, newA);
-  const bo = computeProximalBasepoint(oldA, ex.gamma, ex.powerIter).basepoint;
-  const bn = computeProximalBasepoint(newA, ex.gamma, ex.powerIter).basepoint;
+  // Seed both with the old fixed γ = B (NEW no longer carries γ — it auto-seeds at runtime).
+  const bo = computeProximalBasepoint(oldA, [2], 80).basepoint;
+  const bn = computeProximalBasepoint(newA, [2], 80).basepoint;
   let dS = 0; for (let i = 0; i < newA.stateDim; i++) dS = Math.max(dS, Math.abs(bo[i] - bn[i]));
 
   const ok = !bad && dA <= TOL && dS <= TOL;

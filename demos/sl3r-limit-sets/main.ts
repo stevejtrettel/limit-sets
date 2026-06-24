@@ -25,9 +25,7 @@ import { buildLimitSetMesh } from '@/app/limitSetMesh';
 import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
 import type { GroupAction } from '@/core/group';
-import {
-  computeProximalBasepoint, generateOrbit, type Orbit,
-} from '@/core/orbit';
+import { generateOrbit, type Orbit } from '@/core/orbit';
 import type { SceneEmbedding } from '@/core/scene';
 
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
@@ -35,7 +33,7 @@ import { schemeForColorDepth } from '@/render/colorScheme.ts';
 import { makeMatrixAction, asInvolutions, pairWithInverses } from '@/core/matrixAction';
 import { sphereEmbedding, planeEmbedding } from '@/examples/projective/triangle-groups/embeddings';
 import {
-  EXAMPLES, exampleById, makeLiveTri334, type MatrixGroupExample,
+  EXAMPLES, exampleById, makeLiveTri334, seedTriangle, type MatrixGroupExample,
 } from '@/examples/projective/triangle-groups/data';
 import { paletteForScheme } from '@/examples/projective/triangle-groups/palette';
 import { validateAllExamples } from '@/examples/projective/triangle-groups/validate';
@@ -74,6 +72,7 @@ let colorDepth = 0;
 let stats = { kept: 0, totalWords: 0 };
 /** d parameter for the live (3,3,4) triangle family. */
 let currentD = DEFAULT_D;
+let currentSeedName = '';
 
 const EMBEDDINGS: Record<EmbeddingName, SceneEmbedding> = {
   sphere: sphereEmbedding,
@@ -98,11 +97,12 @@ function loadExample(id: string): void {
       ? asInvolutions(currentExample.generators)
       : pairWithInverses(currentExample.generators),
   );
-  const r = computeProximalBasepoint(currentAction, currentExample.gamma, currentExample.powerIter);
-  currentBasepoint = r.basepoint;
+  const s = seedTriangle(currentAction);
+  currentBasepoint = s.basepoint;
+  currentSeedName = s.name;
   console.log(
-    `[sl3r-${currentExample.id}] loaded: |λ_max(${currentExample.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, ` +
-    `drift = ${r.drift.toFixed(4)}`,
+    `[sl3r-${currentExample.id}] loaded: γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, ` +
+    `drift = ${s.drift.toFixed(4)}`,
   );
 }
 
@@ -298,7 +298,7 @@ function updateUI(): void {
   modeEl.text(`view: ${currentEmbedding.pretty}`);
   exMeta.html(
     `${currentExample.description}<br>` +
-    `γ = ${currentExample.gammaName}`,
+    `γ = ${currentSeedName}`,
   );
 }
 

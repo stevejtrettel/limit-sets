@@ -24,21 +24,19 @@ import { buildLimitSetMesh } from '@/app/limitSetMesh';
 import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
 import type { GroupAction } from '@/core/group';
-import {
-  computeProximalBasepoint, generateOrbit, type Orbit,
-} from '@/core/orbit';
+import { generateOrbit, type Orbit } from '@/core/orbit';
 import type { SceneEmbedding } from '@/core/scene';
 
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
 
-import { makeMobiusAction } from '@/sl2c/action';
-import { sphereEmbedding, planeEmbedding } from '@/sl2c/embedding';
+import { makeMobiusAction } from '@/examples/kleinian/action';
+import { sphereEmbedding, planeEmbedding } from '@/examples/kleinian/embedding';
 import {
-  EXAMPLES, exampleById, type MobiusExample,
-} from '@/sl2c/examples';
-import { paletteForScheme } from '@/sl2c/palettes';
-import { validateAllExamples } from '@/sl2c/validate';
-import type { EmbeddingName, ViewPreset } from '@/sl2c/viewPreset';
+  EXAMPLES, exampleById, seedKleinian, type MobiusExample,
+} from '@/examples/kleinian/examples';
+import { paletteForScheme } from '@/examples/kleinian/palette';
+import { validateAllExamples } from '@/examples/kleinian/validate';
+import type { EmbeddingName, ViewPreset } from '@/examples/kleinian/viewPreset';
 
 validateAllExamples(EXAMPLES);
 
@@ -64,6 +62,7 @@ let currentMesh: THREE.Mesh | null = null;
 let depth = DEFAULT_DEPTH;
 let colorDepth = 0;
 let stats = { kept: 0, totalWords: 0 };
+let currentSeedName = '';
 
 const EMBEDDINGS: Record<EmbeddingName, SceneEmbedding> = {
   sphere: sphereEmbedding,
@@ -79,11 +78,12 @@ const AUTOFIT_DIR: Record<EmbeddingName, readonly [number, number, number]> = {
 function loadExample(id: string): void {
   currentExample = exampleById(id);
   currentAction = makeMobiusAction(currentExample.generators);
-  const r = computeProximalBasepoint(currentAction, currentExample.gamma, currentExample.powerIter);
-  currentBasepoint = r.basepoint;
+  const s = seedKleinian(currentAction);
+  currentBasepoint = s.basepoint;
+  currentSeedName = s.name;
   console.log(
-    `[sl2c-${currentExample.id}] loaded: |λ_max(${currentExample.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, ` +
-    `drift = ${r.drift.toFixed(4)}`,
+    `[sl2c-${currentExample.id}] loaded: γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, ` +
+    `drift = ${s.drift.toFixed(4)}`,
   );
 }
 
@@ -252,7 +252,7 @@ function updateUI(): void {
   modeEl.text(`view: ${currentEmbedding.pretty}`);
   exMeta.html(
     `${currentExample.description}<br>` +
-    `γ = ${currentExample.gammaName}`,
+    `γ = ${currentSeedName}`,
   );
 }
 

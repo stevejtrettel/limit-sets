@@ -5,12 +5,11 @@
  *   node scripts/sl2c-render-limit-set.ts riley-2i 14 --embedding sphere
  */
 import { runRender } from './renderDriver.ts';
-import { EXAMPLES, type MobiusExample } from '../src/sl2c/examples.ts';
-import { makeMobiusAction } from '../src/sl2c/action.ts';
-import { sphereEmbedding, planeEmbedding } from '../src/sl2c/embedding.ts';
-import { paletteForScheme } from '../src/sl2c/palettes.ts';
-import type { ViewPreset } from '../src/sl2c/viewPreset.ts';
-import { computeProximalBasepoint } from '../src/core/orbit.ts';
+import { EXAMPLES, seedKleinian, type MobiusExample } from '../src/examples/kleinian/examples.ts';
+import { makeMobiusAction } from '../src/examples/kleinian/action.ts';
+import { sphereEmbedding, planeEmbedding } from '../src/examples/kleinian/embedding.ts';
+import { paletteForScheme } from '../src/examples/kleinian/palette.ts';
+import type { ViewPreset } from '../src/examples/kleinian/viewPreset.ts';
 
 const flagVal = (n: string): string | null => {
   const i = process.argv.indexOf(n);
@@ -25,9 +24,9 @@ await runRender<MobiusExample>({
   exampleId: (e) => e.id,
   banner: (e) => `${e.label} [${e.id}]`,
   makeAction: (e) => makeMobiusAction(e.generators),
-  findSeed: (action, e) => {
-    const bp = computeProximalBasepoint(action, e.gamma, e.powerIter);
-    return { basepoint: bp.basepoint, note: `|λ_max(${e.gammaName})| ≈ ${bp.lambdaMax.toFixed(3)}, drift = ${bp.drift.toFixed(4)}` };
+  findSeed: (action) => {
+    const s = seedKleinian(action);
+    return { basepoint: s.basepoint, note: `γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, drift = ${s.drift.toFixed(4)}` };
   },
   paletteForScheme,
   variant: (_e, preset) => (preset as unknown as ViewPreset | null)?.embedding ?? EMBEDDING,

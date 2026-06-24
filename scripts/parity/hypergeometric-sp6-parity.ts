@@ -13,6 +13,7 @@
 import {
   CATALOG_EXAMPLES as NEW_CAT, EXAMPLES as NEW_CUR, symplecticAction, type SymplecticExample,
 } from '../../src/examples/hypergeometric/degree6-symplectic.ts';
+import { cyclotomicProduct } from '../../src/core/polynomial.ts';
 import { computeProximalBasepoint } from '../../src/core/orbit.ts';
 import type { GroupAction } from '../../src/core/group.ts';
 
@@ -50,13 +51,15 @@ function check(tag: string, newList: readonly SymplecticExample[], oldList: read
     const old = oldById.get(ex.id);
     if (!old) { console.log(`FAIL ${tag} ${ex.id}: missing in old`); failures++; continue; }
     n++;
-    if (!intEq(ex.coefflistf, old.coefflistf) || !intEq(ex.coefflistg, old.coefflistg)) {
+    // NEW stores α/β; derive its coefflists and check against OLD's hardcoded lists.
+    if (!intEq(cyclotomicProduct(ex.alpha), old.coefflistf) || !intEq(cyclotomicProduct(ex.beta), old.coefflistg)) {
       console.log(`FAIL ${tag} ${ex.id}: coefflist mismatch`); failures++; wPoly++; continue;
     }
     const na = symplecticAction(ex), oa = makeSp6Action(old);
     const dA = applyMax(oa, na); wApply = Math.max(wApply, dA);
+    // Seed both with OLD's TBT word (NEW no longer carries γ — it auto-seeds at runtime).
     const bo = computeProximalBasepoint(oa, old.gamma, old.powerIter).basepoint;
-    const bn = computeProximalBasepoint(na, ex.gamma, ex.powerIter).basepoint;
+    const bn = computeProximalBasepoint(na, old.gamma, old.powerIter).basepoint;
     let dS = 0; for (let i = 0; i < na.stateDim; i++) dS = Math.max(dS, Math.abs(bo[i] - bn[i]));
     wSeed = Math.max(wSeed, dS);
     if (dA > TOL || dS > TOL) { console.log(`FAIL ${tag} ${ex.id}: apply ${dA.toExponential(2)} seed ${dS.toExponential(2)}`); failures++; }

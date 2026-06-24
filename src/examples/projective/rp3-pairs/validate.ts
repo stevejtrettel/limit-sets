@@ -10,10 +10,9 @@
  * (Migrated from src/sl4r/validate.ts; structural checks now use core matDet.)
  */
 
-import { type RP3Example } from './data.ts';
+import { type RP3Example, seedRP3 } from './data.ts';
 import { matDet } from '../../../core/matrix.ts';
 import { makeMatrixAction, asInvolutions, pairWithInverses } from '../../../core/matrixAction.ts';
-import { computeProximalBasepoint } from '../../../core/orbit.ts';
 import { runValidation } from '../../../core/validation.ts';
 
 export interface ValidationResult {
@@ -51,11 +50,11 @@ export function validateExample(ex: RP3Example): ValidationResult {
   if (errors.length === 0) {
     const action = makeMatrixAction(
       ex.involutions ? asInvolutions(ex.generators) : pairWithInverses(ex.generators));
-    const r = computeProximalBasepoint(action, ex.gamma, ex.powerIter);
-    lambdaMax = r.lambdaMax;
-    drift = r.drift;
+    const s = seedRP3(action);
+    lambdaMax = s.lambdaMax;
+    drift = s.drift;
     if (!Number.isFinite(lambdaMax) || lambdaMax === 0) {
-      errors.push(`power iteration produced |λ_max| = ${lambdaMax}; γ may be wrong`);
+      errors.push(`no loxodromic seed found; |λ_max| = ${lambdaMax}`);
     } else if (lambdaMax < 1.0 + 1e-3) {
       warnings.push(`|λ_max(γ)| = ${lambdaMax.toFixed(4)} ≈ 1; γ may not be loxodromic`);
     }

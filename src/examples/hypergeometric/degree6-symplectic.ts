@@ -18,8 +18,8 @@
  * (Merges the old sp6/catalog.ts and sp6/examples.ts.)
  */
 
-import { cyclotomicProduct } from '../../core/polynomial.ts';
-import { hypergeometricActionFromCoeffs, type Walk } from './recipe.ts';
+import { hypergeometricAction, WALK_LABELS, type Walk } from './recipe.ts';
+import { seedFromLoxodromic, type Seed } from '../../core/seed.ts';
 import type { GroupAction } from '../../core/group.ts';
 
 /** This family's natural generating set. */
@@ -29,24 +29,33 @@ export interface SymplecticExample {
   id: string;
   label: string;
   status: 'thin' | 'arithmetic' | 'open';
-  /** Palindromic integer coefficients of f, g (length 7, lead/trail 1). */
-  coefflistf: readonly number[];
-  coefflistg: readonly number[];
-  /** Loxodromic γ word in the action's generator codes (0=A,1=A⁻¹,2=B,3=B⁻¹). */
-  gamma: readonly number[];
-  gammaName: string;
-  powerIter: number;
-  /** Display strings for the rotation tuples. */
-  alpha: string;
-  beta: string;
-  /** Reference |λ_max(γ)| (curated rows only), for validation cross-check. */
-  expectedLambdaMax?: number;
+  /** Rotation tuples (parseable, e.g. '1/2', '5/12'); the companion matrices of
+   *  ∏(x − e^{2πiαⱼ}), ∏(x − e^{2πiβⱼ}) are derived on demand by the recipe. */
+  alpha: readonly string[];
+  beta: readonly string[];
+  /** Optional human note (featured entries). */
+  caption?: string;
 }
 
-/** The GroupAction for a symplectic example — companion pair from its
- *  coefficient lists, walked over the free group {A,A⁻¹,B,B⁻¹}. */
+/** The GroupAction for a symplectic example — companion pair from its rotation
+ *  tuples, walked over the free group {A,A⁻¹,B,B⁻¹}. */
 export function symplecticAction(ex: SymplecticExample): GroupAction {
-  return hypergeometricActionFromCoeffs(ex.coefflistf, ex.coefflistg, SYMPLECTIC_DEGREE6_WALK);
+  return hypergeometricAction(ex.alpha, ex.beta, SYMPLECTIC_DEGREE6_WALK);
+}
+
+/** TBT, the family's historically-known loxodromic word, kept only as the
+ *  auto-search fallback (every thin/arithmetic symplectic group has a shorter
+ *  certified loxodromic, so the fallback is essentially never hit). */
+const SYMPLECTIC_FALLBACK: readonly number[] = [1, 2, 2, 1, 2];
+
+/** Limit-set basepoint for a symplectic group: the attracting fixed point of the
+ *  shortest CERTIFIED loxodromic word (Phase-7 uniform auto-seeding), found by
+ *  the group-agnostic loxodromic search. Replaces the old fixed-TBT seeding. */
+export function seedSymplectic(action: GroupAction): Seed {
+  return seedFromLoxodromic(action, {
+    labels: WALK_LABELS[SYMPLECTIC_DEGREE6_WALK],
+    fallbackWord: SYMPLECTIC_FALLBACK,
+  });
 }
 
 // ─── Catalog rows (α, β) → derived examples ─────────────────────────────────
@@ -175,87 +184,40 @@ const TABLE3: readonly CatalogRow[] = [
 
 const CATALOG: readonly CatalogRow[] = [...TABLE1, ...TABLE2, ...TABLE3];
 
-/** TBT (= A⁻¹·B·B·A⁻¹·B) in the action's generator codes (0=A,1=A⁻¹,2=B,3=B⁻¹).
- *  Loxodromic for every group in the family. */
-const TBT: readonly number[] = [1, 2, 2, 1, 2];
-
-const display = (rots: readonly string[]): string => `(${rots.join(', ')})`;
 const idFromLabel = (label: string): string => label.replace(/-/g, '');
 
 function rowToExample(row: CatalogRow): SymplecticExample {
-  return {
-    id: idFromLabel(row.label),
-    label: row.label,
-    status: row.status,
-    coefflistf: cyclotomicProduct(row.alpha),
-    coefflistg: cyclotomicProduct(row.beta),
-    gamma: TBT,
-    gammaName: 'TBT',
-    powerIter: 30,
-    alpha: display(row.alpha),
-    beta: display(row.beta),
-  };
+  return { id: idFromLabel(row.label), label: row.label, status: row.status, alpha: row.alpha, beta: row.beta };
 }
 
 /** The full BDN catalog as ready-to-use examples (88 groups, paper order). */
 export const CATALOG_EXAMPLES: readonly SymplecticExample[] = CATALOG.map(rowToExample);
 
-// ─── Curated subset (with reference |λ_max|) ────────────────────────────────
-// Used by the sp6-limit-sets and c32 demos. Coefflists are stored directly (the
-// authoritative data); the α/β strings are display-only (unicode fractions).
+// ─── Featured subset ────────────────────────────────────────────────────────
+// A hand-picked shortlist for the sp6-limit-sets / c32 demos — references into
+// the catalog by label (no data re-stored), with the historical id pinned (the
+// view-preset JSON keys off it) and an optional caption.
 
-export const EXAMPLES: readonly SymplecticExample[] = [
-  {
-    id: 'A1', label: 'A-1', status: 'thin',
-    coefflistf: [1, -6, 15, -20, 15, -6, 1], // (x-1)⁶
-    coefflistg: [1,  6, 15,  20, 15,  6, 1], // (x+1)⁶
-    gamma: TBT, gammaName: 'TBT', powerIter: 30,
-    alpha: '(0, 0, 0, 0, 0, 0)', beta: '(½, ½, ½, ½, ½, ½)',
-    expectedLambdaMax: 29.607,
-  },
-  {
-    id: 'A17', label: 'A-17', status: 'arithmetic',
-    coefflistf: [1, -6, 15, -20, 15, -6, 1], // (x-1)⁶
-    coefflistg: [1,  1,  2,   1,  2,  1, 1], // (x²+x+1)²(x²-x+1)
-    gamma: TBT, gammaName: 'TBT', powerIter: 30,
-    alpha: '(0, 0, 0, 0, 0, 0)', beta: '(⅓, ⅓, ⅔, ⅔, ⅙, ⅚)',
-    expectedLambdaMax: 16.607,
-  },
-  {
-    id: 'c2', label: 'C-2', status: 'thin',
-    coefflistf: [1, -3, 3, -2, 3, -3, 1],
-    coefflistg: [1,  4, 7,  8, 7,  4, 1],
-    gamma: TBT, gammaName: 'TBT', powerIter: 30,
-    alpha: '(0, 0, 0, 0, ⅓, ⅔)', beta: '(½, ½, ½, ½, ¼, ¾)',
-    expectedLambdaMax: 17.221,
-  },
-  {
-    id: 'c32', label: 'C-32', status: 'open',
-    coefflistf: [1, -5, 11, -14, 11, -5, 1],
-    coefflistg: [1,  0,  0,   0,  0,  0, 1],
-    gamma: TBT, gammaName: 'TBT', powerIter: 30,
-    alpha: '(0, 0, 0, 0, ⅙, ⅚)', beta: '(¼, ¾, 1/12, 5/12, 7/12, 11/12)',
-    expectedLambdaMax: 12.035,
-  },
-  {
-    id: 'c47', label: 'C-47', status: 'arithmetic',
-    coefflistf: [1, -1, 0,  0, 0, -1, 1],
-    coefflistg: [1,  4, 8, 10, 8,  4, 1],
-    gamma: TBT, gammaName: 'TBT', powerIter: 30,
-    alpha: '(0, 0, ⅕, ⅖, ⅗, ⅘)', beta: '(½, ½, ⅓, ⅓, ⅔, ⅔)',
-    expectedLambdaMax: 12.225,
-  },
-  {
-    id: 'c55', label: 'C-55', status: 'arithmetic',
-    coefflistf: [1, -2, 1,  0, 1, -2, 1],
-    coefflistg: [1,  2, 0, -2, 0,  2, 1],
-    gamma: TBT, gammaName: 'TBT', powerIter: 30,
-    alpha: '(0, 0, ⅛, ⅜, ⅝, ⅞)', beta: '(½, ½, 1/12, 5/12, 7/12, 11/12)',
-    expectedLambdaMax: 10.142,
-  },
-];
+interface FeaturedSpec { label: string; id?: string; caption?: string; }
 
-/** Look up a curated example by id. */
+function featured(specs: readonly FeaturedSpec[]): readonly SymplecticExample[] {
+  return specs.map((spec) => {
+    const row = CATALOG_EXAMPLES.find((e) => e.label === spec.label);
+    if (!row) throw new Error(`featured: no catalog group labelled ${spec.label}`);
+    return { ...row, id: spec.id ?? row.id, caption: spec.caption };
+  });
+}
+
+export const EXAMPLES: readonly SymplecticExample[] = featured([
+  { label: 'A-1' },
+  { label: 'A-17' },
+  { label: 'C-2',  id: 'c2' },
+  { label: 'C-32', id: 'c32', caption: 'open case · hull-overlay demo' },
+  { label: 'C-47', id: 'c47' },
+  { label: 'C-55', id: 'c55' },
+]);
+
+/** Look up a featured example by id. */
 export function exampleById(id: string): SymplecticExample {
   const ex = EXAMPLES.find((e) => e.id === id);
   if (!ex) throw new Error(`unknown sp6 example id: ${id}`);

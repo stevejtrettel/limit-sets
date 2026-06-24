@@ -14,6 +14,15 @@
  */
 
 import { type Mat, mat } from '../../../core/matrix.ts';
+import { seedFromLoxodromic, type Seed } from '../../../core/seed.ts';
+import type { GroupAction } from '../../../core/group.ts';
+
+/** Limit-set basepoint for an RP³ pair group: the attracting fixed point of the
+ *  shortest CERTIFIED loxodromic word (Phase-7 uniform auto-seeding). Replaces
+ *  the old fixed-γ seeding. */
+export function seedRP3(action: GroupAction): Seed {
+  return seedFromLoxodromic(action, { labels: ['A', 'A⁻¹', 'B', 'B⁻¹'] });
+}
 
 /** A hand-picked named chart π(v) = (rowX·v, rowY·v, rowZ·v)/(denom·v), stored
  *  as data (not a fitted object). */
@@ -34,10 +43,6 @@ export interface RP3Example {
   generators: readonly Mat[];
   /** True if every generator is an involution. */
   involutions: boolean;
-  /** Loxodromic γ word (apply-order generator codes). */
-  gamma: readonly number[];
-  gammaName: string;
-  powerIter: number;
   /** Named hand-picked charts attached to this example. */
   customCharts?: readonly CustomChart[];
 }
@@ -85,9 +90,6 @@ export const EXAMPLES: readonly RP3Example[] = [
       'with eigenvalues {1, 1, s, 1/s}, so γ = B drives power-iteration to its 1/s-eigenline.',
     generators: [A_PAIR1, B_PAIR1],
     involutions: false,
-    gamma:     [2], // code 2 = B (codes 0=A, 1=A⁻¹, 2=B, 3=B⁻¹)
-    gammaName: 'B',
-    powerIter: 80,
     customCharts: [FABI_CHART],
   },
 ];

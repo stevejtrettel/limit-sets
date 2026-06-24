@@ -24,16 +24,14 @@ import { buildLimitSetMesh } from '@/app/limitSetMesh';
 import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
 import {
-  EXAMPLES, exampleById, type RP3Example,
+  EXAMPLES, exampleById, seedRP3, type RP3Example,
 } from '@/examples/projective/rp3-pairs/data';
 import { validateAllExamples } from '@/examples/projective/rp3-pairs/validate';
 import { paletteForScheme } from '@/examples/projective/rp3-pairs/palette';
 import type { ViewPreset } from '@/examples/projective/rp3-pairs/viewPreset';
 import { makeMatrixAction, asInvolutions, pairWithInverses } from '@/core/matrixAction';
 import type { GroupAction } from '@/core/group';
-import {
-  computeProximalBasepoint, generateOrbit, type Orbit,
-} from '@/core/orbit';
+import { generateOrbit, type Orbit } from '@/core/orbit';
 import {
   type ChartEmbedding,
   fitPCAChartEmbedding, fitAutoChartEmbedding, makeChartFromData,
@@ -68,6 +66,7 @@ let currentMesh: THREE.Mesh | null = null;
 let depth = DEFAULT_DEPTH;
 let colorDepth = 0;
 let stats = { kept: 0, totalWords: 0 };
+let currentSeedName = '';
 
 function loadExample(id: string): void {
   currentExample = exampleById(id);
@@ -76,12 +75,12 @@ function loadExample(id: string): void {
       ? asInvolutions(currentExample.generators)
       : pairWithInverses(currentExample.generators),
   );
-  const r = computeProximalBasepoint(
-    currentAction, currentExample.gamma, currentExample.powerIter);
-  currentBasepoint = r.basepoint;
+  const s = seedRP3(currentAction);
+  currentBasepoint = s.basepoint;
+  currentSeedName = s.name;
   console.log(
-    `[sl4r-${currentExample.id}] loaded: |λ_max(${currentExample.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, ` +
-    `drift = ${r.drift.toFixed(4)}`,
+    `[sl4r-${currentExample.id}] loaded: γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, ` +
+    `drift = ${s.drift.toFixed(4)}`,
   );
 }
 
@@ -280,7 +279,7 @@ function updateUI(): void {
   modeEl.text(`view: ${currentProj.pretty}`);
   exMeta.html(
     `${currentExample.description}<br>` +
-    `γ = ${currentExample.gammaName}`,
+    `γ = ${currentSeedName}`,
   );
 }
 

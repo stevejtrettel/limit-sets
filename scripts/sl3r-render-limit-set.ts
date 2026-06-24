@@ -5,12 +5,11 @@
  *   node scripts/sl3r-render-limit-set.ts tri-334-d1.0 16 --embedding plane
  */
 import { runRender } from './renderDriver.ts';
-import { EXAMPLES, type MatrixGroupExample } from '../src/examples/projective/triangle-groups/data.ts';
+import { EXAMPLES, seedTriangle, type MatrixGroupExample } from '../src/examples/projective/triangle-groups/data.ts';
 import { makeMatrixAction, asInvolutions, pairWithInverses } from '../src/core/matrixAction.ts';
 import { sphereEmbedding, planeEmbedding } from '../src/examples/projective/triangle-groups/embeddings.ts';
 import { paletteForScheme } from '../src/examples/projective/triangle-groups/palette.ts';
 import type { ViewPreset } from '../src/examples/projective/triangle-groups/viewPreset.ts';
-import { computeProximalBasepoint } from '../src/core/orbit.ts';
 
 const flagVal = (n: string): string | null => {
   const i = process.argv.indexOf(n);
@@ -25,9 +24,9 @@ await runRender<MatrixGroupExample>({
   exampleId: (e) => e.id,
   banner: (e) => `${e.label} [${e.id}]`,
   makeAction: (e) => makeMatrixAction(e.involutions ? asInvolutions(e.generators) : pairWithInverses(e.generators)),
-  findSeed: (action, e) => {
-    const bp = computeProximalBasepoint(action, e.gamma, e.powerIter);
-    return { basepoint: bp.basepoint, note: `|λ_max(${e.gammaName})| ≈ ${bp.lambdaMax.toFixed(3)}, drift = ${bp.drift.toFixed(4)}` };
+  findSeed: (action) => {
+    const s = seedTriangle(action);
+    return { basepoint: s.basepoint, note: `γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, drift = ${s.drift.toFixed(4)}` };
   },
   paletteForScheme,
   variant: (_e, preset) => (preset as unknown as ViewPreset | null)?.embedding ?? EMBEDDING,

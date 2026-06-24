@@ -18,14 +18,14 @@ import { buildLimitSetMesh } from '@/app/limitSetMesh';
 import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
 import {
-  EXAMPLES, exampleById, symplecticAction, type SymplecticExample,
+  EXAMPLES, exampleById, symplecticAction, seedSymplectic, type SymplecticExample,
 } from '@/examples/hypergeometric/degree6-symplectic';
 import { validateAllSymplectic } from '@/examples/hypergeometric/validate';
 import { paletteForSymplectic as paletteForScheme } from '@/examples/hypergeometric/palette';
 import type { ViewPreset } from '@/examples/hypergeometric/viewPreset';
 import type { GroupAction } from '@/core/group';
 import {
-  computeProximalBasepoint, generateOrbit, type Orbit,
+  generateOrbit, type Orbit,
 } from '@/core/orbit';
 import {
   type ChartEmbedding,
@@ -55,15 +55,17 @@ let currentMesh: THREE.Mesh | null = null;
 let depth = DEFAULT_DEPTH;
 let colorDepth = 0;
 let stats = { kept: 0, totalWords: 0 };
+let currentSeedName = 'TBT';
 
 function loadExample(id: string): void {
   currentExample = exampleById(id);
   currentAction = symplecticAction(currentExample);
-  const r = computeProximalBasepoint(currentAction, currentExample.gamma, currentExample.powerIter);
-  currentBasepoint = r.basepoint;
+  const s = seedSymplectic(currentAction);
+  currentBasepoint = s.basepoint;
+  currentSeedName = s.name;
   console.log(
-    `[sp6-${currentExample.id}] loaded: |λ_max(${currentExample.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}` +
-    `, drift = ${r.drift.toFixed(4)}`,
+    `[sp6-${currentExample.id}] loaded: γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}` +
+    `, drift = ${s.drift.toFixed(4)}`,
   );
 }
 
@@ -243,9 +245,9 @@ function updateUI(): void {
   );
   modeEl.text(`view: ${currentProj.pretty}`);
   exMeta.html(
-    `α = ${currentExample.alpha}<br>` +
-    `β = ${currentExample.beta}<br>` +
-    `γ = ${currentExample.gammaName}`,
+    `α = (${currentExample.alpha.join(', ')})<br>` +
+    `β = (${currentExample.beta.join(', ')})<br>` +
+    `γ = ${currentSeedName}`,
   );
 }
 
