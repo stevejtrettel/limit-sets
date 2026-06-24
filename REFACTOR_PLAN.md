@@ -576,47 +576,72 @@ core-only.
 
 ## 9. Sequencing (each phase ends green)
 
-- **Phase 0 — Core foundations (no consumer touched).** Add `core/matrix.ts`,
-  `core/matrixAction.ts`, `core/polynomial.ts`; rename `loxodromic.ts`→`seed.ts` with a
-  temporary re-export shim; generalize `core/viewPreset.ts`. Land the parity harness
-  (§6.1). Nothing imports the new modules yet. ✔ build + existing validators pass.
-- **Phase 1 — Prove the pattern on the simplest family (triangle groups / sl3r).**
-  Stand up `examples/projective/triangle-groups` + shared validator; migrate its 2 (well,
-  4 incl. schwartz-pappus) consumers; run action parity (§6.2) + render spot-check; delete
-  old `sl3r/` once green. ✔
-- **Phase 2 — Hypergeometric (o5 + sp6), the high-value merge.** Build
-  `examples/hypergeometric/` (recipe + two catalogs + unified validator); retarget
-  `gen-o5-catalog.ts`; migrate all 10 consumers; run polynomial + action + spectrum parity
-  + view-preset regression; carefully re-verify c32. Delete `o5/`, `sp6/`. ✔
-- **Phase 3 — Projective RP³ (sl4r) + james-marit.** Move `pair1.ts` into the library;
-  migrate 6 consumers; parity + spot-check; delete `sl4r/`. ✔
-- **Phase 4 — Kleinian (sl2c).** Mechanical relocation; migrate 2 consumers. Delete
-  `sl2c/`. (Complex loxodromic seeding deferred as a tracked follow-up.) ✔
-- **Phase 5 — Schwartz-Pappus rewire.** Re-point to `core/matrix`; run `validatePappus`;
-  migrate marked-boxes import paths. Delete old dir + the `core/seed` re-export shim. ✔
-- **Phase 6 — Cleanup.** Resolve palette placement; collapse `embeddings.ts` wrappers into
-  core chart constructors where possible; remove dead code; update `@/` notes, README, and
-  any developer docs describing the layout.
+Status markers: ✅ done · ◻ pending. Through the structural phases (1–5) the example
+*types* ride along unchanged so each is a **pure structural move** verified by bit-exact
+parity; the example-format + seeding redesign that *changes* those types is isolated to a
+single late phase (Phase 7, §12).
 
-Rollback at any phase = the old family dir still exists until its parity gate passes, so a
-failed phase reverts by not deleting.
+- **Phase 0 — Core foundations (no consumer touched).** ✅ `core/matrix.ts`,
+  `core/matrixAction.ts`, `core/polynomial.ts` added; `loxodromic.ts`→`seed.ts` + shim;
+  `core/viewPreset.ts` generalized; `scripts/parity/action-parity.ts` lands. Bit-identical
+  across o5/sp6/sl3r.
+- **Phase 1 — Triangle groups (sl3r → `examples/projective/triangle-groups`).** ✅
+  `data.ts`/`embeddings.ts`/`palette.ts`/`validate.ts`/`viewPreset.ts` built on core;
+  `sl3r-limit-sets` demo + render script migrated; bit-identical parity (apply + seed).
+  **`src/sl3r/` NOT deleted** — schwartz-pappus still depends on it (deletion deferred to
+  Phase 5).
+- **Phase 2 — Hypergeometric (o5 + sp6), split into reviewable check-ins:**
+  - **2a — o5 (degree-5 orthogonal).** ✅ `examples/hypergeometric/` recipe + generated
+    `degree5-orthogonal.ts` + validate + palette + viewPreset; `gen-o5-catalog.ts`
+    retargeted; all 5 o5 consumers migrated; bit-identical across all 77 groups.
+  - **2b — sp6 (degree-6 symplectic).** ✅ `degree6-symplectic.ts` (88 catalog + 6 curated)
+    + `symplecticAction` adapter + symplectic validator; palette matched; `sp6-explorer`,
+    `sp6-limit-sets`, `sp6-render` migrated; bit-identical across 88 + 6.
+  - **2c — c32 family + dir deletion.** ⏸ DEFERRED (user's call). The c32/sp6-c32 demos
+    + hull scripts are bespoke, actively-developed work; the user will first decide which
+    c32 variants to keep, then migrate. `src/o5/` and `src/sp6/` stay in place meanwhile —
+    harmless (all demos build), still imported only by the c32 family + parity tests. The
+    o5/sp6 dir deletion waits on this.
+- **Phase 3 — Projective RP³ (sl4r) + james-marit.** ◻ Move `pair1.ts` into the library;
+  migrate 6 consumers; parity + spot-check; delete `sl4r/`.
+- **Phase 4 — Kleinian (sl2c).** ◻ Mechanical relocation; migrate 2 consumers. Delete
+  `sl2c/`. (Complex loxodromic seeding deferred to Phase 7.)
+- **Phase 5 — Schwartz-Pappus rewire + sl3r teardown.** ◻ Re-point `matrices.ts`/
+  `validate.ts` to `core/matrix`; migrate the schwartz-pappus demo+script off
+  `makeMat3Action`/sl3r embeddings; migrate marked-boxes import paths; run `validatePappus`.
+  **Then delete `src/sl3r/`** (last family dir) and the `core/loxodromic`/`sp6/hypergeometric`
+  shims.
+- **Phase 6 — Structural cleanup.** ◻ Resolve palette placement; collapse `embeddings.ts`
+  wrappers into core chart constructors where possible; remove dead code; update `@/` notes,
+  README, developer docs.
+- **Phase 7 — Example format & seeding redesign (§12).** ◻ The one *type-changing,
+  picture-affecting* pass, done across ALL families at once: featured = ref + caption,
+  uniform auto-seeding via the loxodromic machinery, drop derived fields. Verified by
+  before/after spot-checks, NOT bit-parity.
+
+Rollback at any structural phase = the old family dir still exists until its parity gate
+passes, so a failed phase reverts by not deleting.
 
 ---
 
-## 10. Open decisions (need a ruling before/within the relevant phase)
+## 10. Open decisions
 
 1. **Palette home** (§2): beside each catalog (`examples/<cat>/palette.ts`) vs a shared
-   `app/palettes.ts`. Default: beside catalog; revisit if duplication is annoying.
-2. **`examples/projective/` grouping**: one dir with `triangle-groups/` + `rp3-pairs/`
-   subdirs (proposed) vs two sibling dirs `triangle-groups/` and `rp3-pairs/`. Cosmetic.
-3. **Curated sp6 examples**: fold the 6 hand-curated rows into the 88-row symplectic
-   catalog (proposed, with `expectedLambdaMax`/`seedWord` on those rows) vs keep a separate
-   small curated list. Affects whether `sp6-limit-sets` reads catalog or a curated subset.
-4. **Per-row generating sets**: the walk menu currently lives on the recipe and a default
-   on the catalog. If a single atlas ever needs a walk the others don't, promote `walk`
-   (or a `seedWord`) to the row. Deferred until a concrete case appears.
-5. **Complex loxodromic seeding for kleinian** (§4.3): schedule as a follow-up task, or do
-   it within Phase 4? Proposed: follow-up (keeps the structural refactor clean).
+   `app/palettes.ts`. Default: beside catalog; revisit in Phase 6. ◻ open.
+2. **`examples/projective/` grouping**: `triangle-groups/` + `rp3-pairs/` subdirs vs siblings.
+   Cosmetic, decide in Phase 3. ◻ open.
+3. **Curated/featured example format** — ✅ RESOLVED (see §12): featured = a `ref` to a
+   catalog id (inline α/β only for true one-offs) + optional caption; `coefflists`,
+   unicode `alpha/beta` display, and `expectedLambdaMax` are all dropped (derived /
+   self-snapshot). Applied in Phase 7, not now.
+4. **Seeding strategy** — ✅ RESOLVED (see §12): uniform auto-seed via the loxodromic
+   machinery is the default for every real family; `seedWord?` survives only as a per-row
+   override (sl2c until complex seeding lands; parabolic fallbacks). No stored `gamma` /
+   family seed constant. Applied in Phase 7.
+5. **Per-row generating sets**: walk menu on the recipe, default on the catalog; promote
+   `walk` to a row only if a concrete case appears. ◻ deferred.
+6. **Complex loxodromic seeding for kleinian** (§4.3): ✅ scheduled as part of Phase 7
+   (needs `complexDominantCriterion` + a complex power-iteration step).
 
 ---
 
@@ -631,4 +656,62 @@ failed phase reverts by not deleting.
 - On-disk view-preset JSON shape, group tags, and example `id` strings (§5.3).
 - `schwartz-pappus/box.ts` and `core/subdivision.ts` — the subdivision construction is a
   genuinely different (non-matrix-group) object and stays separate.
+
+---
+
+## 12. Phase 7 — Example format & seeding redesign (decided design)
+
+The structural phases (1–5) deliberately keep each family's example *type* intact so they
+stay pure, bit-identical moves. This phase — run ONCE across all families after the
+structural migration lands — is the single type-changing, picture-affecting pass. It is
+verified by **before/after visual spot-checks, not bit-parity** (the basepoint changes on
+purpose).
+
+### Why (the field audit)
+
+A curated example today stores almost nothing irreducible. For the symplectic curated set
+we verified:
+- `coefflistf/g` = `cyclotomicProduct(α, β)` — derived.
+- `alpha/beta` (unicode) = a display-only duplicate of the catalog's parseable α/β.
+- `expectedLambdaMax` = `|λ_max(γ=TBT)|`, equal to the digit to what the code computes —
+  a self-snapshot with **no independent source** (confirmed: not in the BDN paper). The
+  bit-exact parity gates already guard regressions far better.
+- `gamma`/`gammaName`/`powerIter` = `TBT`/`30` for ALL 88 — a family fact, not per-row.
+- Only the catalog **id** (+ an optional human caption) is irreducible.
+
+### Target shapes
+
+**Featured/curated list** = hand-picked refs + presentation, nothing re-stored:
+```ts
+export const FEATURED = [
+  'A-1', 'A-17', 'C-2',
+  { ref: 'C-32', caption: 'open case · hull-overlay demo' },
+  'C-47', 'C-55',
+];
+```
+Resolve `ref` → catalog row → action via the family recipe. Inline `{ alpha, beta }` is the
+escape hatch for a one-off not in any catalog. Same `FEATURED` pattern for every family
+(sl2c's 7, sl4r's pairs, sl3r's set).
+
+**Seeding** = an ability applied to the action, not stored data. Default: auto-search a
+certified loxodromic word (`seedFromLoxodromic`) and power-iterate to its fixed point —
+*more* rigorous than the trusted hand words. Strategy with override:
+```ts
+function seedFor(action, example, family) {
+  if (example.seedWord) return computeProximalBasepoint(action, example.seedWord, iters); // override
+  return seedFromLoxodromic(action, { fallbackWord: family.fallbackWord, ... });           // default
+}
+```
+- `seedWord?` survives only as a per-row override: **sl2c** (until complex seeding is wired
+  — also in this phase), and any group wanting a specific point.
+- `fallbackWord` is the only family-level seed knob (e.g. o5's parabolic `TB` for the
+  near-MUM cases; finite groups seed to nothing and draw nothing).
+
+### Consequence
+
+Drop from every example type: `coefflistf/g`, unicode `alpha/beta`, `expectedLambdaMax`,
+per-row `gamma`/`gammaName`/`powerIter`. The basepoint shifts for the formerly hand-seeded
+families (symplectic, triangle, sl4r) — **same limit set, different finite-depth sampling**
+— so this is gated on a visual spot-check per family, with the old word available as a
+`seedWord` override if an exact historical framing must be reproduced.
 ```

@@ -28,13 +28,13 @@ export const orthogonalPalette: Palette = [
 
 export const paletteForOrthogonal = makePaletteSelector(orthogonalPalette, grayscalePalette);
 
-/** Symplectic (free): A = red, A⁻¹ = amber, B = blue, B⁻¹ = teal. */
+/** Symplectic (free): A = warm red, A⁻¹ = warm amber, B = cool blue, B⁻¹ = cool teal. */
 export const symplecticPalette: Palette = [
-  [0.95, 0.95, 0.95], // 0: basepoint
-  [0.75, 0.20, 0.20], // 1: A   — red
-  [0.85, 0.55, 0.10], // 2: A⁻¹ — amber
-  [0.20, 0.35, 0.75], // 3: B   — blue
-  [0.10, 0.55, 0.55], // 4: B⁻¹ — teal
+  [0.95, 0.95, 0.95], // 0: basepoint / uncategorized
+  [0.65, 0.20, 0.15], // 1: A   — warm red
+  [0.70, 0.40, 0.10], // 2: A⁻¹ — warm amber
+  [0.10, 0.20, 0.55], // 3: B   — cool blue
+  [0.10, 0.40, 0.55], // 4: B⁻¹ — cool teal
 ];
 
 export const paletteForSymplectic = makePaletteSelector(symplecticPalette, grayscalePalette);

@@ -16,8 +16,9 @@
  */
 
 import { cyclotomicProduct } from '../../core/polynomial.ts';
-import { hypergeometricAction, WALK_LABELS, WALK_FALLBACK, type Walk } from './recipe.ts';
+import { hypergeometricAction, hypergeometricActionFromCoeffs, WALK_LABELS, WALK_FALLBACK, type Walk } from './recipe.ts';
 import { seedFromLoxodromic } from '../../core/seed.ts';
+import { computeProximalBasepoint } from '../../core/orbit.ts';
 import { runValidation } from '../../core/validation.ts';
 
 export interface HyperExampleLike {
@@ -121,5 +122,79 @@ export function validateAllOrthogonal(examples: readonly HyperExampleLike[]): Va
   return runValidation('hypergeometric/o5', examples.map(validateOrthogonalExample), {
     idOf: (r) => r.example.label,
     summaryOf: (r) => `γ=${r.gammaName.padEnd(8)} λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`,
+  });
+}
+
+// ─── Degree-6 symplectic ─────────────────────────────────────────────────────
+// The curated symplectic examples store coefficient lists (not parseable
+// rotation tuples) and a hand-picked loxodromic γ, so they validate from the
+// coefflists + γ directly (not via cyclotomicProduct or a loxodromic search).
+
+export interface SymplecticExampleLike {
+  id: string;
+  label: string;
+  status: string;
+  coefflistf: readonly number[];
+  coefflistg: readonly number[];
+  gamma: readonly number[];
+  gammaName: string;
+  powerIter: number;
+  expectedLambdaMax?: number;
+}
+
+export interface SymplecticValidationResult {
+  example: SymplecticExampleLike;
+  passed: boolean;
+  errors: string[];
+  warnings: string[];
+  lambdaMax: number;
+  drift: number;
+}
+
+function symplecticStructural(ex: SymplecticExampleLike, errors: string[]): void {
+  const checks: [string, readonly number[]][] = [['coefflistf', ex.coefflistf], ['coefflistg', ex.coefflistg]];
+  for (const [name, c] of checks) {
+    if (c.length !== 7) { errors.push(`${name} has length ${c.length}, expected 7`); continue; }
+    if (c[0] !== 1) errors.push(`${name}[0] = ${c[0]}, expected 1`);
+    if (c[6] !== 1) errors.push(`${name}[6] = ${c[6]}, expected 1`);
+    for (let i = 0; i < 4; i++) {
+      if (c[i] !== c[6 - i]) errors.push(`${name} not palindromic: [${i}]=${c[i]}, [${6 - i}]=${c[6 - i]}`);
+    }
+    for (let i = 0; i < 7; i++) {
+      if (!Number.isInteger(c[i])) errors.push(`${name}[${i}] = ${c[i]} is not integer`);
+    }
+  }
+}
+
+export function validateSymplecticExample(ex: SymplecticExampleLike): SymplecticValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  symplecticStructural(ex, errors);
+
+  let lambdaMax = NaN, drift = NaN;
+  if (errors.length === 0) {
+    const action = hypergeometricActionFromCoeffs(ex.coefflistf, ex.coefflistg, 'free');
+    const r = computeProximalBasepoint(action, ex.gamma, ex.powerIter);
+    lambdaMax = r.lambdaMax;
+    drift = r.drift;
+    if (!Number.isFinite(lambdaMax) || lambdaMax === 0) {
+      errors.push(`power iteration produced |λ_max| = ${lambdaMax}; γ may be wrong`);
+    } else if (drift > 1e-2 && Math.abs(drift - 2) > 1e-2) {
+      warnings.push(`drift = ${drift.toFixed(4)} (expected ≈0 or ≈2); γ may not be loxodromic`);
+    }
+    if (ex.expectedLambdaMax !== undefined) {
+      const rel = Math.abs(lambdaMax - ex.expectedLambdaMax) / ex.expectedLambdaMax;
+      if (rel > 0.01) warnings.push(`|λ_max| = ${lambdaMax.toFixed(3)}, expected ≈ ${ex.expectedLambdaMax}`);
+    }
+  }
+
+  return { example: ex, passed: errors.length === 0, errors, warnings, lambdaMax, drift };
+}
+
+export function validateAllSymplectic(examples: readonly SymplecticExampleLike[]): SymplecticValidationResult[] {
+  return runValidation('hypergeometric/sp6', examples.map(validateSymplecticExample), {
+    idOf: (r) => r.example.id,
+    summaryOf: (r) => `λ_max=${r.lambdaMax.toFixed(3)}  drift=${r.drift.toFixed(4)}`,
+    padId: 4,
   });
 }

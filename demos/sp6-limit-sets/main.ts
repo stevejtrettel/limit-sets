@@ -18,9 +18,11 @@ import { buildLimitSetMesh } from '@/app/limitSetMesh';
 import { cameraSpecFromApp, viewportFromApp, saveViewPreset } from '@/app/viewExport';
 
 import {
-  EXAMPLES, exampleById, type Sp6Example,
-} from '@/sp6/examples';
-import { makeSp6Action } from '@/sp6/action';
+  EXAMPLES, exampleById, symplecticAction, type SymplecticExample,
+} from '@/examples/hypergeometric/degree6-symplectic';
+import { validateAllSymplectic } from '@/examples/hypergeometric/validate';
+import { paletteForSymplectic as paletteForScheme } from '@/examples/hypergeometric/palette';
+import type { ViewPreset } from '@/examples/hypergeometric/viewPreset';
 import type { GroupAction } from '@/core/group';
 import {
   computeProximalBasepoint, generateOrbit, type Orbit,
@@ -29,12 +31,9 @@ import {
   type ChartEmbedding,
   fitPCAChartEmbedding, fitAutoChartEmbedding,
 } from '@/core/chart';
-import { validateAllExamples } from '@/sp6/validate';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
-import { paletteForScheme } from '@/sp6/palettes.ts';
-import type { ViewPreset } from '@/sp6/viewPreset.ts';
 
-validateAllExamples(EXAMPLES);
+validateAllSymplectic(EXAMPLES);
 
 const app = new App({ antialias: true });
 app.scene.background = new THREE.Color(0xf2f2f2);
@@ -47,7 +46,7 @@ const DEFAULT_RADIUS = 0.025;
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
-let currentExample!:   Sp6Example;
+let currentExample!:   SymplecticExample;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentOrbit!:     Orbit;
@@ -59,7 +58,7 @@ let stats = { kept: 0, totalWords: 0 };
 
 function loadExample(id: string): void {
   currentExample = exampleById(id);
-  currentAction = makeSp6Action(currentExample);
+  currentAction = symplecticAction(currentExample);
   const r = computeProximalBasepoint(currentAction, currentExample.gamma, currentExample.powerIter);
   currentBasepoint = r.basepoint;
   console.log(

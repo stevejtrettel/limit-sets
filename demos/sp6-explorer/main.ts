@@ -22,10 +22,11 @@ import { ControlPanel } from '@/app/ControlPanel';
 import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpheres';
 import { autofitCamera } from '@/app/autofit';
 
-import { CATALOG_EXAMPLES } from '@/sp6/catalog';
-import type { Sp6Example } from '@/sp6/examples';
-import { validateExample } from '@/sp6/validate';
-import { makeSp6Action } from '@/sp6/action';
+import {
+  CATALOG_EXAMPLES, symplecticAction, type SymplecticExample,
+} from '@/examples/hypergeometric/degree6-symplectic';
+import { validateSymplecticExample } from '@/examples/hypergeometric/validate';
+import { paletteForSymplectic as paletteForScheme } from '@/examples/hypergeometric/palette';
 import type { GroupAction } from '@/core/group';
 import { computeProximalBasepoint, generateOrbit, type Orbit } from '@/core/orbit';
 import {
@@ -33,7 +34,6 @@ import {
 } from '@/core/chart';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
 import { buildOrbitInstances } from '@/render/orbitInstances.ts';
-import { paletteForScheme } from '@/sp6/palettes.ts';
 
 const app = new App({ antialias: true });
 app.scene.background = new THREE.Color(0xf2f2f2);
@@ -51,7 +51,7 @@ const DEFAULT_RADIUS = 0.025;
 const byId = new Map(CATALOG_EXAMPLES.map((e) => [e.id, e]));
 
 let family: Family = DEFAULT_FAMILY;
-let currentExample!:   Sp6Example;
+let currentExample!:   SymplecticExample;
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentLambda = NaN;
@@ -63,7 +63,7 @@ let colorDepth = 0;
 let stats = { kept: 0, totalWords: 0 };
 
 /** Catalog groups in the active family, in catalog order. */
-function groupsInFamily(f: Family): Sp6Example[] {
+function groupsInFamily(f: Family): SymplecticExample[] {
   return f === 'all' ? [...CATALOG_EXAMPLES] : CATALOG_EXAMPLES.filter((e) => e.status === f);
 }
 
@@ -71,10 +71,10 @@ function loadExample(id: string): void {
   const ex = byId.get(id);
   if (!ex) throw new Error(`unknown catalog group id: ${id}`);
   currentExample = ex;
-  currentAction = makeSp6Action(ex);
+  currentAction = symplecticAction(ex);
 
   // Lazy validation: structural + dynamical, on selection only. Warn, don't throw.
-  const v = validateExample(ex);
+  const v = validateSymplecticExample(ex);
   for (const w of v.warnings) console.warn(`[sp6-explorer ${ex.label}] ⚠ ${w}`);
   if (!v.passed) console.error(`[sp6-explorer ${ex.label}] ✗ ${v.errors.join('; ')}`);
 
@@ -173,12 +173,12 @@ const selGroup = groupFolder.select({
 });
 
 /** Dropdown label for a group: "A-1 — thin" in 'all', else just "A-1". */
-function groupOption(e: Sp6Example): { value: string; label: string } {
+function groupOption(e: SymplecticExample): { value: string; label: string } {
   return { value: e.id, label: family === 'all' ? `${e.label} — ${e.status}` : e.label };
 }
 
 /** Which <optgroup> a row belongs to — by source table (paper structure). */
-function tableHeader(e: Sp6Example): string {
+function tableHeader(e: SymplecticExample): string {
   if (e.status === 'open') return 'Table 3 · open (unclassified)';
   return e.label.startsWith('A-')
     ? 'Table 1 · maximally unipotent (α = 0)'

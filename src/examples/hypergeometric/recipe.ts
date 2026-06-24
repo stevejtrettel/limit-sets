@@ -66,6 +66,16 @@ export function companionPairAlphabet(A: Mat, B: Mat, walk: Walk): Alphabet {
   return generatingSet([{ M: T, involution: true }, { M: B }]);
 }
 
+/** The GroupAction for the companion pair (A, B) directly from their polynomial
+ *  coefficient lists (high-degree-first, leading 1). Use when the integer
+ *  polynomials are the authoritative data — e.g. the curated symplectic examples
+ *  store coefflists rather than parseable rotation tuples. */
+export function hypergeometricActionFromCoeffs(
+  coefflistf: readonly number[], coefflistg: readonly number[], walk: Walk = 'free',
+): GroupAction {
+  return makeMatrixAction(companionPairAlphabet(companion(coefflistf), companion(coefflistg), walk));
+}
+
 /** The GroupAction for one hypergeometric group, given its rotation tuples and
  *  the generating set to walk. */
 export function hypergeometricAction(
