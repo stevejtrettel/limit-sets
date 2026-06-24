@@ -50,9 +50,10 @@ import {
   makeIntegerDeposit, makeTentSplatDeposit,
 } from '../src/render/splat.ts';
 
-import { makeMat4Action, type Mat4R } from '../src/sl4r/action.ts';
-import { embeddingFromPreset } from '../src/sl4r/embedding.ts';
-import { paletteForScheme } from '../src/sl4r/palettes.ts';
+import { makeMatrixAction, pairWithInverses } from '../src/core/matrixAction.ts';
+import { mat } from '../src/core/matrix.ts';
+import { embeddingFromPreset } from '../src/core/viewPreset.ts';
+import { paletteForScheme } from '../src/examples/james-marit/palette.ts';
 
 import type { GroupAction } from '../src/core/group.ts';
 import {
@@ -62,7 +63,7 @@ import {
 } from '../src/core/orbit.ts';
 import { type Projector } from '../src/core/scene.ts';
 import { makePresetProjector } from '../src/core/projector.ts';
-import type { JMViewPreset, JMRenderMode } from '../demos/james-marit-new/viewPreset.ts';
+import type { JMViewPreset, JMRenderMode } from '../demos/james-marit/viewPreset.ts';
 
 // ─── Defaults ──────────────────────────────────────────────────────────────
 
@@ -433,10 +434,8 @@ if (!FORCE_REFRESH && existsSync(cachePath)) {
 
 if (!loadedFromCache) {
   log('Computing proximal basepoint...');
-  const generators = VIEW_PRESET.generators.map(
-    (m) => m.map((row: readonly number[]) => [...row]) as unknown as Mat4R,
-  );
-  const action = makeMat4Action(generators, { involutions: VIEW_PRESET.involutions });
+  const generators = VIEW_PRESET.generators.map((m) => mat(m as unknown as number[][]));
+  const action = makeMatrixAction(pairWithInverses(generators));
   const bp = computeProximalBasepoint(action, VIEW_PRESET.gamma, VIEW_PRESET.powerIter);
   log(`Proximal basepoint: |λ_max(${VIEW_PRESET.gammaName})| ≈ ${bp.lambdaMax.toFixed(3)}, ` +
       `drift = ${bp.drift.toFixed(4)}`);

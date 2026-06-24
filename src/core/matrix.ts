@@ -72,6 +72,21 @@ export function matTrace(M: Mat): number {
   return t;
 }
 
+/** Scalar multiple s·M. */
+export function matScale(M: Mat, s: number): Mat {
+  const R = new Float64Array(M.length);
+  for (let i = 0; i < M.length; i++) R[i] = s * M[i];
+  return R;
+}
+
+/** Entrywise difference A − B (dimensions assumed equal). */
+export function matSub(A: Mat, B: Mat): Mat {
+  if (A.length !== B.length) throw new Error('matSub: dimension mismatch');
+  const R = new Float64Array(A.length);
+  for (let i = 0; i < A.length; i++) R[i] = A[i] - B[i];
+  return R;
+}
+
 /** Determinant via Gaussian elimination with partial pivoting. */
 export function matDet(M: Mat): number {
   const n = matDim(M);
