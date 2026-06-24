@@ -7,7 +7,7 @@
 import { runRender } from './renderDriver.ts';
 import { EXAMPLES, seedTriangle, type MatrixGroupExample } from '../src/examples/projective/triangle-groups/data.ts';
 import { makeMatrixAction, asInvolutions, pairWithInverses } from '../src/core/matrixAction.ts';
-import { sphereEmbedding, planeEmbedding } from '../src/examples/projective/triangle-groups/embeddings.ts';
+import { sphereEmbedding, planeEmbedding } from '../src/examples/projective/rp2.ts';
 import { paletteForScheme } from '../src/examples/projective/triangle-groups/palette.ts';
 import type { ViewPreset } from '../src/examples/projective/triangle-groups/viewPreset.ts';
 

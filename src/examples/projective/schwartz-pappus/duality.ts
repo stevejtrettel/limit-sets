@@ -63,7 +63,6 @@ function brent(
   if (Math.abs(fa) < Math.abs(fb)) { [a, b] = [b, a]; [fa, fb] = [fb, fa]; }
   let c = a, fc = fa;
   let d = b - a;
-  let e = d;
   let mflag = true;
 
   for (let iter = 0; iter < maxIter; iter++) {

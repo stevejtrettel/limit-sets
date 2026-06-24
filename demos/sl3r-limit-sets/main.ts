@@ -31,7 +31,7 @@ import type { SceneEmbedding } from '@/core/scene';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
 
 import { makeMatrixAction, asInvolutions, pairWithInverses } from '@/core/matrixAction';
-import { sphereEmbedding, planeEmbedding } from '@/examples/projective/triangle-groups/embeddings';
+import { sphereEmbedding, planeEmbedding } from '@/examples/projective/rp2';
 import {
   EXAMPLES, exampleById, makeLiveTri334, seedTriangle, type MatrixGroupExample,
 } from '@/examples/projective/triangle-groups/data';

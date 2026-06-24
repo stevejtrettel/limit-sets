@@ -42,9 +42,10 @@ import {
   makeIntegerDeposit, makeTentSplatDeposit,
 } from '../src/render/splat.ts';
 
-import { makeMat3Action, type Mat3R } from '../src/sl3r/action.ts';
-import { sphereEmbedding, planeEmbedding } from '../src/sl3r/embedding.ts';
-import { paletteForScheme } from '../src/sl3r/palettes.ts';
+import { makeMatrixAction, pairWithInverses } from '../src/core/matrixAction.ts';
+import { mat } from '../src/core/matrix.ts';
+import { sphereEmbedding, planeEmbedding } from '../src/examples/projective/rp2.ts';
+import { paletteForScheme } from '../src/examples/projective/schwartz-pappus/palette.ts';
 
 import type { GroupAction } from '../src/core/group.ts';
 import {
@@ -322,10 +323,8 @@ if (!FORCE_REFRESH && existsSync(cachePath)) {
 
 if (!loadedFromCache) {
   log('Computing proximal basepoint...');
-  const generators = VIEW_PRESET.generators.map(
-    (m) => m.map((row: readonly number[]) => [...row]) as unknown as Mat3R,
-  );
-  const action = makeMat3Action(generators, { involutions: VIEW_PRESET.involutions });
+  const generators = VIEW_PRESET.generators.map((m) => mat(m as unknown as number[][]));
+  const action = makeMatrixAction(pairWithInverses(generators));
   const bp = computeProximalBasepoint(action, VIEW_PRESET.gamma, VIEW_PRESET.powerIter);
   log(`Proximal basepoint: |λ_max(${VIEW_PRESET.gammaName})| ≈ ${bp.lambdaMax.toFixed(3)}, ` +
       `drift = ${bp.drift.toFixed(4)}`);

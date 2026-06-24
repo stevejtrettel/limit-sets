@@ -29,7 +29,7 @@ import {
   initialBox, pappusChildren,
   CORNER_IDX, TOP_MARK_IDX, BOTTOM_MARK_IDX,
   type MarkedBox, type Vec3,
-} from '@/schwartz-pappus/box';
+} from '@/examples/projective/schwartz-pappus/box';
 import { colorForDepth } from './colorLUT';
 import type { MarkedBoxesViewPreset } from './viewPreset';
 

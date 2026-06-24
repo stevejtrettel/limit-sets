@@ -17,7 +17,7 @@
 import type {
   ViewPresetCamera,
   ViewPresetViewport,
-} from '@/sl3r/viewPreset';
+} from '@/core/viewPreset';
 
 /**
  * Embeddings available in the Schwartz–Pappus demo. Currently 'plane' and

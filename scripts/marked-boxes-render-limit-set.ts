@@ -34,7 +34,7 @@ import {
   initialBox, pappusChildren,
   CORNER_IDX, TOP_MARK_IDX, BOTTOM_MARK_IDX,
   type MarkedBox, type Vec3,
-} from '../src/schwartz-pappus/box.ts';
+} from '../src/examples/projective/schwartz-pappus/box.ts';
 import { colorForDepth255 } from '../demos/marked-boxes/colorLUT.ts';
 import type { MarkedBoxesViewPreset } from '../demos/marked-boxes/viewPreset.ts';
 

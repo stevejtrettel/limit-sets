@@ -616,11 +616,15 @@ single late phase (Phase 7, §12).
   **`src/sl2c/` is fully dead** (only the parity test still imports it) — first clean
   deletion: remove `src/sl2c/` + `scripts/parity/kleinian-migration-parity.ts` together.
   (Complex loxodromic seeding still deferred to Phase 7.)
-- **Phase 5 — Schwartz-Pappus rewire + sl3r teardown.** ◻ Re-point `matrices.ts`/
-  `validate.ts` to `core/matrix`; migrate the schwartz-pappus demo+script off
-  `makeMat3Action`/sl3r embeddings; migrate marked-boxes import paths; run `validatePappus`.
-  **Then delete `src/sl3r/`** (last family dir) and the `core/loxodromic`/`sp6/hypergeometric`
-  shims.
+- **Phase 5 — Schwartz-Pappus rewire + sl3r teardown.** ✅ Moved to
+  `examples/projective/schwartz-pappus/` (box + duality verbatim; matrices + validate
+  rewired to flat `core/matrix`; new `recipe.ts` = `pappusRep`/`pappusAction`/`seedPappus`).
+  Shared RP² embeddings hoisted to `examples/projective/rp2.ts` (triangle-groups uses it too;
+  its `embeddings.ts` deleted). Demo + render script + marked-boxes migrated; flag files +
+  repBuilder deleted. **`src/sl3r/` and `src/schwartz-pappus/` deleted.** `validatePappus`
+  passes (§7 identities on flat matrices). Added **`core/seed.ts seedFromWord`** — the
+  explicit-word seeding primitive (§12's override path, first real use = the
+  parameter-stable `γ=r₁·r₂²`). Fixed 2 more pre-existing tsc errors (now 3 remain).
 - **Phase 6 — Structural cleanup.** ◻ Resolve palette placement; collapse `embeddings.ts`
   wrappers into core chart constructors where possible; remove dead code; update `@/` notes,
   README, developer docs.

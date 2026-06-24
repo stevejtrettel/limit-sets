@@ -202,3 +202,27 @@ export function seedFromLoxodromic(
     fallback: !lox,
   };
 }
+
+/**
+ * Seed from an EXPLICIT word — the override counterpart to
+ * {@link seedFromLoxodromic}: skip the loxodromic search and power-iterate the
+ * given word straight to its proximal fixed point. Use when a specific γ is
+ * wanted (e.g. a continuous seed across a live parameter sweep, where the
+ * shortest-loxodromic word would jump around). Returns a Seed just like the
+ * search path, so callers treat both uniformly.
+ */
+export function seedFromWord(
+  action: GroupAction,
+  word: readonly number[],
+  opts: { iters?: number; name?: string; labels?: readonly string[] } = {},
+): Seed {
+  const r = computeProximalBasepoint(action, word, opts.iters ?? 400);
+  return {
+    basepoint: r.basepoint,
+    word: [...word],
+    name: opts.name ?? (opts.labels ? formatWord(word, opts.labels) : word.join(',')),
+    lambdaMax: r.lambdaMax,
+    drift: r.drift,
+    fallback: false,
+  };
+}

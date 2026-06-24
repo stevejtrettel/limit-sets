@@ -26,21 +26,18 @@ import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpher
 import { autofitCamera } from '@/app/autofit';
 
 import type { GroupAction } from '@/core/group';
-import {
-  computeProximalBasepoint, generateOrbit, type Orbit,
-} from '@/core/orbit';
+import { generateOrbit, type Orbit } from '@/core/orbit';
 import type { SceneEmbedding } from '@/core/scene';
+import { makeMatrixAction, pairWithInverses } from '@/core/matrixAction';
+import type { Mat } from '@/core/matrix';
 
 import { schemeForColorDepth } from '@/render/colorScheme';
 import { buildOrbitInstances } from '@/render/orbitInstances';
 
-import type { SL3RExample } from '@/sl3r/examples';
-import { makeMat3Action } from '@/sl3r/action';
-import { sphereEmbedding, planeEmbedding } from '@/sl3r/embedding';
-import { paletteForScheme } from '@/sl3r/palettes';
-
-import { buildExample } from './repBuilder';
-import { validatePappus } from '@/schwartz-pappus/validate';
+import { sphereEmbedding, planeEmbedding } from '@/examples/projective/rp2';
+import { paletteForScheme } from '@/examples/projective/schwartz-pappus/palette';
+import { pappusRep, seedPappus, PAPPUS_SEED } from '@/examples/projective/schwartz-pappus/recipe';
+import { validatePappus } from '@/examples/projective/schwartz-pappus/validate';
 import type {
   SchwartzPappusViewPreset, Mat3Json, PappusEmbeddingName,
 } from './viewPreset';
@@ -84,7 +81,8 @@ let d = DEFAULT_D;
 let b = DEFAULT_B;
 let aSolved = 1;
 
-let currentExample!:   SL3RExample;
+let currentGenerators!: readonly Mat[];
+let currentSeedName = '';
 let currentAction!:    GroupAction;
 let currentBasepoint!: Float64Array;
 let currentOrbit!:     Orbit;
@@ -107,17 +105,15 @@ function setEmbedding(name: PappusEmbeddingName): void {
 
 /** rebuild generators, power-iterate γ, regenerate orbit. */
 function rebuildRep(): void {
-  const built = buildExample({ c, d, b });
-  currentExample = built.example;
-  aSolved        = built.a;
-  currentAction  = makeMat3Action(currentExample.generators, {
-    involutions: currentExample.involutions,
-  });
-  const r = computeProximalBasepoint(
-    currentAction, currentExample.gamma, currentExample.powerIter);
-  currentBasepoint = r.basepoint;
-  lambdaMax        = r.lambdaMax;
-  drift            = r.drift;
+  const built = pappusRep(c, d, b);
+  currentGenerators = built.generators;
+  aSolved           = built.a;
+  currentAction     = makeMatrixAction(pairWithInverses(built.generators));
+  const s = seedPappus(currentAction);
+  currentBasepoint = s.basepoint;
+  currentSeedName  = s.name;
+  lambdaMax        = s.lambdaMax;
+  drift            = s.drift;
 }
 
 function regenerateOrbit(N: number): void {
@@ -309,7 +305,7 @@ function updateUI(): void {
   morphMeta.html(
     `b = ${b.toFixed(3)} → a = ${aSolved.toFixed(6)} along γ_{c,d}<br>` +
     `phase: ${phase}<br>` +
-    `|λ_max(γ=${currentExample.gammaName})| = ${lambdaMax.toFixed(4)}, ` +
+    `|λ_max(γ=${currentSeedName})| = ${lambdaMax.toFixed(4)}, ` +
     `drift = ${drift.toExponential(2)}`,
   );
 }
@@ -326,13 +322,13 @@ async function exportView(): Promise<void> {
     colorScheme:  schemeForColorDepth(colorDepth).name,
     embedding:    currentEmbeddingName,
     params:       { c, d, b, a: aSolved },
-    generators:   currentExample.generators.map(
-      (m) => m.map((r) => [...r]) as unknown as Mat3Json,
+    generators:   currentGenerators.map(
+      (m) => [[m[0], m[1], m[2]], [m[3], m[4], m[5]], [m[6], m[7], m[8]]] as unknown as Mat3Json,
     ),
-    gamma:        [...currentExample.gamma],
-    gammaName:    currentExample.gammaName,
-    powerIter:    currentExample.powerIter,
-    involutions:  currentExample.involutions,
+    gamma:        [...PAPPUS_SEED],
+    gammaName:    'r₁·r₂²',
+    powerIter:    80,
+    involutions:  false,
     camera: {
       position: [cam.position.x, cam.position.y, cam.position.z],
       target:   [tgt.x, tgt.y, tgt.z],

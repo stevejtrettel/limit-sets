@@ -13,17 +13,14 @@
  * Exit code 0 = all within tolerance; 1 = a mismatch (prints the offender).
  */
 
-import type { GroupAction } from '../../src/core/group.ts';
-import { companion, matMul, matInverse, mat, type Mat } from '../../src/core/matrix.ts';
-import { makeMatrixAction, generatingSet, asInvolutions, pairWithInverses } from '../../src/core/matrixAction.ts';
+import { companion, matMul, matInverse, type Mat } from '../../src/core/matrix.ts';
+import { makeMatrixAction, generatingSet, pairWithInverses } from '../../src/core/matrixAction.ts';
 
 // Old per-family factories + data (to be deleted in later phases).
 import { makeO5Action, companion as o5Companion, companionInverse as o5CompanionInverse } from '../../src/o5/action.ts';
 import { CATALOG_EXAMPLES as O5_EXAMPLES } from '../../src/o5/catalog.ts';
 import { makeSp6Action } from '../../src/sp6/action.ts';
 import { EXAMPLES as SP6_EXAMPLES } from '../../src/sp6/examples.ts';
-import { makeMat3Action } from '../../src/sl3r/action.ts';
-import { EXAMPLES as SL3R_EXAMPLES } from '../../src/sl3r/examples.ts';
 
 const TOL = 1e-12;
 
@@ -43,33 +40,6 @@ let failures = 0;
 function report(label: string, ok: boolean, detail: string): void {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label.padEnd(40)} ${detail}`);
   if (!ok) failures++;
-}
-
-/** Compare two GroupActions over `trials` random vectors. */
-function compareActions(label: string, oldA: GroupAction, newA: GroupAction, trials = 8): void {
-  if (oldA.numGenerators !== newA.numGenerators || oldA.stateDim !== newA.stateDim) {
-    report(label, false, `shape mismatch: old(${oldA.numGenerators},${oldA.stateDim}) new(${newA.numGenerators},${newA.stateDim})`);
-    return;
-  }
-  for (let g = 0; g < oldA.numGenerators; g++) {
-    if (oldA.inverse[g] !== newA.inverse[g]) {
-      report(label, false, `inverse[${g}] mismatch: old ${oldA.inverse[g]} new ${newA.inverse[g]}`);
-      return;
-    }
-  }
-  const n = oldA.stateDim;
-  let maxDiff = 0;
-  const oOut = new Float64Array(n);
-  const nOut = new Float64Array(n);
-  for (let t = 0; t < trials; t++) {
-    const v = randomVec(n);
-    for (let g = 0; g < oldA.numGenerators; g++) {
-      oldA.apply(g, v, 0, oOut, 0);
-      newA.apply(g, v, 0, nOut, 0);
-      for (let i = 0; i < n; i++) maxDiff = Math.max(maxDiff, Math.abs(oOut[i] - nOut[i]));
-    }
-  }
-  report(label, maxDiff <= TOL, `max|Δapply| = ${maxDiff.toExponential(2)}`);
 }
 
 function maxMatDiff(A: Mat, B: Mat): number {
@@ -136,13 +106,8 @@ function maxMatDiff(A: Mat, B: Mat): number {
   report(`sp6 free (${SP6_EXAMPLES.length} groups)`, worst <= TOL, `max|Δapply| = ${worst.toExponential(2)}`);
 }
 
-// ── 4. sl3r action (explicit matrices, involutions or paired) ────────────────
-for (const ex of SL3R_EXAMPLES) {
-  const mats = ex.generators.map((g) => mat(g as unknown as number[][]));
-  const newA = makeMatrixAction(ex.involutions ? asInvolutions(mats) : pairWithInverses(mats));
-  const oldA = makeMat3Action(ex.generators, { involutions: ex.involutions });
-  compareActions(`sl3r ${ex.id}`, oldA, newA, 4);
-}
+// (sl3r section removed — src/sl3r deleted; triangle-groups migration is verified
+//  by its own gate, and live matrix-action parity is covered by o5/sp6 above.)
 
 console.log(failures === 0
   ? `\nAll parity checks PASSED (tol ${TOL}).`
