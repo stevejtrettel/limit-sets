@@ -1,7 +1,13 @@
 /**
  * verify.ts — check the C-32 ping-pong cone certificate (background/c-32-5-30.pdf).
  *
- *   npm run verify-c32        (or:  node demos/c32/verify.ts)
+ *   npm run verify-c32   (or:  node src/examples/hypergeometric/c32-certificate/verify.ts)
+ *
+ * The thinness certificate for the C-32 hypergeometric group. Its inputs come from
+ * the `c32` catalog example (α/β → the defining polynomials f, g) and the example
+ * cone (its 254 extremal rays); the 77-row `FACETS_H` is the (over-complete)
+ * H-description the certificate carries — see NOTE-c32-facet-count.md. This is the
+ * GᵢK ⊆ K ping-pong proof, complementary to core/convex's K**=K duality check.
  *
  * Ingredients (all from the group's defining polynomials f, g; group.ts):
  *   • the generators S, T⁻¹, E and the change of basis P (`buildHyperGroup`);
@@ -15,13 +21,13 @@
  * Dominance/invariance are cone containments `inside(Y, X)`; symplectic is gᵀ Ω_U g = Ω_U.
  */
 
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
 import { FACETS_H } from './facets.ts';
 import { buildHyperGroup, coneCertificateMaps, type Mat } from './group.ts';
 import { invert6, matmul6, transpose6, det } from './mat6.ts';
 import { exactRank } from './exactrank.ts';
+import { exampleById } from '../degree6-symplectic.ts';
+import { cyclotomicProduct } from '../../../core/polynomial.ts';
+import { C32_CONE_RAYS } from '../c32-cone.ts';
 
 // Two names for `readonly number[]`, marking the vector/covector duality at every
 // signature. Documentation only — TypeScript is structural, so they are NOT enforced
@@ -132,12 +138,14 @@ function report(pass: boolean, message: string): void {
 
 // ─── Inputs: the maps and the convex bodies ──────────────────────────────────
 
-// The C-32 hypergeometric group, from its two defining polynomials (paper §1):
-//   f = x⁶ − 5x⁵ + 11x⁴ − 14x³ + 11x² − 5x + 1 ,   g = x⁶ + 1 .
+// The C-32 hypergeometric group, from its two defining polynomials (paper §1) —
+// taken straight from the catalog example's rotation tuples α, β:
+//   f = cyclo(α) = x⁶ − 5x⁵ + 11x⁴ − 14x³ + 11x² − 5x + 1 ,   g = cyclo(β) = x⁶ + 1 .
 // buildHyperGroup derives the normal-form generators S, T⁻¹, E (u-basis) and the
 // change of basis P; the eleven cone-certificate maps are words in the generators.
-const F = [1, -5, 11, -14, 11, -5, 1];
-const G = [1, 0, 0, 0, 0, 0, 1];
+const C32 = exampleById('c32');
+const F = cyclotomicProduct(C32.alpha);
+const G = cyclotomicProduct(C32.beta);
 const group = buildHyperGroup(F, G);
 const maps = coneCertificateMaps(group.S, group.Tinv, group.E);
 
@@ -171,10 +179,8 @@ for (let i = 0; i < 6; i++)
   for (let j = i + 1; j < 6; j++)
     lieSpan.push(bracket(Ngens[i], Ngens[j]));
 
-// The domain K — both views: 254 extreme rays (same file rays.ts loads) + 77 facets H.
-const RAYS: Vector[] = JSON.parse(readFileSync(
-  fileURLToPath(new URL('./background/c32_extremal_rays.json', import.meta.url)), 'utf8',
-)).rays;
+// The domain K — both views: the example cone's 254 extreme rays + 77 facets H.
+const RAYS: Vector[] = C32_CONE_RAYS as Vector[];
 const K: ConvexBody = { rays: RAYS, facets: FACETS_H };
 
 // The dominance cube  Δ̄₀ = { y : y₀ ≥ |yᵢ| }  (paper §3), in both views:

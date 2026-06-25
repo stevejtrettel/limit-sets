@@ -1,5 +1,5 @@
 /**
- * C-32 coordinate systems (stage 2 of the pipeline; see implementation.md).
+ * C-32 coordinate systems (stage 2 of the pipeline; see README.md).
  *
  * The orbit is computed once in the companion basis (the repo's A₀,B₀), giving
  * points x ∈ ℝ⁶. A "coordinate system" is a projective map M applied to those
@@ -18,7 +18,7 @@
  * projective, so the scale is irrelevant.
  */
 
-import { I6, invert6 } from './mat6';
+import { mat, matInverse, identity, type Mat } from '@/core/matrix';
 
 /** P (paper p.2): columns are the u-basis vectors in companion coords. */
 export const P: readonly (readonly number[])[] = [
@@ -30,7 +30,12 @@ export const P: readonly (readonly number[])[] = [
   [  5,  11,  14,  11,   5,   0],
 ];
 
-const P_INV = invert6(P);
+/** Flat core matrix → rows (the chart and COORD_SYSTEMS read row-by-row). */
+const toRows = (m: Mat, n = 6): number[][] =>
+  Array.from({ length: n }, (_, i) => Array.from(m.subarray(i * n, (i + 1) * n)));
+
+const I6: number[][] = toRows(identity(6));
+const P_INV: number[][] = toRows(matInverse(mat(P)));
 
 export interface CoordSystem {
   readonly id: string;

@@ -18,7 +18,7 @@
 
 import { facetsFromRays } from '../../src/core/convex.ts';
 import { c32Cone, C32_CONE_RAYS } from '../../src/examples/hypergeometric/c32-cone.ts';
-import { FACETS_H } from '../../demos/c32/facets.ts';
+import { FACETS_H } from '../../src/examples/hypergeometric/c32-certificate/facets.ts';
 
 const RAYS = C32_CONE_RAYS as readonly (readonly number[])[];
 const cone = c32Cone(); // the example module: rays + core-computed facets + edges

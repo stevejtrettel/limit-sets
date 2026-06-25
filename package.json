@@ -8,7 +8,7 @@
     "build": "node scripts/run-demo.mjs build",
     "preview": "node scripts/run-demo.mjs preview",
     "render": "node scripts/sp6-render-limit-set.ts",
-    "verify-c32": "node demos/c32/verify.ts"
+    "verify-c32": "node src/examples/hypergeometric/c32-certificate/verify.ts"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

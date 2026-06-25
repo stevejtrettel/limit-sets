@@ -14,9 +14,9 @@
  * Stages 2–4 collapse into one ChartEmbedding whose denom + rows are selected
  * rows of M (see `coordChart`). No PCA — explicit coordinate projections only.
  *
- * Modules: coords (M, P⁻¹) · rays (ray data) · facets (H) · topology (the exact
- * 1-skeleton) · wireframe (skeleton mesh) · hull (silhouette). See
- * implementation.md for the math and the staged build log.
+ * Thin wiring: `coords` (M, P⁻¹) + `copies` (S, T⁻¹ presets). The cone, its
+ * facets/edges, and all drawing come from core/convex + app/convexMesh + the
+ * `c32-cone` example. See README.md for the math and module map.
  */
 
 import * as THREE from 'three';
@@ -39,7 +39,7 @@ import { COORD_SYSTEMS, coordSystemById, P } from './coords';
 import { baseCopies, rotatedCopies, nestedCopies, type Copy } from './copies';
 import { c32Cone } from '@/examples/hypergeometric/c32-cone';
 import { transformCone, type ConvexCone } from '@/core/convex';
-import { mat, matMul } from '@/core/matrix';
+import { mat, matMul, type Mat } from '@/core/matrix';
 import { coneDomainMesh, coneMembershipInstances, hexToRgb } from '@/app/convexMesh';
 
 // ─── This demo is C-32, period ───────────────────────────────────────────────
@@ -120,8 +120,8 @@ function applyChart(): void { proj = coordChart(coordId, denomIdx, axes); }
 // orbit. Edges + facets carry along (a linear iso preserves the face lattice).
 const BASE_CONE = c32Cone();
 const P_FLAT = mat(P as number[][]);
-const drawableCone = (g: readonly (readonly number[])[]): ConvexCone =>
-  transformCone(BASE_CONE, matMul(P_FLAT, mat(g as number[][])));
+const drawableCone = (g: Mat): ConvexCone =>
+  transformCone(BASE_CONE, matMul(P_FLAT, g));
 // How to show the copies: as 3-D hulls (wire/body) OR as a coloring of Λ by cone
 // membership. 'coloring' draws no hulls and recolors the limit set instead.
 type DomainMode = 'none' | 'wire' | 'wire+body' | 'body' | 'coloring';
@@ -135,7 +135,7 @@ let domainObjs: { group: THREE.Group; dispose(): void }[] = [];
 let domainNote: { text(s: string): void } | null = null;
 // Δ₀ dominance box: in the u-basis e₀ chart, dominance (y₀ > |yᵢ|) is exactly
 // |out coord| < 1, so Δ₀ projects to the cube [−1,1]³ regardless of axes. ℙ(K)
-// must sit inside it (verify.md, check 1). Only meaningful in that chart.
+// must sit inside it (the certificate's dominance check). Only meaningful here.
 let showBox = false;
 let boxObj: THREE.LineSegments | null = null;
 let boxNote: { text(s: string): void } | null = null;

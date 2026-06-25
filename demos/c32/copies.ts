@@ -1,10 +1,10 @@
 /**
  * Copies of the ping-pong cone K under u-basis group elements (Step 4b).
  *
- * A "copy" is a u-basis matrix g; the copy is the polytope g·K. Because g is a
- * linear isomorphism, g·K has the SAME 1-skeleton as K (topology.ts) — only the
- * vertex positions change (g·rᵢ). So one `coneEdges()` result serves every copy;
- * `rays.transformedRays(g)` gives a copy's rays in companion coords (P·g·rᵢ).
+ * A "copy" is a u-basis matrix g; the copy is the cone g·K. Because g is a linear
+ * isomorphism, g·K has the SAME face lattice as K — only the vertex positions move
+ * (g·rᵢ). main.ts turns each g into a drawable cone via
+ * `transformCone(c32Cone(), P·g)` (companion coords), reusing K's facets + edges.
  *
  * Presets:
  *   base      K
@@ -18,49 +18,49 @@
  * nested copies all sit inside K and are bounded.
  */
 
-import { I6, matmul6 } from './mat6.ts';
+import { mat, matMul, identity, type Mat } from '@/core/matrix';
 
 /** Signed cyclic shift S (u-basis): S eᵢ = −e_{i+1}, S e₅ = e₀, S⁶ = −I. */
-export const S_U: readonly (readonly number[])[] = [
+export const S_U: Mat = mat([
   [ 0,  0,  0,  0,  0,  1],
   [-1,  0,  0,  0,  0,  0],
   [ 0, -1,  0,  0,  0,  0],
   [ 0,  0, -1,  0,  0,  0],
   [ 0,  0,  0, -1,  0,  0],
   [ 0,  0,  0,  0, -1,  0],
-];
+]);
 
 /** Inverse transvection T⁻¹ (u-basis): row transvection on coordinate 0. */
-export const T_INV_U: readonly (readonly number[])[] = [
+export const T_INV_U: Mat = mat([
   [1, -5, -11, -14, -11, -5],
   [0,  1,   0,   0,   0,  0],
   [0,  0,   1,   0,   0,  0],
   [0,  0,   0,   1,   0,  0],
   [0,  0,   0,   0,   1,  0],
   [0,  0,   0,   0,   0,  1],
-];
+]);
 
 /** Involution E (u-basis, paper §1): E² = I, ESE = S⁻¹, ETE = T⁻¹. */
-export const E_U: readonly (readonly number[])[] = [
+export const E_U: Mat = mat([
   [1,  0,  0,  0,  0,  0],
   [0,  0,  0,  0,  0, -1],
   [0,  0,  0,  0, -1,  0],
   [0,  0,  0, -1,  0,  0],
   [0,  0, -1,  0,  0,  0],
   [0, -1,  0,  0,  0,  0],
-];
+]);
 
 /** Mᵏ for k ≥ 0 (M⁰ = I). */
-function matpow(M: readonly (readonly number[])[], k: number): number[][] {
-  let R = I6.map((r) => r.slice());
-  for (let p = 0; p < k; p++) R = matmul6(M, R);
+function matpow(M: Mat, k: number): Mat {
+  let R = identity(6);
+  for (let p = 0; p < k; p++) R = matMul(M, R);
   return R;
 }
 
 export interface Copy {
   label: string;
-  /** u-basis transform g; this copy is g·K. */
-  g: number[][];
+  /** u-basis transform g (flat core matrix); this copy is g·K. */
+  g: Mat;
   edge: number;     // edge-tube color
   vertex: number;   // vertex-sphere color
   body: number;     // silhouette-body color
@@ -72,7 +72,7 @@ const BASE_EDGE = 0x1f5f87, BASE_VERTEX = 0xe09650, BASE_BODY = 0x3789b8;
 const ROSETTE = [0xd1342b, 0xe8830c, 0x2f9e44, 0x1971c2, 0x7048e8, 0xc2255c];
 
 export function baseCopies(): Copy[] {
-  return [{ label: 'K', g: I6.map((r) => r.slice()), edge: BASE_EDGE, vertex: BASE_VERTEX, body: BASE_BODY }];
+  return [{ label: 'K', g: identity(6), edge: BASE_EDGE, vertex: BASE_VERTEX, body: BASE_BODY }];
 }
 
 export function rotatedCopies(): Copy[] {
@@ -84,7 +84,7 @@ export function rotatedCopies(): Copy[] {
 
 export function nestedCopies(): Copy[] {
   return [0, 1, 2, 3, 4, 5].map((k) => ({
-    label: `T⁻¹S^${k}·K`, g: matmul6(T_INV_U, matpow(S_U, k)),
+    label: `T⁻¹S^${k}·K`, g: matMul(T_INV_U, matpow(S_U, k)),
     edge: ROSETTE[k], vertex: ROSETTE[k], body: ROSETTE[k],
   }));
 }

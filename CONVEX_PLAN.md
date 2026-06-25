@@ -91,14 +91,21 @@ bitmasks.
   is `coneDomainMesh`; membership coloring is `coneMembershipInstances`. Deleted
   `topology/hull/wireframe/membership/rays.ts`. Demo BUILDS; parity green;
   transformCone verified (copy S·K: 254 rays, 680 edges, every ray ∈ copy).
-- **S4a (next): move the certificate to examples.** Per the user's decision, lift
-  `group.ts`/`verify.ts`/`exactrank.ts` (+ the 77-row `FACETS_H`) into
-  `examples/hypergeometric/c32-certificate/` as a kept, runnable exact verification
-  (the GᵢK ⊆ K ping-pong/thinness proof — complementary to core's K**=K, not
-  redundant). Wire its group construction to the example's α/β.
-- **S4c (cleanup): mat6.** Still used by `coords.ts`/`copies.ts` (demo-local) + the
-  certificate. Flatten onto `core/matrix` (or move with the certificate) — deferred,
-  non-blocking. `demos/c32/facets.ts` stays until the certificate move absorbs it.
+- **S4a ✅ DONE: certificate → examples.** `group/verify/exactrank/facets/mat6` moved
+  to `examples/hypergeometric/c32-certificate/`; `verify.ts` now sources its inputs
+  from the catalog example (α/β → f,g via `cyclotomicProduct`) and the example cone
+  (`C32_CONE_RAYS`). `npm run verify-c32` (repointed) → ALL CHECKS PASSED (dominance,
+  GᵢK⊆K invariance, symplectic, Zariski density). The 77-row `FACETS_H` lives with
+  the certificate; the parity gate's ⊆77 check imports it from there.
+- **S4c ✅ DONE: mat6 gone from the demo.** `coords.ts`/`copies.ts` flattened onto
+  `core/matrix` (`mat`/`matMul`/`matInverse`/`identity`); copies' `g` is now a flat
+  `Mat`. `demos/c32/mat6.ts` deleted (a co-located copy remains certificate-local).
+
+**INITIATIVE COMPLETE.** `demos/c32/` is thin wiring (`coords`/`copies`/`main`).
+The convex machinery is core/convex (exact V→H + edges + membership + transform) →
+app/convexMesh (project + draw) → examples (c32-cone data, c32-certificate proof),
+all reusable + dimension-agnostic. Validated: c32 builds, parity green, certificate
+passes, sibling demos build, tsc at the 3 pre-existing errors.
 
 ## Validation gate (exact)
 
