@@ -35,13 +35,12 @@ import { generateOrbit, type Orbit } from '@/core/orbit';
 import { makeChartFromData, type ChartEmbedding } from '@/core/chart';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
 import { buildOrbitInstances } from '@/render/orbitInstances.ts';
-import { COORD_SYSTEMS, coordSystemById } from './coords';
-import { NUM_RAYS, transformedRays } from './rays';
-import { coneEdges } from './topology';
+import { COORD_SYSTEMS, coordSystemById, P } from './coords';
 import { baseCopies, rotatedCopies, nestedCopies, type Copy } from './copies';
-import { buildWireframe } from './wireframe';
-import { computeShadow, buildBodyMesh } from './hull';
-import { makeConeTest, buildMembershipInstances, hexToRgb, type ConeTest } from './membership';
+import { c32Cone } from '@/examples/hypergeometric/c32-cone';
+import { transformCone, type ConvexCone } from '@/core/convex';
+import { mat, matMul } from '@/core/matrix';
+import { coneDomainMesh, coneMembershipInstances, hexToRgb } from '@/app/convexMesh';
 
 // ─── This demo is C-32, period ───────────────────────────────────────────────
 
@@ -115,11 +114,14 @@ let proj: ChartEmbedding = coordChart(coordId, denomIdx, axes);
 
 function applyChart(): void { proj = coordChart(coordId, denomIdx, axes); }
 
-// Domain state. EDGES is the projection-independent 1-skeleton (shared by every
-// copy, since copies are linear isos of K), computed once. `activeCopies` holds
-// each copy's companion rays cᵢ = P·g·rᵢ; rebuilt only when the copy-mode
-// changes, then reprojected through `proj` on each chart change.
-const EDGES = coneEdges();
+// Domain state. The base cone K (rays + its 33 facets + 680-edge 1-skeleton, all
+// computed by core/convex) is built once; a copy g·K is `transformCone`d into
+// COMPANION coords (rays P·g·rᵢ) so it projects through the same chart as the
+// orbit. Edges + facets carry along (a linear iso preserves the face lattice).
+const BASE_CONE = c32Cone();
+const P_FLAT = mat(P as number[][]);
+const drawableCone = (g: readonly (readonly number[])[]): ConvexCone =>
+  transformCone(BASE_CONE, matMul(P_FLAT, mat(g as number[][])));
 // How to show the copies: as 3-D hulls (wire/body) OR as a coloring of Λ by cone
 // membership. 'coloring' draws no hulls and recolors the limit set instead.
 type DomainMode = 'none' | 'wire' | 'wire+body' | 'body' | 'coloring';
@@ -128,7 +130,7 @@ let domainMode: DomainMode = 'wire+body';
 let copyMode: CopyMode = 'base';
 let domainSize = DOMAIN_DEFAULT_SIZE;
 let showInterior = DEFAULT_SHOW_INTERIOR;   // false ⇒ only the 3D-hull boundary
-let activeCopies: { copy: Copy; raysC: Float64Array; test: ConeTest }[] = [];
+let activeCopies: { copy: Copy; cone: ConvexCone }[] = [];
 let domainObjs: { group: THREE.Group; dispose(): void }[] = [];
 let domainNote: { text(s: string): void } | null = null;
 // Δ₀ dominance box: in the u-basis e₀ chart, dominance (y₀ > |yᵢ|) is exactly
@@ -144,12 +146,10 @@ const coloring = (): boolean => domainMode === 'coloring';
 function copyListFor(m: CopyMode): Copy[] {
   return m === 'rotated' ? rotatedCopies() : m === 'nested' ? nestedCopies() : baseCopies();
 }
-/** Recompute each active copy's companion rays + membership test (only when the
- *  copy-mode changes; both are chart-independent). */
+/** Rebuild each active copy's drawable cone (companion coords + carried facets);
+ *  only when the copy-mode changes — chart-independent. */
 function rebuildCopyRays(): void {
-  activeCopies = copyListFor(copyMode).map((copy) => ({
-    copy, raysC: transformedRays(copy.g), test: makeConeTest(copy.g),
-  }));
+  activeCopies = copyListFor(copyMode).map((copy) => ({ copy, cone: drawableCone(copy.g) }));
 }
 
 {
@@ -171,8 +171,8 @@ function rebuildMesh(autofit: boolean): void {
   // 'coloring' mode tints Λ by cone membership; otherwise a plain grayscale pass.
   let aPos: Float32Array, aColor: Float32Array, kept: number;
   if (coloring() && activeCopies.length) {
-    const cones = activeCopies.map((c) => ({ test: c.test, rgb: hexToRgb(c.copy.edge) }));
-    ({ aPos, aColor, kept } = buildMembershipInstances(proj, orbit, cones));
+    const cones = activeCopies.map((c) => ({ cone: c.cone, rgb: hexToRgb(c.copy.edge) }));
+    ({ aPos, aColor, kept } = coneMembershipInstances(proj, orbit, cones));
   } else {
     const scheme = schemeForColorDepth(0);
     ({ aPos, aColor, kept } = buildOrbitInstances(proj, orbit, scheme, paletteForScheme(scheme.name)));
@@ -189,15 +189,15 @@ function rebuildMesh(autofit: boolean): void {
 
 // ─── Domain layer: copies of ℙ(K) ────────────────────────────────────────────
 
-/** Is this copy inside the current affine patch? True iff the denominator
+/** Is this cone inside the current affine patch? True iff the denominator
  *  covector is one-signed (and nonzero) over its rays — else the copy wraps
  *  through infinity in this chart and we cannot draw it. */
-function bounded(raysC: Float64Array): boolean {
+function bounded(cone: ConvexCone): boolean {
   const d = proj.denom;
   let lo = Infinity, hi = -Infinity;
-  for (let k = 0; k < NUM_RAYS; k++) {
+  for (const r of cone.rays) {
     let s = 0;
-    for (let j = 0; j < 6; j++) s += d[j] * raysC[k * 6 + j];
+    for (let j = 0; j < 6; j++) s += d[j] * r[j];
     if (s < lo) lo = s;
     if (s > hi) hi = s;
   }
@@ -205,54 +205,22 @@ function bounded(raysC: Float64Array): boolean {
   return lo > eps || hi < -eps;
 }
 
-/** Project a copy's rays into ℝ³ through the active chart (null = a vertex at
- *  infinity; should not happen once `bounded` passes). */
-function projectRays(raysC: Float64Array): (THREE.Vector3 | null)[] {
-  const o = new Float64Array(3);
-  const out: (THREE.Vector3 | null)[] = [];
-  for (let k = 0; k < NUM_RAYS; k++) {
-    out.push(proj.embed(raysC, k * 6, o, 0) ? new THREE.Vector3(o[0], o[1], o[2]) : null);
-  }
-  return out;
-}
-
 function clearDomains(): void {
   for (const o of domainObjs) { app.scene.remove(o.group); o.dispose(); }
   domainObjs = [];
 }
 
-/** Draw one copy (wireframe and/or body) in its colors. */
-function drawCopy(copy: Copy, raysC: Float64Array): void {
-  const pts = projectRays(raysC);
-
-  // The silhouette hull gives both the body faces and the boundary/interior
-  // classification; build it once if either layer needs it.
-  let boundary: Set<number> | null = null;
-  let facePositions: number[] = [];
-  if (showBody() || !showInterior) {
-    try {
-      const shadow = computeShadow(pts);
-      boundary = shadow.boundary;
-      facePositions = shadow.facePositions;
-    } catch (e) {
-      console.warn('[c32] silhouette hull failed (degenerate projection):', e);
-    }
-  }
-
-  if (showWire()) {
-    const keep = showInterior || !boundary ? undefined : (i: number) => boundary!.has(i);
-    const w = buildWireframe(pts, EDGES, {
-      edgeColor: copy.edge, tubeRadius: domainSize,
-      vertexColor: copy.vertex, vertexRadius: domainSize * VERTEX_SCALE,
-    }, keep);
-    app.scene.add(w.group);
-    domainObjs.push(w);
-  }
-  if (showBody()) {
-    const b = buildBodyMesh(facePositions, copy.body, BODY_OPACITY);
-    app.scene.add(b.group);
-    domainObjs.push(b);
-  }
+/** Draw one copy's cone (wireframe and/or silhouette body) in its colors. The
+ *  generic convex-mesh builder projects through the active chart, computes the
+ *  silhouette, and hides interior wireframe vertices unless `showInterior`. */
+function drawCopy(copy: Copy, cone: ConvexCone): void {
+  const d = coneDomainMesh(cone, proj, {
+    edgeColor: copy.edge, tubeRadius: domainSize,
+    vertexColor: copy.vertex, vertexRadius: domainSize * VERTEX_SCALE,
+    bodyColor: copy.body, bodyOpacity: BODY_OPACITY,
+  }, { showVertices: showWire(), showEdges: showWire(), showBody: showBody(), showInterior });
+  app.scene.add(d.group);
+  domainObjs.push(d);
 }
 
 function rebuildDomains(): void {
@@ -265,9 +233,9 @@ function rebuildDomains(): void {
   }
 
   let drawn = 0;
-  for (const { copy, raysC } of activeCopies) {
-    if (!bounded(raysC)) continue;
-    drawCopy(copy, raysC);
+  for (const { copy, cone } of activeCopies) {
+    if (!bounded(cone)) continue;
+    drawCopy(copy, cone);
     drawn++;
   }
 
@@ -275,7 +243,7 @@ function rebuildDomains(): void {
   if (drawn === 0) {
     domainNote?.text('⚠ nothing drawable in this patch (crosses infinity)');
   } else if (total === 1) {
-    domainNote?.text(`ℙ(K): ${NUM_RAYS} vertices, ${EDGES.length} edges` +
+    domainNote?.text(`ℙ(K): ${BASE_CONE.rays.length} vertices, ${BASE_CONE.edges.length} edges` +
       (showInterior ? '' : ' (silhouette shell)'));
   } else {
     domainNote?.text(`${drawn}/${total} copies drawn` +
