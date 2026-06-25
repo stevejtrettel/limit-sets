@@ -1,4 +1,4 @@
-import { CATALOG_EXAMPLES } from '../src/o5/catalog.ts';
-import { validateAllExamples } from '../src/o5/validate.ts';
+import { CATALOG_EXAMPLES } from '../src/examples/hypergeometric/degree5-orthogonal.ts';
+import { validateAllOrthogonal } from '../src/examples/hypergeometric/validate.ts';
 console.log(`catalog size: ${CATALOG_EXAMPLES.length}`);
-validateAllExamples(CATALOG_EXAMPLES);
+validateAllOrthogonal(CATALOG_EXAMPLES);

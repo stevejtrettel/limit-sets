@@ -25,15 +25,16 @@ import { ControlPanel } from '@/app/ControlPanel';
 import { createSphereMaterial, makeInstancedSpheres } from '@/app/instancedSpheres';
 import { autofitCamera } from '@/app/autofit';
 
-import { exampleById, type Sp6Example } from '@/sp6/examples';
-import { makeSp6Action } from '@/sp6/action';
-import { validateExample } from '@/sp6/validate';
+import {
+  exampleById, symplecticAction, seedSymplectic, type SymplecticExample,
+} from '@/examples/hypergeometric/degree6-symplectic';
+import { validateSymplecticExample } from '@/examples/hypergeometric/validate';
+import { paletteForSymplectic as paletteForScheme } from '@/examples/hypergeometric/palette';
 import type { GroupAction } from '@/core/group';
-import { computeProximalBasepoint, generateOrbit, type Orbit } from '@/core/orbit';
+import { generateOrbit, type Orbit } from '@/core/orbit';
 import { makeChartFromData, type ChartEmbedding } from '@/core/chart';
 import { schemeForColorDepth } from '@/render/colorScheme.ts';
 import { buildOrbitInstances } from '@/render/orbitInstances.ts';
-import { paletteForScheme } from '@/sp6/palettes.ts';
 import { COORD_SYSTEMS, coordSystemById } from './coords';
 import { NUM_RAYS, transformedRays } from './rays';
 import { coneEdges } from './topology';
@@ -44,9 +45,9 @@ import { makeConeTest, buildMembershipInstances, hexToRgb, type ConeTest } from 
 
 // ─── This demo is C-32, period ───────────────────────────────────────────────
 
-const C32: Sp6Example = exampleById('c32');
+const C32: SymplecticExample = exampleById('c32');
 {
-  const v = validateExample(C32);
+  const v = validateSymplecticExample(C32);
   if (!v.passed) throw new Error(`[c32] validation failed: ${v.errors.join('; ')}`);
   for (const w of v.warnings) console.warn(`[c32] ⚠ ${w}`);
 }
@@ -97,9 +98,10 @@ const app = new App({ antialias: true });
 app.scene.background = new THREE.Color(0xf2f2f2);
 
 const { material, uniforms } = createSphereMaterial();
-const action: GroupAction = makeSp6Action(C32);
+const action: GroupAction = symplecticAction(C32);
 
 let basepoint!: Float64Array;
+let currentSeedName = 'TBT';
 let orbit!: Orbit;
 let mesh: THREE.Mesh | null = null;
 let depth = DEFAULT_DEPTH;
@@ -151,10 +153,11 @@ function rebuildCopyRays(): void {
 }
 
 {
-  const r = computeProximalBasepoint(action, C32.gamma, C32.powerIter);
-  basepoint = r.basepoint;
+  const s = seedSymplectic(action);
+  basepoint = s.basepoint;
+  currentSeedName = s.name;
   console.log(
-    `[c32] loaded: |λ_max(${C32.gammaName})| ≈ ${r.lambdaMax.toFixed(3)}, drift = ${r.drift.toFixed(4)}`,
+    `[c32] loaded: γ = ${s.name}, |λ_max| ≈ ${s.lambdaMax.toFixed(3)}, drift = ${s.drift.toFixed(4)}`,
   );
 }
 
@@ -508,7 +511,7 @@ function updateUI(): void {
   modeEl.text(`view: ${proj.pretty}`);
   exMeta.html(
     `example: ${C32.label} (${C32.status})<br>` +
-    `α = ${C32.alpha}<br>β = ${C32.beta}<br>γ = ${C32.gammaName}`,
+    `α = (${C32.alpha.join(', ')})<br>β = (${C32.beta.join(', ')})<br>γ = ${currentSeedName}`,
   );
 }
 

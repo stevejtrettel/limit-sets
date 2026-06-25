@@ -737,3 +737,71 @@ families (symplectic, triangle, sl4r) — **same limit set, different finite-dep
 — so this is gated on a visual spot-check per family, with the old word available as a
 `seedWord` override if an exact historical framing must be reproduced.
 ```
+
+
+---
+
+## 13. c32 migration (the last bespoke cluster)
+
+The `demos/c32/` ping-pong convex-domain viewer is the keeper; `demos/sp6-c32/`
+was abandoned (its own `implementation.md` says so). Migrating c32 off `src/sp6`
+lets us finally delete `src/o5/` + `src/sp6/`.
+
+### Already done
+- Deleted `demos/sp6-c32/` + `scripts/sp6-c32-render-hull.ts` +
+  `scripts/sp6-c32-transform-rays.ts` (the abandoned cluster).
+
+### Key finding — c32 is a STANDARD migration
+The c32 hull machinery (`coords.ts`, `rays.ts`, `facets.ts`, `topology.ts`,
+`hull.ts`, `wireframe.ts`, `membership.ts`, `exactrank.ts`, `group.ts`, `mat6.ts`,
+`verify.ts`) is **independent of the group action** — `coords.ts` uses a HARDCODED
+change-of-basis `P`, and the orbit is computed in the companion basis that
+`symplecticAction` already uses (bit-identical to `makeSp6Action`, proven in 2b).
+So only the standard sp6 demo coupling changes; the hull code is untouched.
+
+### Step 1 — migrate `demos/c32/main.ts` (mechanical, same as the sp6 demos)
+- `exampleById, type Sp6Example` from `@/sp6/examples` →
+  `exampleById, symplecticAction, seedSymplectic, type SymplecticExample` from
+  `@/examples/hypergeometric/degree6-symplectic` (the `c32` id is preserved in
+  `FEATURED`).
+- `makeSp6Action` → `symplecticAction`; `validateExample` →
+  `validateSymplecticExample` (`@/examples/hypergeometric/validate`);
+  `paletteForScheme` → `paletteForSymplectic` (`@/examples/hypergeometric/palette`).
+- Seeding: `computeProximalBasepoint(action, C32.gamma, C32.powerIter)` →
+  `seedSymplectic(action)` (the new example has no `gamma`/`powerIter`). Track a
+  `currentSeedName` for the HUD.
+- Display: `C32.alpha`/`C32.beta` are now arrays → `(${C32.alpha.join(", ")})`;
+  `C32.gammaName` → the seed name.
+- The coordinate pipeline (`P`, `coordChart`, copies, membership) is UNCHANGED.
+
+### Step 2 — clean up the remaining `src/o5` / `src/sp6` users
+- `scripts/o5-validate-catalog.ts` → repoint to
+  `examples/hypergeometric/degree5-orthogonal` `CATALOG_EXAMPLES` +
+  `validateAllOrthogonal` (or delete; the explorer validates at load).
+- Delete the parity scaffolds that compare against the old dirs:
+  `scripts/parity/action-parity.ts`, `hypergeometric-o5-parity.ts`,
+  `hypergeometric-sp6-parity.ts` (their migrations are verified and done).
+
+### Step 3 — delete the old dirs
+- Delete `src/o5/` and `src/sp6/` (nothing imports them after Steps 1–2).
+- Delete `src/sl2c/` (already fully dead) + `scripts/parity/kleinian-migration-parity.ts`.
+
+### Step 4 — verify
+- `tsc` clean (only the 3 pre-existing errors remain); `npm run build c32` +
+  `o5-explorer` + `sp6-explorer` + `sl2c-limit-sets` green.
+- Orbit + hull sanity: c32 builds the action, seeds (now auto `BA`), walks NaN-free;
+  the hull wireframe + silhouette still render. Spot-check the limit set is the
+  same Λ (auto-seed shifts the basepoint, same set — the hull `P(K)` is
+  basepoint-independent).
+- Preserve c32's view-preset group tag (check `vite.config.ts ALLOWED_GROUPS`).
+
+### Open / out of scope
+- **c32 has no offline render script** (the old `sp6-c32-render-hull` served the
+  abandoned demo). A c32 hull renderer is a separate future task, not part of this
+  migration.
+
+### After this
+Only **Phase 6 cleanup** remains: palette placement (§10.1), README/docs (done),
+and the 3 lingering pre-existing `tsc` errors (`limitSetMesh`, `textOverlay`×2).
+All `src/` family dirs are then gone — only `core/`, `examples/`, `render/`,
+`app/` remain.
