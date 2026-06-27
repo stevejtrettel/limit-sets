@@ -30,18 +30,12 @@ Thumbs.db
 .env
 .env.*
 
-# View presets written by the demos' "save view" buttons — volatile per-user
-# framings, regenerated on demand; never committed.
-scripts/*-view-preset.json
-
-# Point cache for sp6-render-limit-set.mjs (post-projection xs/ys/zs binary)
-scripts/cache/
-
 # Rendered output images
 *.png
 *.jpg
 
-# Script render outputs (scripts write PNGs here)
+# Render workspace (all gitignored): PNGs foldered by family, accumulator caches
+# (outputs/cache/), and the demos' saved view-preset framings (outputs/presets/).
 outputs/
 
 # Holding area for root cleanup (papers / pics / tex to sort or discard)

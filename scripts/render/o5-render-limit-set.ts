@@ -7,13 +7,13 @@
 import { runRender } from './renderDriver.ts';
 import {
   CATALOG_EXAMPLES, ORTHOGONAL_DEGREE5_WALK, type OrthogonalExample,
-} from '../src/examples/hypergeometric/degree5-orthogonal.ts';
-import { hypergeometricAction, WALK_LABELS, WALK_FALLBACK } from '../src/examples/hypergeometric/recipe.ts';
-import { paletteForOrthogonal } from '../src/examples/hypergeometric/palette.ts';
-import type { ViewPreset } from '../src/examples/hypergeometric/viewPreset.ts';
-import { seedFromLoxodromic } from '../src/core/seed.ts';
-import { embeddingFromPreset } from '../src/core/viewPreset.ts';
-import { fitAutoChartEmbedding } from '../src/core/chart.ts';
+} from '../../src/examples/hypergeometric/degree5-orthogonal.ts';
+import { hypergeometricAction, WALK_LABELS, WALK_FALLBACK } from '../../src/examples/hypergeometric/recipe.ts';
+import { paletteForOrthogonal } from '../../src/examples/hypergeometric/palette.ts';
+import type { ViewPreset } from '../../src/examples/hypergeometric/viewPreset.ts';
+import { seedFromLoxodromic } from '../../src/core/seed.ts';
+import { embeddingFromPreset } from '../../src/core/viewPreset.ts';
+import { fitAutoChartEmbedding } from '../../src/core/chart.ts';
 
 await runRender<OrthogonalExample>({
   family: 'o5', defaultExampleId: 'g1', defaultDepth: 16,

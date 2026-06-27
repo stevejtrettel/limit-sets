@@ -5,11 +5,11 @@
  *   node scripts/sl2c-render-limit-set.ts riley-2i 14 --embedding sphere
  */
 import { runRender } from './renderDriver.ts';
-import { EXAMPLES, seedKleinian, type MobiusExample } from '../src/examples/kleinian/examples.ts';
-import { makeMobiusAction } from '../src/examples/kleinian/action.ts';
-import { sphereEmbedding, planeEmbedding } from '../src/examples/kleinian/embedding.ts';
-import { paletteForScheme } from '../src/examples/kleinian/palette.ts';
-import type { ViewPreset } from '../src/examples/kleinian/viewPreset.ts';
+import { EXAMPLES, seedKleinian, type MobiusExample } from '../../src/examples/kleinian/examples.ts';
+import { makeMobiusAction } from '../../src/examples/kleinian/action.ts';
+import { sphereEmbedding, planeEmbedding } from '../../src/examples/kleinian/embedding.ts';
+import { paletteForScheme } from '../../src/examples/kleinian/palette.ts';
+import type { ViewPreset } from '../../src/examples/kleinian/viewPreset.ts';
 
 const flagVal = (n: string): string | null => {
   const i = process.argv.indexOf(n);

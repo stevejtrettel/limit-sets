@@ -6,7 +6,7 @@ ping-pong domain's extremal rays has **33 facets**, whereas
 `demos/c32/facets.ts` (`FACETS_H`) lists **77** covectors. This note records what
 the 77 actually are and why 33 is the minimal facet count, with an exact proof.
 
-Reproduce: `node scripts/parity/c32-cone-parity.ts`.
+Reproduce: `node scripts/tests/c32-cone-parity.ts`.
 
 ## The objects
 

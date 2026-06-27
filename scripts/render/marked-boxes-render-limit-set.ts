@@ -2,7 +2,7 @@
  * marked-boxes-render-limit-set.ts
  *
  * Offline PNG render of the Schwartz–Pappus marked-box subdivision.
- * Reads `scripts/marked-boxes-view-preset.json` (written by the demo's
+ * Reads `outputs/presets/marked-boxes-view-preset.json` (written by the demo's
  * "copy view JSON for offline render" button) for parameters + visible
  * bbox + viewport aspect, walks the subdivision tree, rasterizes each
  * box's 4 edges into an RGBA buffer using Xiaolin Wu's AA algorithm,
@@ -24,19 +24,19 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { writePng } from '../src/render/png.ts';
-import { outputPath } from '../src/render/outputPath.ts';
-import { drawLineAA, fillBackground, type RGB } from '../src/render/lineRaster.ts';
+import { writePng } from '../../src/render/png.ts';
+import { outputPath } from '../../src/render/outputPath.ts';
+import { drawLineAA, fillBackground, type RGB } from '../../src/render/lineRaster.ts';
 import {
   subdivideTree, type DepthState,
-} from '../src/core/subdivision.ts';
+} from '../../src/core/subdivision.ts';
 import {
   initialBox, pappusChildren,
   CORNER_IDX, TOP_MARK_IDX, BOTTOM_MARK_IDX,
   type MarkedBox, type Vec3,
-} from '../src/examples/projective/schwartz-pappus/box.ts';
-import { colorForDepth255 } from '../demos/marked-boxes/colorLUT.ts';
-import type { MarkedBoxesViewPreset } from '../demos/marked-boxes/viewPreset.ts';
+} from '../../src/examples/projective/schwartz-pappus/box.ts';
+import { colorForDepth255 } from '../../demos/marked-boxes/colorLUT.ts';
+import type { MarkedBoxesViewPreset } from '../../demos/marked-boxes/viewPreset.ts';
 
 // ─── Defaults ──────────────────────────────────────────────────────────────
 
@@ -55,7 +55,7 @@ const log = (m: string): void => { process.stderr.write(m + '\n'); };
 // ─── Load preset ───────────────────────────────────────────────────────────
 
 const VIEW_PRESET_PATH = fileURLToPath(
-  new URL('./marked-boxes-view-preset.json', import.meta.url),
+  new URL('../../outputs/presets/marked-boxes-view-preset.json', import.meta.url),
 );
 if (!existsSync(VIEW_PRESET_PATH)) {
   log(`[marked-boxes-render] missing ${VIEW_PRESET_PATH}`);

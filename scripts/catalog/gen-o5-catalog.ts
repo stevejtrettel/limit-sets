@@ -1,8 +1,10 @@
 /**
- * One-off generator: emit src/o5/catalog.ts from the validated Bajpai–Singh CSV
- * (orthogonal_hypergeometric_group_tables.csv, all 77 groups), annotating each
- * with its signature type, thin/arithmetic/open/finite status, and the paper
- * that established it. Run once: node scripts/gen-o5-catalog.ts
+ * Generator for src/examples/hypergeometric/degree5-orthogonal.ts, emitted from
+ * the validated Bajpai–Singh CSV (orthogonal_hypergeometric_group_tables.csv, all
+ * 77 groups), annotating each with its signature type, thin/arithmetic/open/finite
+ * status, and the paper that established it. The catalog is generated, not
+ * hand-edited: re-run after changing the CSV or annotations.
+ *   node scripts/gen-o5-catalog.ts
  *
  * Status/source assignment by BS number (worked out from the BS tables + the
  * Bajpai–Nitsche O(5) paper, cross-checked against the prior 29-group catalog):
@@ -18,7 +20,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const CSV = fileURLToPath(new URL('./orthogonal_hypergeometric_group_tables.csv', import.meta.url));
-const OUT = fileURLToPath(new URL('../src/examples/hypergeometric/degree5-orthogonal.ts', import.meta.url));
+const OUT = fileURLToPath(new URL('../../src/examples/hypergeometric/degree5-orthogonal.ts', import.meta.url));
 
 const BDN = 'Bajpai–Nitsche (this O(5) paper)';
 // BS Table 6 (48–67) and Table 7 (68–77) split by what the Bajpai–Nitsche paper

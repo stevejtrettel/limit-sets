@@ -13,7 +13,7 @@
  *
  * Integer input ⇒ everything exact, no tolerance.
  *
- *   node scripts/parity/c32-cone-parity.ts
+ *   node scripts/tests/c32-cone-parity.ts
  */
 
 import { facetsFromRays } from '../../src/core/convex.ts';

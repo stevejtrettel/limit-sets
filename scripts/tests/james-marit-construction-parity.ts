@@ -7,7 +7,7 @@
  * pipeline. Two independent implementations agreeing bit-for-bit across a sweep
  * of (s, α) proves the rewrite preserved the rep.
  *
- *   node scripts/parity/james-marit-construction-parity.ts
+ *   node scripts/tests/james-marit-construction-parity.ts
  */
 
 import { DEFAULT_REP, defaultMultipliers } from '../../src/examples/james-marit/so21Rep.ts';

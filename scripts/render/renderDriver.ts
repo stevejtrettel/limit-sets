@@ -12,7 +12,7 @@
  *          --color-scheme grayscale|last-gen|kth-last:k  --splat R
  *          --depth N  --no-preset  --refresh
  *
- * View-preset mode (default when scripts/<family>-view-preset.json exists)
+ * View-preset mode (default when outputs/presets/<family>-view-preset.json exists)
  * reproduces a framed perspective view exported from the demo; AUTO mode does a
  * PCA-pilot + percentile-bbox orthographic autofit. The preset's exampleId wins.
  */
@@ -23,22 +23,22 @@ import { createHash } from 'node:crypto';
 
 import {
   createAccumulator, writeAccumulatorFile, readAccumulatorFile, type Accumulator,
-} from '../src/render/accumulator.ts';
-import { accumulatorToRGBA, type Bg, type Palette } from '../src/render/tone.ts';
-import { writePng } from '../src/render/png.ts';
-import { createProgress, formatCount } from '../src/render/progress.ts';
-import { getScheme, categoryFromStack } from '../src/render/colorScheme.ts';
-import { type DepositFn, makeIntegerDeposit, makeTentSplatDeposit } from '../src/render/splat.ts';
-import { outputPath } from '../src/render/outputPath.ts';
+} from '../../src/render/accumulator.ts';
+import { accumulatorToRGBA, type Bg, type Palette } from '../../src/render/tone.ts';
+import { writePng } from '../../src/render/png.ts';
+import { createProgress, formatCount } from '../../src/render/progress.ts';
+import { getScheme, categoryFromStack } from '../../src/render/colorScheme.ts';
+import { type DepositFn, makeIntegerDeposit, makeTentSplatDeposit } from '../../src/render/splat.ts';
+import { outputPath } from '../../src/render/outputPath.ts';
 
-import type { GroupAction } from '../src/core/group.ts';
-import { streamOrbit, totalNodes, type Orbit } from '../src/core/orbit.ts';
-import type { Projector, SceneEmbedding } from '../src/core/scene.ts';
-import { makeAutoProjector, makePresetProjector } from '../src/core/projector.ts';
+import type { GroupAction } from '../../src/core/group.ts';
+import { streamOrbit, totalNodes, type Orbit } from '../../src/core/orbit.ts';
+import type { Projector, SceneEmbedding } from '../../src/core/scene.ts';
+import { makeAutoProjector, makePresetProjector } from '../../src/core/projector.ts';
 
 /** What a family must provide; `E` is the family's example type. */
 export interface RenderPlugin<E> {
-  family: string;            // outputs/<family>/, scripts/<family>-view-preset.json, log tag
+  family: string;            // outputs/<family>/, outputs/presets/<family>-view-preset.json, log tag
   defaultExampleId: string;
   defaultDepth: number;
 
@@ -99,7 +99,7 @@ export async function runRender<E>(plugin: RenderPlugin<E>): Promise<void> {
   { const v = flag('--color-scheme'); if (v !== null) { try { getScheme(v); COLOR_SCHEME = v; } catch (e) { log(`[${tag}-render] ignoring --color-scheme=${v} (${(e as Error).message})`); } } }
 
   // ─── view preset ────────────────────────────────────────────────────────────
-  const PRESET_PATH = fileURLToPath(new URL(`./${tag}-view-preset.json`, import.meta.url));
+  const PRESET_PATH = fileURLToPath(new URL(`../../outputs/presets/${tag}-view-preset.json`, import.meta.url));
   let preset: ViewPresetLike | null = null;
   if (plugin.presetEmbedding && !ARGS.includes('--no-preset') && existsSync(PRESET_PATH)) {
     try {
@@ -151,7 +151,7 @@ export async function runRender<E>(plugin: RenderPlugin<E>): Promise<void> {
     splatRadius: SPLAT_RADIUS, variant: variant ?? null, mode: preset ? 'preset' : 'auto',
     preset: preset ? { camera: preset.camera, viewport: preset.viewport } : null,
   })).digest('hex').slice(0, 16);
-  const cachePath = `${fileURLToPath(new URL('./cache/', import.meta.url))}${EXAMPLE_ID}-depth${DEPTH}-${cacheKey}.acc`;
+  const cachePath = `${fileURLToPath(new URL('../../outputs/cache/', import.meta.url))}${EXAMPLE_ID}-depth${DEPTH}-${cacheKey}.acc`;
 
   let acc: Accumulator | undefined, drawn = 0, loadedFromCache = false;
   if (!FORCE_REFRESH && existsSync(cachePath)) {

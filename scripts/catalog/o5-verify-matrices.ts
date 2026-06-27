@@ -13,12 +13,12 @@
  *      the dominant eigenvalue is real or a complex pair.
  */
 
-import { CATALOG_EXAMPLES } from '../src/examples/hypergeometric/degree5-orthogonal.ts';
-import { companion, matInverse, matMul, type Mat } from '../src/core/matrix.ts';
-import { cyclotomicProduct } from '../src/core/polynomial.ts';
-import { hypergeometricAction } from '../src/examples/hypergeometric/recipe.ts';
-import { findLoxodromicWord, formatWord } from '../src/core/seed.ts';
-import { jacobiSymmetricEig, charPoly, polyRoots, type Complex } from '../src/core/linalg.ts';
+import { CATALOG_EXAMPLES } from '../../src/examples/hypergeometric/degree5-orthogonal.ts';
+import { companion, matInverse, matMul, type Mat } from '../../src/core/matrix.ts';
+import { cyclotomicProduct } from '../../src/core/polynomial.ts';
+import { hypergeometricAction } from '../../src/examples/hypergeometric/recipe.ts';
+import { findLoxodromicWord, formatWord } from '../../src/core/seed.ts';
+import { jacobiSymmetricEig, charPoly, polyRoots, type Complex } from '../../src/core/linalg.ts';
 
 const N = 5;
 

@@ -154,9 +154,11 @@ little glue; a new family is "implement these few things."
 
 ## Verification
 
-Migration steps are gated by **parity tests** under `scripts/parity/` that prove
-new code reproduces old numerically (usually bit-identical). Every family also
-runs a **startup validator** (structural + dynamical checks) when its demo loads.
+Core engines and constructions are pinned by **tests** under `scripts/tests/` that
+check results against a known answer or an independent reference (exact where
+possible — e.g. the convex V→H engine against C-32's facets, the james-marit rep
+against a re-derivation). Every family also runs a **startup validator**
+(structural + dynamical checks) when its demo loads.
 
 ## Conventions
 

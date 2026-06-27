@@ -5,11 +5,11 @@
  *   node scripts/sl3r-render-limit-set.ts tri-334-d1.0 16 --embedding plane
  */
 import { runRender } from './renderDriver.ts';
-import { EXAMPLES, seedTriangle, type MatrixGroupExample } from '../src/examples/projective/triangle-groups/data.ts';
-import { makeMatrixAction, asInvolutions, pairWithInverses } from '../src/core/matrixAction.ts';
-import { sphereEmbedding, planeEmbedding } from '../src/examples/projective/rp2.ts';
-import { paletteForScheme } from '../src/examples/projective/triangle-groups/palette.ts';
-import type { ViewPreset } from '../src/examples/projective/triangle-groups/viewPreset.ts';
+import { EXAMPLES, seedTriangle, type MatrixGroupExample } from '../../src/examples/projective/triangle-groups/data.ts';
+import { makeMatrixAction, asInvolutions, pairWithInverses } from '../../src/core/matrixAction.ts';
+import { sphereEmbedding, planeEmbedding } from '../../src/examples/projective/rp2.ts';
+import { paletteForScheme } from '../../src/examples/projective/triangle-groups/palette.ts';
+import type { ViewPreset } from '../../src/examples/projective/triangle-groups/viewPreset.ts';
 
 const flagVal = (n: string): string | null => {
   const i = process.argv.indexOf(n);

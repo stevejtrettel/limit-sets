@@ -4,12 +4,12 @@
  *   node scripts/sl4r-render-limit-set.ts pair1 16
  */
 import { runRender } from './renderDriver.ts';
-import { EXAMPLES, seedRP3, type RP3Example } from '../src/examples/projective/rp3-pairs/data.ts';
-import { paletteForScheme } from '../src/examples/projective/rp3-pairs/palette.ts';
-import type { ViewPreset } from '../src/examples/projective/rp3-pairs/viewPreset.ts';
-import { makeMatrixAction, asInvolutions, pairWithInverses } from '../src/core/matrixAction.ts';
-import { embeddingFromPreset } from '../src/core/viewPreset.ts';
-import { fitAutoChartEmbedding } from '../src/core/chart.ts';
+import { EXAMPLES, seedRP3, type RP3Example } from '../../src/examples/projective/rp3-pairs/data.ts';
+import { paletteForScheme } from '../../src/examples/projective/rp3-pairs/palette.ts';
+import type { ViewPreset } from '../../src/examples/projective/rp3-pairs/viewPreset.ts';
+import { makeMatrixAction, asInvolutions, pairWithInverses } from '../../src/core/matrixAction.ts';
+import { embeddingFromPreset } from '../../src/core/viewPreset.ts';
+import { fitAutoChartEmbedding } from '../../src/core/chart.ts';
 
 await runRender<RP3Example>({
   family: 'sl4r', defaultExampleId: 'pair1', defaultDepth: 13,

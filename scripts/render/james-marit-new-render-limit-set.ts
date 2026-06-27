@@ -5,7 +5,7 @@
  * (the FIXED SO(2,1) rep variant; see demos/james-marit-new/).
  *
  * Like the james-marit renderer, this script consumes a self-contained
- * `scripts/james-marit-new-view-preset.json` — the demo's "copy view JSON"
+ * `outputs/presets/james-marit-new-view-preset.json` — the demo's "copy view JSON"
  * button writes the live 4×4 generators, γ word, projection, and camera into
  * that file, and this script renders exactly what was on screen at higher
  * resolution and depth.
@@ -36,34 +36,34 @@ import {
   writeAccumulatorFile,
   readAccumulatorFile,
   type Accumulator,
-} from '../src/render/accumulator.ts';
-import { accumulatorToRGBA, type Bg, type Palette } from '../src/render/tone.ts';
-import { writePng } from '../src/render/png.ts';
-import { outputPath } from '../src/render/outputPath.ts';
+} from '../../src/render/accumulator.ts';
+import { accumulatorToRGBA, type Bg, type Palette } from '../../src/render/tone.ts';
+import { writePng } from '../../src/render/png.ts';
+import { outputPath } from '../../src/render/outputPath.ts';
 import {
   drawText, measureText, fillRect, pickFontSize, type TextStyle,
-} from '../src/render/textOverlay.ts';
-import { createProgress, formatCount } from '../src/render/progress.ts';
-import { getScheme } from '../src/render/colorScheme.ts';
+} from '../../src/render/textOverlay.ts';
+import { createProgress, formatCount } from '../../src/render/progress.ts';
+import { getScheme } from '../../src/render/colorScheme.ts';
 import {
   type DepositFn,
   makeIntegerDeposit, makeTentSplatDeposit,
-} from '../src/render/splat.ts';
+} from '../../src/render/splat.ts';
 
-import { makeMatrixAction, pairWithInverses } from '../src/core/matrixAction.ts';
-import { mat } from '../src/core/matrix.ts';
-import { embeddingFromPreset } from '../src/core/viewPreset.ts';
-import { paletteForScheme } from '../src/examples/james-marit/palette.ts';
+import { makeMatrixAction, pairWithInverses } from '../../src/core/matrixAction.ts';
+import { mat } from '../../src/core/matrix.ts';
+import { embeddingFromPreset } from '../../src/core/viewPreset.ts';
+import { paletteForScheme } from '../../src/examples/james-marit/palette.ts';
 
-import type { GroupAction } from '../src/core/group.ts';
+import type { GroupAction } from '../../src/core/group.ts';
 import {
   computeProximalBasepoint,
   streamOrbit,
   totalNodes,
-} from '../src/core/orbit.ts';
-import { type Projector } from '../src/core/scene.ts';
-import { makePresetProjector } from '../src/core/projector.ts';
-import type { JMViewPreset, JMRenderMode } from '../demos/james-marit/viewPreset.ts';
+} from '../../src/core/orbit.ts';
+import { type Projector } from '../../src/core/scene.ts';
+import { makePresetProjector } from '../../src/core/projector.ts';
+import type { JMViewPreset, JMRenderMode } from '../../demos/james-marit/viewPreset.ts';
 
 // ─── Defaults ──────────────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ let LINE_OPACITY = 0.2;
 const log = (msg: string): void => { process.stderr.write(msg + '\n'); };
 
 const VIEW_PRESET_PATH = fileURLToPath(
-  new URL('./james-marit-new-view-preset.json', import.meta.url),
+  new URL('../../outputs/presets/james-marit-new-view-preset.json', import.meta.url),
 );
 if (!existsSync(VIEW_PRESET_PATH)) {
   log(`[james-marit-new-render] missing ${VIEW_PRESET_PATH}`);

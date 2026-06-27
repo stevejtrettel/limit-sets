@@ -3,7 +3,7 @@
  *
  * Offline density-image render of a Schwartz–Pappus limit set on RP².
  *
- * Self-contained: reads `scripts/schwartz-pappus-view-preset.json` (written
+ * Self-contained: reads `outputs/presets/schwartz-pappus-view-preset.json` (written
  * by the demo's "copy view JSON for offline render" button), which carries
  * the live 3×3 generators (g₁, g₂), γ word, embedding name, and camera —
  * the renderer doesn't need to re-import the Pappus math.
@@ -31,32 +31,32 @@ import {
   writeAccumulatorFile,
   readAccumulatorFile,
   type Accumulator,
-} from '../src/render/accumulator.ts';
-import { accumulatorToRGBA, type Bg, type Palette } from '../src/render/tone.ts';
-import { writePng } from '../src/render/png.ts';
-import { outputPath } from '../src/render/outputPath.ts';
-import { createProgress, formatCount } from '../src/render/progress.ts';
-import { getScheme } from '../src/render/colorScheme.ts';
+} from '../../src/render/accumulator.ts';
+import { accumulatorToRGBA, type Bg, type Palette } from '../../src/render/tone.ts';
+import { writePng } from '../../src/render/png.ts';
+import { outputPath } from '../../src/render/outputPath.ts';
+import { createProgress, formatCount } from '../../src/render/progress.ts';
+import { getScheme } from '../../src/render/colorScheme.ts';
 import {
   type DepositFn,
   makeIntegerDeposit, makeTentSplatDeposit,
-} from '../src/render/splat.ts';
+} from '../../src/render/splat.ts';
 
-import { makeMatrixAction, pairWithInverses } from '../src/core/matrixAction.ts';
-import { mat } from '../src/core/matrix.ts';
-import { sphereEmbedding, planeEmbedding } from '../src/examples/projective/rp2.ts';
-import { paletteForScheme } from '../src/examples/projective/schwartz-pappus/palette.ts';
+import { makeMatrixAction, pairWithInverses } from '../../src/core/matrixAction.ts';
+import { mat } from '../../src/core/matrix.ts';
+import { sphereEmbedding, planeEmbedding } from '../../src/examples/projective/rp2.ts';
+import { paletteForScheme } from '../../src/examples/projective/schwartz-pappus/palette.ts';
 
-import type { GroupAction } from '../src/core/group.ts';
+import type { GroupAction } from '../../src/core/group.ts';
 import {
   computeProximalBasepoint,
   streamOrbit,
   totalNodes,
-} from '../src/core/orbit.ts';
-import type { SceneEmbedding } from '../src/core/scene.ts';
-import { type Projector } from '../src/core/scene.ts';
-import { makePresetProjector } from '../src/core/projector.ts';
-import type { SchwartzPappusViewPreset } from '../demos/schwartz-pappus/viewPreset.ts';
+} from '../../src/core/orbit.ts';
+import type { SceneEmbedding } from '../../src/core/scene.ts';
+import { type Projector } from '../../src/core/scene.ts';
+import { makePresetProjector } from '../../src/core/projector.ts';
+import type { SchwartzPappusViewPreset } from '../../demos/schwartz-pappus/viewPreset.ts';
 // Flag-variety viz is being reworked — see demos/schwartz-pappus/flagEmbedding.ts
 // for the skeleton. Once one of the approaches lands, add the matching
 // embedding-mode branch in the action/basepoint construction below.
@@ -82,7 +82,7 @@ let SPLAT_RADIUS = 0;
 const log = (msg: string): void => { process.stderr.write(msg + '\n'); };
 
 const VIEW_PRESET_PATH = fileURLToPath(
-  new URL('./schwartz-pappus-view-preset.json', import.meta.url),
+  new URL('../../outputs/presets/schwartz-pappus-view-preset.json', import.meta.url),
 );
 if (!existsSync(VIEW_PRESET_PATH)) {
   log(`[schwartz-pappus-render] missing ${VIEW_PRESET_PATH}`);

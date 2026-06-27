@@ -6,11 +6,11 @@
 import { runRender } from './renderDriver.ts';
 import {
   EXAMPLES, symplecticAction, seedSymplectic, type SymplecticExample,
-} from '../src/examples/hypergeometric/degree6-symplectic.ts';
-import { paletteForSymplectic } from '../src/examples/hypergeometric/palette.ts';
-import type { ViewPreset } from '../src/examples/hypergeometric/viewPreset.ts';
-import { embeddingFromPreset } from '../src/core/viewPreset.ts';
-import { fitAutoChartEmbedding } from '../src/core/chart.ts';
+} from '../../src/examples/hypergeometric/degree6-symplectic.ts';
+import { paletteForSymplectic } from '../../src/examples/hypergeometric/palette.ts';
+import type { ViewPreset } from '../../src/examples/hypergeometric/viewPreset.ts';
+import { embeddingFromPreset } from '../../src/core/viewPreset.ts';
+import { fitAutoChartEmbedding } from '../../src/core/chart.ts';
 
 await runRender<SymplecticExample>({
   family: 'sp6', defaultExampleId: 'c32', defaultDepth: 13,

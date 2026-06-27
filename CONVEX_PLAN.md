@@ -65,7 +65,7 @@ bitmasks.
 ## Stages
 
 - **S1 ✅ DONE: `core/convex.ts` + validated against C-32.**
-  `scripts/parity/c32-cone-parity.ts` (PASSED, exact, 0.4 s). Engine: exact BigInt
+  `scripts/tests/c32-cone-parity.ts` (PASSED, exact, 0.4 s). Engine: exact BigInt
   double-description (`facetsFromRays`), Fukuda combinatorial edges (`coneEdges`),
   `contains`, `transformCone`, `coneFromRays`.
 
@@ -113,4 +113,4 @@ passes, sibling demos build, tsc at the 3 pre-existing errors.
   ≥5 rays; `K**=K` round-trip `facetsFromRays(facets)` recovers all 254 rays.
 - `c32Cone().edges` → **680** edges.
 - Pure integer arithmetic ⇒ exact equality, no tolerance.
-  (`node scripts/parity/c32-cone-parity.ts`)
+  (`node scripts/tests/c32-cone-parity.ts`)

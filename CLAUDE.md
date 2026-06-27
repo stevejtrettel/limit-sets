@@ -13,7 +13,8 @@ src/examples/  catalogs (data) + recipes (data → GroupAction), named by the ma
 src/render/    offline rasterization (accumulator, tone-map, PNG)
 src/app/       live three.js (App, ControlPanel, meshes)
 demos/         thin wiring: pick an example, build action, orbit, embed, render
-scripts/       offline render scripts + scripts/parity/ gates
+scripts/       CLI tools — render/ (offline renderers) · catalog/ (o5 atlas
+               gen + validate) · tests/ (correctness gates) · run-demo.mjs
 ```
 
 - **Putting a matrix or coefficient list in `core/` is a mistake.** Core is
@@ -48,7 +49,7 @@ scripts/       offline render scripts + scripts/parity/ gates
 - **Run scripts:** `node scripts/<x>.ts` (Node 25 strips TS). Scripts use
   **relative imports with `.ts` extensions**; demos use the **`@/` alias** (→
   `src/`, Vite-only). `node` cannot resolve `@/`, so anything node runs (scripts,
-  parity gates) must use relative `.ts` paths.
+  tests) must use relative `.ts` paths.
 - **Strict TS:** `verbatimModuleSyntax` + `erasableSyntaxOnly`. Use `import type`
   for type-only imports; no enums, no constructor parameter-properties,
   `noUnusedLocals/Parameters`.
@@ -59,19 +60,20 @@ scripts/       offline render scripts + scripts/parity/ gates
   strings** must not change — saved presets key off them. (E.g. the renamed
   `demos/james-marit/` still uses tag `'james-marit-new'`.)
 - **Renders default to white background.** Fix dim limit sets via gamma/tone, not
-  a dark background. PNGs/JPGs in `outputs/` are gitignored build artifacts.
-- **Verify with a parity gate.** When migrating, add a `scripts/parity/*.ts` that
-  builds old and new actions and asserts identical `apply`/seed (aim ≤1e-12).
-  When a base change makes bit-parity impossible (e.g. auto-seeding picks a
-  different word), spot-check that the limit set is unchanged (orbit bbox) and say
-  so.
+  a dark background. `outputs/` is the gitignored render workspace (PNGs +
+  `outputs/cache/` accumulator caches + `outputs/presets/` saved framings).
+- **Pin core math with a test.** When changing a core engine or construction, add
+  a `scripts/tests/*.ts` that checks the result against a known answer or an
+  independent reference (exact / ≤1e-12 where possible). When an intended change
+  shifts the bits (e.g. auto-seeding picks a different word), spot-check that the
+  limit set is unchanged (orbit bbox) and say so.
 
 ## Build / verify
 
 ```sh
 npm run build <demo>      # vite production build (proves the demo loads)
 npx tsc --noEmit          # typecheck (3 known pre-existing errors: limitSetMesh, textOverlay×2)
-node scripts/parity/<gate>.ts
+node scripts/tests/<gate>.ts
 ```
 
 ## Status (mid-refactor)

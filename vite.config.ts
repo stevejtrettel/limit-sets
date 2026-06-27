@@ -1,15 +1,15 @@
 import { defineConfig, type PluginOption } from 'vite';
 import path from 'path';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 
 // Dev-only middleware: demos POST their current view JSON (camera + projection
 // info + example id + ...) to /__save-view/<group>, which we write to
-// scripts/<group>-view-preset.json. The matching offline render script reads
-// that file on startup.
+// outputs/presets/<group>-view-preset.json (gitignored working state — not code,
+// grouped with the renders it frames). The render script reads it on startup.
 //
 // Whitelist of allowed group names keeps this safe — we only ever write into
-// scripts/<known-group>-view-preset.json, never an attacker-supplied path.
-const ALLOWED_GROUPS = new Set(['sp6', 'sp6c32', 'o5', 'sl2c', 'sl3r', 'sl4r', 'james-marit', 'james-marit-new', 'schwartz-pappus', 'marked-boxes']);
+// outputs/presets/<known-group>-view-preset.json, never an attacker path.
+const ALLOWED_GROUPS = new Set(['sp6', 'o5', 'sl2c', 'sl3r', 'sl4r', 'james-marit-new', 'schwartz-pappus', 'marked-boxes']);
 
 function viewPresetWriter(): PluginOption {
   return {
@@ -37,8 +37,9 @@ function viewPresetWriter(): PluginOption {
           try {
             const body = Buffer.concat(chunks).toString('utf8');
             JSON.parse(body);
-            const file = `scripts/${group}-view-preset.json`;
+            const file = `outputs/presets/${group}-view-preset.json`;
             const out = path.resolve(__dirname, file);
+            mkdirSync(path.dirname(out), { recursive: true });
             writeFileSync(out, body);
             res.statusCode = 200;
             res.setHeader('content-type', 'application/json');

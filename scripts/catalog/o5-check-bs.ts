@@ -9,10 +9,10 @@
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { cyclotomicProduct } from '../src/core/polynomial.ts';
-import { companion, matInverse, matMul, matDet, type Mat } from '../src/core/matrix.ts';
-import { hypergeometricAction } from '../src/examples/hypergeometric/recipe.ts';
-import { findLoxodromicWord } from '../src/core/seed.ts';
+import { cyclotomicProduct } from '../../src/core/polynomial.ts';
+import { companion, matInverse, matMul, matDet, type Mat } from '../../src/core/matrix.ts';
+import { hypergeometricAction } from '../../src/examples/hypergeometric/recipe.ts';
+import { findLoxodromicWord } from '../../src/core/seed.ts';
 
 const CSV = fileURLToPath(new URL('./orthogonal_hypergeometric_group_tables.csv', import.meta.url));
 
