@@ -18,7 +18,7 @@
  */
 
 import type { GroupAction } from '../../core/group.ts';
-import type { CMat, Cx } from '../../core/complexMatrix.ts';
+import { type CMat, type Cx, cmatMul } from '../../core/complexMatrix.ts';
 import {
   type CGen, asComplexInvolutions, complexGeneratingSet, makeComplexMatrixAction,
 } from '../../core/complexMatrixAction.ts';
@@ -87,9 +87,30 @@ export function idealTriangleAction(p1: CVec3, p2: CVec3, p3: CVec3): GroupActio
 /**
  * A normalized null triple with Cartan angular invariant A ∈ (−π/2, π/2):
  *   p₁ = (1, 0, 1),  p₂ = (−1, 0, 1),  p₃ = (−i·tan(A/2), √(1 − tan²(A/2)), 1).
- * At A = 0 this is the real triple (R-Fuchsian, limit set an R-circle); as
- * |A| → π/2 the triple degenerates onto a complex line. Round-trips through
- * `cartanInvariant` exactly (pinned by scripts/tests/su21-gates.ts).
+ *
+ * One triple per PU(2,1)-orbit: triples of boundary points have 9 real dof
+ * and the group has 8, so the moduli space is the interval parameterized by
+ * A, and this function is an explicit slice of it. No searching is involved —
+ * the formula comes from gauge-fixing and inverting in closed form:
+ *
+ *   1. SU(2,1) is transitive on PAIRS of boundary points ⇒ fix p₁, p₂ above.
+ *   2. Write p₃ = (a, b, 1); null ⟺ |a|² + |b|² = 1. Then ⟨p₁,p₂⟩ = −2,
+ *      ⟨p₂,p₃⟩ = −ā − 1, ⟨p₃,p₁⟩ = a − 1, so
+ *        A = arg(−⟨p₁,p₂⟩⟨p₂,p₃⟩⟨p₃,p₁⟩) = atan2(−2·Im a, 1 − |a|²).
+ *      b has dropped out (its phase is the residual gauge freedom of the
+ *      p₁p₂-stabilizer; take b real ≥ 0) and only Im a matters (gauge away
+ *      Re a, i.e. a = iy).
+ *   3. atan2(−2y, 1−y²) = −2·arctan y (double angle) inverts to
+ *      y = −tan(A/2); nullity gives b = √(1 − tan²(A/2)).
+ *
+ * Endpoints check out: A = 0 is the real triple (R-Fuchsian, limit set an
+ * R-circle); as |A| → π/2, b → 0 and the triple degenerates onto the complex
+ * line z₂ = 0 (a chain). Round-trips through `cartanInvariant` — which knows
+ * nothing of this construction — exactly (pinned in su21-gates.ts).
+ *
+ * Schwartz's Clifford-torus triple (β_s, β̄_s…, 2005-35 eq. 2.22) is a
+ * different slice of the same moduli space, PU(2,1)-conjugate to this one
+ * under the dictionary s = tan A (verified numerically to 1e-16).
  */
 export function idealTrianglePoints(A: number): [CVec3, CVec3, CVec3] {
   if (!(Math.abs(A) < Math.PI / 2)) {
@@ -102,6 +123,47 @@ export function idealTrianglePoints(A: number): [CVec3, CVec3, CVec3] {
     cvec3([-1, 0], [0, 0], [1, 0]),
     cvec3([0, -t], [b, 0], [1, 0]),
   ];
+}
+
+// ─── The Goldman–Parker discreteness dial ────────────────────────────────────
+//
+// In an ideal triangle group the ιᵢιⱼ are parabolic by construction, so the
+// only element that can degenerate is ι₁ι₂ι₃. Schwartz's theorem (the GP
+// conjecture): ρ_A is a discrete embedding ⟺ ι₁ι₂ι₃ is NOT elliptic. So the
+// whole discreteness landscape of the family reads off one trace.
+
+/**
+ * The critical Cartan invariant A* = arctan√(125/3) ≈ 1.41710: ι₁ι₂ι₃ is
+ * loxodromic for |A| < A*, parabolic at A* (Schwartz's "last ideal triangle
+ * group"), elliptic — hence non-discrete — beyond. Goldman–Parker's parameter
+ * is s = tan A, with their critical value s̄² = 125/3; our pipeline reproduces
+ * that constant to 13 digits (pinned in scripts/tests/su21-gates.ts).
+ */
+export const GP_CRITICAL_A = Math.atan(Math.sqrt(125 / 3));
+
+/** τ = tr(−ι₁ι₂ι₃) for the ideal triangle group at invariant A. The sign puts
+ *  the representative in SU(2,1) (each ι has det −1), which Goldman's trace
+ *  classification requires. */
+export function idealTriangleProductTrace(A: number): Cx {
+  const [i1, i2, i3] = idealTriangleReflections(...idealTrianglePoints(A));
+  const P = cmatMul(i1, cmatMul(i2, i3));
+  let re = 0, im = 0;
+  for (let k = 0; k < 3; k++) {
+    re -= P[2 * (3 * k + k)];
+    im -= P[2 * (3 * k + k) + 1];
+  }
+  return [re, im];
+}
+
+/** Goldman's trace discriminant for M ∈ SU(2,1), τ = tr M:
+ *    f(τ) = |τ|⁴ − 8·Re(τ³) + 18·|τ|² − 27.
+ *  f > 0 ⟺ loxodromic, f < 0 ⟺ regular elliptic, f = 0 on the parabolic
+ *  boundary. Invariant under the cube-root-of-unity trace ambiguity of
+ *  PU(2,1) lifts. */
+export function goldmanDiscriminant(tau: Cx): number {
+  const m2 = tau[0] * tau[0] + tau[1] * tau[1];
+  const re3 = tau[0] * (tau[0] * tau[0] - 3 * tau[1] * tau[1]);
+  return m2 * m2 - 8 * re3 + 18 * m2 - 27;
 }
 
 /** GroupAction from an explicit SU(2,1) generating set (mixed involution/free

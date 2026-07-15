@@ -89,7 +89,7 @@ export async function runRender<E>(plugin: RenderPlugin<E>): Promise<void> {
   const VALUE_FLAGS = new Set(['--max-dim', '--gamma', '--tone', '--bg', '--color-scheme', '--splat', '--depth']);
   const positional = ARGS.filter((a, i) => !a.startsWith('--') && !VALUE_FLAGS.has(ARGS[i - 1] ?? ''));
 
-  const MAX_DIM = flag('--max-dim') ? Math.max(256, parseInt(flag('--max-dim')!, 10)) : 2000;
+  const MAX_DIM = flag('--max-dim') ? Math.max(256, parseInt(flag('--max-dim')!, 10)) : 6000;
   const TONE_GAMMA = flag('--gamma') ? parseFloat(flag('--gamma')!) : 1;
   const TONE_PERCENTILE = flag('--tone') ? parseFloat(flag('--tone')!) : 0.999;
   const BG: Bg = flag('--bg') === 'black' ? 'black' : 'white';

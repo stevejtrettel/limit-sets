@@ -28,6 +28,7 @@ import {
 } from '../../src/examples/complex-hyperbolic/hermitian.ts';
 import {
   idealTrianglePoints, idealTriangleReflections, complexReflection, zetaOfOrder,
+  GP_CRITICAL_A, idealTriangleProductTrace, goldmanDiscriminant,
 } from '../../src/examples/complex-hyperbolic/recipe.ts';
 import {
   EXAMPLES, exampleById, buildAction, seedSU21, trianglePointsOf,
@@ -119,6 +120,20 @@ for (const ex of EXAMPLES) {
     });
   }
 }
+
+// ─── 5b. Goldman–Parker threshold ───────────────────────────────────────────
+// The dial: f(τ(A)) with τ = tr(−ι₁ι₂ι₃). Pins (a) the closed form
+// tan²A* = 125/3 (Goldman–Parker's s̄² = 125/3 under s = tan A — an independent
+// literature cross-check of the whole construction), (b) parabolicity exactly
+// at A*, (c) the sign of f on either side.
+console.log('Goldman–Parker threshold:');
+gate('tan²(A*) = 125/3', Math.abs(Math.tan(GP_CRITICAL_A) ** 2 - 125 / 3), 1e-9);
+gate('f(τ(A*)) = 0 (ι₁ι₂ι₃ parabolic at the wall)',
+  Math.abs(goldmanDiscriminant(idealTriangleProductTrace(GP_CRITICAL_A))), 1e-9);
+gate('f(τ(0.95·A*)) > 0 (still loxodromic)',
+  goldmanDiscriminant(idealTriangleProductTrace(0.95 * GP_CRITICAL_A)) > 0 ? 0 : 1, 0.5);
+gate('f(τ(1.05·A*)) < 0 (elliptic, non-discrete)',
+  goldmanDiscriminant(idealTriangleProductTrace(1.05 * GP_CRITICAL_A)) < 0 ? 0 : 1, 0.5);
 
 // ─── 6–8. Orbit geometry gates ──────────────────────────────────────────────
 /** Max deviation of an orbit from a per-point predicate on w = (z₁/z₃, z₂/z₃). */

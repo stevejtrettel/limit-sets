@@ -20,7 +20,9 @@ import type { GroupAction } from '../../core/group.ts';
 import type { CGen } from '../../core/complexMatrixAction.ts';
 import { cmat } from '../../core/complexMatrix.ts';
 import type { CVec3 } from './hermitian.ts';
-import { idealTrianglePoints, idealTriangleAction, su21Action, seedCH2 } from './recipe.ts';
+import {
+  idealTrianglePoints, idealTriangleAction, su21Action, seedCH2, GP_CRITICAL_A,
+} from './recipe.ts';
 import type { Seed } from '../../core/seed.ts';
 
 export interface SU21Example {
@@ -82,6 +84,15 @@ const cFuchsianGens: readonly CGen[] = [
   ]) },
 ];
 
+// ─── The Goldman–Parker ladder ──────────────────────────────────────────────
+//
+// Ideal triangle groups swept from the R-Fuchsian point toward the Schwartz
+// discreteness threshold A* = arctan√(125/3) (see GP_CRITICAL_A in recipe.ts):
+// discrete embedding for |A| ≤ A* (ι₁ι₂ι₃ loxodromic, then parabolic exactly
+// at A*), non-discrete beyond (ι₁ι₂ι₃ elliptic). The interesting geometry is
+// crowded against the wall — Goldman's discriminant f collapses from ~10⁵ at
+// A = 0 to 0 at A* — so rows are spaced by FRACTION OF A*, not uniformly.
+
 export const EXAMPLES: readonly SU21Example[] = [
   {
     id: 'ideal-triangle-fuchsian',
@@ -91,9 +102,33 @@ export const EXAMPLES: readonly SU21Example[] = [
   },
   {
     id: 'ideal-triangle-A45',
-    label: 'Ideal triangle, A = π/4',
-    description: 'bent ideal triangle group; limit set leaves every real plane (genuinely 3D curve)',
+    label: 'Ideal triangle, A = π/4 ≈ 0.55·A*',
+    description: 'bent ideal triangle group; limit set leaves every real plane (genuinely 3D quasicircle)',
     cartanA: Math.PI / 4,
+  },
+  {
+    id: 'gp-080',
+    label: 'Goldman–Parker, A = 0.80·A*',
+    description: 'deep in the discrete range; strongly wrinkled quasicircle',
+    cartanA: 0.80 * GP_CRITICAL_A,
+  },
+  {
+    id: 'gp-095',
+    label: 'Goldman–Parker, A = 0.95·A*',
+    description: 'near-critical: ι₁ι₂ι₃ barely loxodromic; parabolic pinching emerging (use high depth)',
+    cartanA: 0.95 * GP_CRITICAL_A,
+  },
+  {
+    id: 'gp-critical',
+    label: 'Goldman–Parker critical, A* = arctan√(125/3)',
+    description: 'Schwartz’s last ideal triangle group: ι₁ι₂ι₃ parabolic; even subgroup = spherical CR holonomy of the Whitehead link complement',
+    cartanA: GP_CRITICAL_A,
+  },
+  {
+    id: 'gp-supercritical',
+    label: 'Goldman–Parker, A = 1.05·A* (NON-discrete)',
+    description: 'past the threshold: ι₁ι₂ι₃ elliptic, group non-discrete — the orbit closure is not a limit-set circle (drawn for contrast)',
+    cartanA: 1.05 * GP_CRITICAL_A,
   },
   {
     id: 'c-fuchsian',

@@ -52,6 +52,11 @@ The code is layered by **how reusable each piece is**:
   matrices into a `GroupAction` (dimension inferred). The **alphabet** is the one
   group-theoretic choice: `asInvolutions` (Coxeter), `pairWithInverses` (free
   group), or `generatingSet` (mixed, e.g. a free product). Plus `normalizeSphere`.
+- **`complexMatrix.ts`, `complexMatrixAction.ts`** — the complex mirror of the
+  two files above: flat interleaved complex matrices and
+  `makeComplexMatrixAction` (same three alphabet builders) for subgroups of
+  GL(n,C) acting on CP^{n-1}; the state is the realified vector in R^{2n}.
+  Pinned against the bespoke Kleinian apply by `scripts/tests/su21-gates.ts`.
 - **`polynomial.ts`** — `cyclotomicProduct`: rotation tuples → integer polynomial
   (the hypergeometric construction).
 - **`seed.ts`** — find a basepoint *on* the limit set. `seedFromLoxodromic`
@@ -88,6 +93,16 @@ names specific groups.
 - **`kleinian/`** — Möbius groups on CP¹. Keeps a bespoke complex 2×2 `apply` (the
   complex matvec reads closer to the math than a realified 4×4); seeds with the
   complex dominance criterion.
+- **`complex-hyperbolic/`** — SU(2,1) acting on ∂CH² = S³ ⊂ C² (ball model,
+  form diag(1,1,−1)). `hermitian.ts` carries the form vocabulary (Hermitian
+  product, polar vectors, the Cartan angular invariant, the Cayley map to the
+  Siegel form); `recipe.ts` builds complex reflections R_ζ (any order) and the
+  **Goldman–Parker ideal triangle groups** from three boundary points — or just
+  the Cartan invariant A, a complete parameter (`idealTrianglePoints(A)`, with
+  the derivation in its doc comment). The discreteness dial is Goldman's trace
+  discriminant on ι₁ι₂ι₃, critical at A* = arctan√(125/3) (= Goldman–Parker's
+  s̄² = 125/3 under s = tan A; pinned by gates). Two fixed embeddings:
+  stereographic S³ → R³ and Heisenberg (ζ, v).
 - **`james-marit/`** — an SL(4,ℝ) Hitchin/Anosov rep of the once-punctured torus
   group, built as an affine cohomological deformation of a fixed SO(2,1) base rep:
   `so21Rep` (base) + `cohomology` (φ-twist) + `cocycle` (solve `v_{[a,b]}=0`) +
@@ -121,6 +136,8 @@ rewrites the `<script>` tag in `index.html` to the chosen demo.
 - **`sl4r-limit-sets`** — GL(4,ℝ) pairs on RP³; **`james-marit`** — the SO(2,1)
   Hitchin construction on RP³.
 - **`sl2c-limit-sets`** — Kleinian / quasifuchsian groups on CP¹.
+- **`su21-limit-sets`** — the Goldman–Parker ideal-triangle ladder (A = 0 up
+  through the critical A* and beyond) + C-Fuchsian examples on ∂CH² = S³.
 
 ## Offline render
 
