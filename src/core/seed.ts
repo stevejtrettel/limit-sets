@@ -67,27 +67,47 @@ const EXPAND = 1.001;   // |λ| must exceed this to count as expanding
 const ISO = 1e-4;       // dominant must beat the next modulus by this margin
 const REAL = 1e-6;      // |im| < REAL·|λ| counts the dominant as real
 
+/** Overrides for the criterion thresholds. The one that matters in practice is
+ *  `expand`: a PARABOLIC word has a high-multiplicity eigenvalue on the unit
+ *  circle, and numeric root-finding scatters an m-fold root by ~ε^(1/m) — for a
+ *  realified 6×6 (m up to 6) that is ≈3e-3, ABOVE the default 1.001 floor, so a
+ *  parabolic can masquerade as loxodromic. Families whose actions realify to
+ *  larger matrices raise `expand` past the scatter (any word with true |λ|
+ *  above the floor is still found; near-cusp groups just seed from a longer,
+ *  more expanding word). */
+export interface CriterionOpts { expand?: number; iso?: number; }
+
 /** A single real isolated dominant eigenvalue, |λ| > 1. The condition for real
  *  power iteration to converge to a fixed direction. */
-export const realDominantCriterion: LoxodromicCriterion = (eigs) => {
-  const top = eigs[0], next = eigs[1];
-  const mag = cAbs(top);
-  if (mag < EXPAND) return null;
-  if (Math.abs(top.im) > REAL * mag) return null;        // dominant must be real
-  if (next && cAbs(next) > mag * (1 - ISO)) return null;  // dominant must be isolated
-  return mag;
-};
+export function makeRealDominantCriterion(
+  { expand = EXPAND, iso = ISO }: CriterionOpts = {},
+): LoxodromicCriterion {
+  return (eigs) => {
+    const top = eigs[0], next = eigs[1];
+    const mag = cAbs(top);
+    if (mag < expand) return null;
+    if (Math.abs(top.im) > REAL * mag) return null;        // dominant must be real
+    if (next && cAbs(next) > mag * (1 - iso)) return null;  // dominant must be isolated
+    return mag;
+  };
+}
+export const realDominantCriterion: LoxodromicCriterion = makeRealDominantCriterion();
 
 /** Dominant modulus > 1, isolated from the next distinct modulus, with at most a
  *  conjugate pair at the top. For complex (Möbius-type) actions. */
-export const complexDominantCriterion: LoxodromicCriterion = (eigs) => {
-  const mag = cAbs(eigs[0]);
-  if (mag < EXPAND) return null;
-  let k = 1;
-  while (k < eigs.length && cAbs(eigs[k]) > mag * (1 - ISO)) k++;
-  if (k > 2 || k === eigs.length) return null; // degenerate top cluster / all equal modulus
-  return mag;
-};
+export function makeComplexDominantCriterion(
+  { expand = EXPAND, iso = ISO }: CriterionOpts = {},
+): LoxodromicCriterion {
+  return (eigs) => {
+    const mag = cAbs(eigs[0]);
+    if (mag < expand) return null;
+    let k = 1;
+    while (k < eigs.length && cAbs(eigs[k]) > mag * (1 - iso)) k++;
+    if (k > 2 || k === eigs.length) return null; // degenerate top cluster / all equal modulus
+    return mag;
+  };
+}
+export const complexDominantCriterion: LoxodromicCriterion = makeComplexDominantCriterion();
 
 // ─── Word enumeration + search ───────────────────────────────────────────────
 

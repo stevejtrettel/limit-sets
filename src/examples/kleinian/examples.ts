@@ -137,22 +137,25 @@ const whiteheadLike = bianchiTauExample({
 //   β = [[-iμ, -i], [-i, 0]]
 //
 // The Maskit slice is the set of μ giving discrete free groups (commutator
-// is parabolic, once-punctured torus quotient). At μ ≈ 1.95859103 (real),
-// an additional element becomes parabolic — the "double cusp" — and the
-// limit set degenerates into a specific gasket-like nested-circle packing
-// distinct from the Riley t = 2i picture.
+// is parabolic, once-punctured torus quotient). On the slice boundary an
+// additional word becomes parabolic — a "double cusp" — and the limit set
+// degenerates into a gasket-like nested-circle packing distinct from the
+// Riley t = 2i picture. This is the Indra's Pearls double cusp with
+// tr β = 1.958591030 + 0.011278560i, i.e. μ = i·conj(tr β), near the
+// μ(0) = 2i cusp. μ MUST be genuinely complex: for real μ both generators
+// preserve R̂ and the limit set collapses onto the real line.
 //
-// γ = αβ is loxodromic: tr = -i(μ+2), |tr| ≈ 3.96.
-const MASKIT_MU = 1.95859103;
+// γ = αβ is loxodromic: tr = -i(μ+2), |tr| ≈ 2.81.
+const MASKIT_MU: readonly [number, number] = [0.011278560, 1.958591030]; // [Re μ, Im μ]
 const maskitDoubleCusp: MobiusExample = {
   id: 'maskit-double-cusp',
-  label: `Maskit double cusp (μ ≈ ${MASKIT_MU.toFixed(4)})`,
+  label: `Maskit double cusp (μ ≈ ${MASKIT_MU[0].toFixed(4)} + ${MASKIT_MU[1].toFixed(4)}i)`,
   description: 'Maskit-slice boundary; an extra parabolic word forces a "double cusp"; gasket-like nested-circle packing',
   generators: [
     // α = [[1, 2], [0, 1]]  (z + 2)
     { a: [1, 0], b: [2, 0], c: [0, 0], d: [1, 0] },
-    // β = [[-iμ, -i], [-i, 0]]
-    { a: [0, -MASKIT_MU], b: [0, -1], c: [0, -1], d: [0, 0] },
+    // β = [[-iμ, -i], [-i, 0]];  -iμ = μ_im − i·μ_re
+    { a: [MASKIT_MU[1], -MASKIT_MU[0]], b: [0, -1], c: [0, -1], d: [0, 0] },
   ],
 };
 
