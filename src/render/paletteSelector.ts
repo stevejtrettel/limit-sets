@@ -16,7 +16,7 @@ export function makePaletteSelector(
   grayscalePalette: Palette,
 ): (schemeName: string) => Palette {
   return (schemeName) =>
-    schemeName === 'last-gen' || schemeName.startsWith('kth-last:')
+    schemeName === 'last-gen' || schemeName.startsWith('last-gen:') || schemeName.startsWith('kth-last:')
       ? familyPalette
       : grayscalePalette;
 }

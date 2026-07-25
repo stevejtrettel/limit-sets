@@ -113,6 +113,68 @@ export function drawLineAA(
 }
 
 /**
+ * Anti-aliased round-capped stroke of arbitrary `width` (in pixels), for
+ * figure-quality linework where Wu's 1-pixel line is too thin to read — hull
+ * edges and silhouettes on a 6000-pixel-wide render.
+ *
+ * Coverage is the analytic distance-to-segment falloff: a pixel is fully inked
+ * within (width/2 − ½) of the segment and fades to nothing at (width/2 + ½), so
+ * the stroke keeps a constant apparent weight at any width, including sub-pixel.
+ * `opacity` (0..1) scales the whole stroke, for depth-faded / occluded edges.
+ */
+export function drawThickLineAA(
+  rgba: Uint8Array, w: number, h: number,
+  x0: number, y0: number, x1: number, y1: number,
+  color: RGB, width: number, opacity = 1,
+): void {
+  if (opacity <= 0 || width <= 0) return;
+  const half = width / 2;
+  const pad = half + 1;
+  const minX = Math.max(0, Math.floor(Math.min(x0, x1) - pad));
+  const maxX = Math.min(w - 1, Math.ceil(Math.max(x0, x1) + pad));
+  const minY = Math.max(0, Math.floor(Math.min(y0, y1) - pad));
+  const maxY = Math.min(h - 1, Math.ceil(Math.max(y0, y1) + pad));
+  if (minX > maxX || minY > maxY) return;
+
+  const dx = x1 - x0, dy = y1 - y0;
+  const len2 = dx * dx + dy * dy;
+  for (let y = minY; y <= maxY; y++) {
+    const py = y + 0.5;
+    for (let x = minX; x <= maxX; x++) {
+      const px = x + 0.5;
+      let t = len2 > 0 ? ((px - x0) * dx + (py - y0) * dy) / len2 : 0;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const dist = Math.hypot(px - (x0 + t * dx), py - (y0 + t * dy));
+      const cov = half + 0.5 - dist;
+      if (cov <= 0) continue;
+      plot(rgba, w, h, x, y, (cov < 1 ? cov : 1) * opacity, color);
+    }
+  }
+}
+
+/**
+ * Anti-aliased filled disc — the dot at a projected vertex. Same coverage model
+ * as {@link drawThickLineAA}, so dots and strokes carry matching weight.
+ */
+export function drawDiscAA(
+  rgba: Uint8Array, w: number, h: number,
+  cx: number, cy: number, radius: number, color: RGB, opacity = 1,
+): void {
+  if (opacity <= 0 || radius <= 0) return;
+  const minX = Math.max(0, Math.floor(cx - radius - 1));
+  const maxX = Math.min(w - 1, Math.ceil(cx + radius + 1));
+  const minY = Math.max(0, Math.floor(cy - radius - 1));
+  const maxY = Math.min(h - 1, Math.ceil(cy + radius + 1));
+  for (let y = minY; y <= maxY; y++) {
+    for (let x = minX; x <= maxX; x++) {
+      const cov = radius + 0.5 - Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+      if (cov <= 0) continue;
+      plot(rgba, w, h, x, y, (cov < 1 ? cov : 1) * opacity, color);
+    }
+  }
+}
+
+/**
  * Convenience: fill the entire `rgba` buffer with a single solid color.
  * (Background paint for line-based renders.)
  */

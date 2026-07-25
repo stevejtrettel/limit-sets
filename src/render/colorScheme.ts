@@ -28,7 +28,10 @@
  * Built-in schemes:
  *   - "grayscale"         K=1   stepsBack=-1
  *   - "last-gen"          K=5   stepsBack=0
- *   - "kth-last:K"        K=5   stepsBack=K-1
+ *   - "last-gen:K"        K=K   stepsBack=0    (alphabets with > 4 codes,
+ *                                              e.g. the 6-generator tetrahedra)
+ *   - "kth-last:k"        K=5   stepsBack=k-1
+ *   - "kth-last:k:K"      K=K   stepsBack=k-1
  */
 
 export interface ColorScheme {
@@ -44,18 +47,31 @@ const grayscaleScheme: ColorScheme = Object.freeze({
   stepsBack: -1,
 });
 
+/** Category-count suffix parser shared by the letter-family specs. */
+function parseK(raw: string | undefined, spec: string): number {
+  if (raw === undefined) return 5;   // legacy default: basepoint + 4 codes
+  const K = parseInt(raw, 10);
+  if (!Number.isFinite(K) || K < 2) {
+    throw new Error(`invalid category count in '${spec}': K must be ≥ 2`);
+  }
+  return K;
+}
+
 /** Construct or look up a scheme by spec string. */
 export function getScheme(spec: string): ColorScheme {
   if (spec === 'grayscale') return grayscaleScheme;
-  if (spec === 'last-gen') {
-    return Object.freeze({ name: 'last-gen', categoryCount: 5, stepsBack: 0 });
+  if (spec === 'last-gen' || spec.startsWith('last-gen:')) {
+    const K = parseK(spec === 'last-gen' ? undefined : spec.slice('last-gen:'.length), spec);
+    return Object.freeze({ name: spec, categoryCount: K, stepsBack: 0 });
   }
   if (spec.startsWith('kth-last:')) {
-    const k = parseInt(spec.slice('kth-last:'.length), 10);
+    const parts = spec.slice('kth-last:'.length).split(':');
+    const k = parseInt(parts[0], 10);
     if (!Number.isFinite(k) || k < 1) {
       throw new Error(`invalid kth-last spec '${spec}': k must be ≥ 1`);
     }
-    return Object.freeze({ name: spec, categoryCount: 5, stepsBack: k - 1 });
+    const K = parseK(parts[1], spec);
+    return Object.freeze({ name: spec, categoryCount: K, stepsBack: k - 1 });
   }
   throw new Error(`unknown color scheme '${spec}'`);
 }
@@ -67,11 +83,16 @@ export function getScheme(spec: string): ColorScheme {
  *   0 → grayscale
  *   1 → last-gen
  *   k ≥ 2 → kth-last:k
+ *
+ * `categoryCount` (default 5) selects the K-suffixed spec variants for
+ * alphabets with more than 4 codes; the default emits the legacy names so
+ * every saved preset string stays valid.
  */
-export function schemeForColorDepth(colorDepth: number): ColorScheme {
+export function schemeForColorDepth(colorDepth: number, categoryCount = 5): ColorScheme {
+  const suffix = categoryCount === 5 ? '' : `:${categoryCount}`;
   if (colorDepth <= 0) return getScheme('grayscale');
-  if (colorDepth === 1) return getScheme('last-gen');
-  return getScheme(`kth-last:${colorDepth}`);
+  if (colorDepth === 1) return getScheme(`last-gen${suffix}`);
+  return getScheme(`kth-last:${colorDepth}${suffix}`);
 }
 
 // ─── Lookup helpers ─────────────────────────────────────────────────────────

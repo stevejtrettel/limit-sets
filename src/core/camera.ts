@@ -18,6 +18,14 @@ export interface Camera {
   readonly imgW: number;
   readonly imgH: number;
   project(x: number, y: number, z: number): { px: number; py: number } | null;
+  /**
+   * Unclipped variant carrying view depth, for drawing GEOMETRY rather than
+   * scattering points: a polygon or line may have vertices outside the frame and
+   * still cover pixels inside it, so this clips only against the eye (null when
+   * the point is behind the camera). `depth` increases away from the viewer —
+   * compare it to z-buffer values, never read it as a distance in scene units.
+   */
+  projectDepth(x: number, y: number, z: number): { px: number; py: number; depth: number } | null;
 }
 
 // ─── Dim resolution ────────────────────────────────────────────────────────
@@ -128,14 +136,23 @@ function mat4Perspective(
 /** Three.js-compatible perspective camera. Uses image aspect = imgW/imgH. */
 export function makePerspectiveCamera(opts: PerspectiveCameraOptions): Camera {
   const W = opts.imgW, H = opts.imgH;
-  const VP = mat4Mul(
-    mat4Perspective(opts.fov, W / H, opts.near, opts.far),
-    mat4LookAt(opts.position, opts.target, opts.up),
-  );
+  const V = mat4LookAt(opts.position, opts.target, opts.up);
+  const VP = mat4Mul(mat4Perspective(opts.fov, W / H, opts.near, opts.far), V);
 
   return {
     imgW: W,
     imgH: H,
+    projectDepth(x, y, z) {
+      const cx = VP[0] *x + VP[1] *y + VP[2] *z + VP[3];
+      const cy = VP[4] *x + VP[5] *y + VP[6] *z + VP[7];
+      const cw = VP[12]*x + VP[13]*y + VP[14]*z + VP[15];
+      if (cw <= 0) return null;   // behind the eye — nothing to draw
+      const invW = 1 / cw;
+      // View-space z is negative in front of a look-at camera, so negate it for
+      // a depth that grows away from the viewer.
+      const depth = -(V[8] * x + V[9] * y + V[10] * z + V[11]);
+      return { px: (cx * invW + 1) * 0.5 * W, py: (1 - cy * invW) * 0.5 * H, depth };
+    },
     project(x, y, z) {
       const cx = VP[0] *x + VP[1] *y + VP[2] *z + VP[3];
       const cy = VP[4] *x + VP[5] *y + VP[6] *z + VP[7];
@@ -171,6 +188,10 @@ export function makeOrthographicCamera(opts: OrthographicCameraOptions): Camera 
 
   return {
     imgW, imgH,
+    // The window looks down −z from +z, so depth (away from the viewer) is −z.
+    projectDepth(x, y, z) {
+      return { px: (x - xLo) * sx, py: (oyTop - y) * sy, depth: -z };
+    },
     project(x, y /* , z ignored */) {
       const px = (x - xLo) * sx;
       const py = (oyTop - y) * sy;
@@ -178,6 +199,57 @@ export function makeOrthographicCamera(opts: OrthographicCameraOptions): Camera 
       return { px, py };
     },
   };
+}
+
+// ─── View frame (camera axes recovered in scene coordinates) ───────────────
+
+export interface ViewFrame {
+  /** Scene direction that moves a point to the RIGHT on screen. */
+  right: readonly [number, number, number];
+  /** Scene direction that moves a point UP on screen. */
+  up: readonly [number, number, number];
+  /** Scene direction pointing from `at` TOWARD the viewer. */
+  toViewer: readonly [number, number, number];
+}
+
+/**
+ * Recover the camera's screen axes as scene-space directions, near the point
+ * `at`, by finite-differencing `projectDepth` along the three scene axes.
+ *
+ * Both camera models are projective, so the differenced Jacobian is exact for
+ * the orthographic camera and a faithful local frame for the perspective one.
+ * This is what lets a renderer light or orient geometry RELATIVE TO THE VIEW
+ * without ever being told where the camera is — the caller only ever holds a
+ * `Camera`. `h` is the probe step; scale it to the scene (a small fraction of
+ * the object's size).
+ */
+export function viewFrameAt(
+  camera: Camera, at: readonly [number, number, number], h: number,
+): ViewFrame | null {
+  const base = camera.projectDepth(at[0], at[1], at[2]);
+  if (!base) return null;
+
+  const dpx = [0, 0, 0], dpy = [0, 0, 0], dd = [0, 0, 0];
+  for (let k = 0; k < 3; k++) {
+    const q: [number, number, number] = [at[0], at[1], at[2]];
+    q[k] += h;
+    const s = camera.projectDepth(q[0], q[1], q[2]);
+    if (!s) return null;
+    dpx[k] = (s.px - base.px) / h;
+    dpy[k] = (s.py - base.py) / h;
+    dd[k]  = (s.depth - base.depth) / h;
+  }
+
+  const unit = (v: number[], sign: number): [number, number, number] | null => {
+    const l = Math.hypot(v[0], v[1], v[2]);
+    if (!(l > 0)) return null;
+    return [sign * v[0] / l, sign * v[1] / l, sign * v[2] / l];
+  };
+  // Screen y grows downward and depth grows away from the viewer, so both are
+  // negated to give "up" and "toward the viewer".
+  const right = unit(dpx, 1), up = unit(dpy, -1), toViewer = unit(dd, -1);
+  if (!right || !up || !toViewer) return null;
+  return { right, up, toViewer };
 }
 
 // ─── Autofit bbox (orthographic) ───────────────────────────────────────────

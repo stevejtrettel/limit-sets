@@ -23,6 +23,9 @@ export interface LimitSetMeshOpts {
   orbit: Orbit;
   /** Browser color-depth value (0 = grayscale, 1 = last letter, …). */
   colorDepth: number;
+  /** Categories for letter schemes: basepoint + number of generator codes.
+   *  Default 5 (the classic 4-code alphabets). */
+  categoryCount?: number;
   paletteForScheme: (schemeName: string) => Palette;
   /** Mesh to remove + dispose (null on first build). */
   previous: THREE.Mesh | null;
@@ -34,7 +37,7 @@ export interface LimitSetMeshOpts {
 
 /** Returns the new mesh and the number of kept (chart-projected) points. */
 export function buildLimitSetMesh(o: LimitSetMeshOpts): { mesh: THREE.Mesh; kept: number } {
-  const scheme = schemeForColorDepth(o.colorDepth);
+  const scheme = schemeForColorDepth(o.colorDepth, o.categoryCount);
   const { aPos, aColor, kept } = buildOrbitInstances(
     o.embedding, o.orbit, scheme, o.paletteForScheme(scheme.name),
   );

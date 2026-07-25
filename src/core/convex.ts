@@ -251,6 +251,21 @@ export function facetsFromRays(rays: readonly (readonly number[])[]): number[][]
 }
 
 /**
+ * Extreme rays of the halfspace-presented cone { x : h·x ≥ 0 ∀ h ∈ H }, for
+ * integer covectors H spanning a pointed, full-dimensional cone.
+ *
+ * This is {@link facetsFromRays} read the other way round — the same double
+ * description, since the two problems are dual (see the header). Given as its
+ * own name because clipping wants it in the H→V direction: cut a cone by extra
+ * halfspaces and ask what its corners are.
+ *
+ * Throws if the constraints do not leave a full-dimensional cone.
+ */
+export function raysFromHalfspaces(halfspaces: readonly (readonly number[])[]): number[][] {
+  return facetsFromRays(halfspaces);
+}
+
+/**
  * 1-skeleton of cone(rays) given its facets: rays i, j are joined by an edge iff
  * the smallest face containing both is the 2-face they span — i.e. exactly two
  * rays are tight on every facet common to i and j (Fukuda's adjacency test).

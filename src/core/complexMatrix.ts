@@ -133,6 +133,44 @@ export function cmatMaxAbs(M: CMat): number {
   return m;
 }
 
+/** Determinant via complex Gaussian elimination with partial pivoting (by
+ *  modulus). Dimension-generic, mirrors `matDet`. Returns [re, im]. */
+export function cmatDet(M: CMat): Cx {
+  const n = cmatDim(M);
+  const A = Float64Array.from(M);
+  const idx = (r: number, c: number): number => 2 * (r * n + c);
+  let dr = 1, di = 0;
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    let max = Math.hypot(A[idx(col, col)], A[idx(col, col) + 1]);
+    for (let r = col + 1; r < n; r++) {
+      const v = Math.hypot(A[idx(r, col)], A[idx(r, col) + 1]);
+      if (v > max) { max = v; piv = r; }
+    }
+    if (max < EPS_SINGULAR) return [0, 0];
+    if (piv !== col) {
+      for (let j = 0; j < 2 * n; j++) {
+        const t = A[2 * col * n + j]; A[2 * col * n + j] = A[2 * piv * n + j]; A[2 * piv * n + j] = t;
+      }
+      dr = -dr; di = -di;
+    }
+    const pr = A[idx(col, col)], pi = A[idx(col, col) + 1];
+    const t = dr * pr - di * pi; di = dr * pi + di * pr; dr = t;   // det *= pivot
+    const den = pr * pr + pi * pi;
+    for (let r = col + 1; r < n; r++) {
+      const ar = A[idx(r, col)], ai = A[idx(r, col) + 1];
+      if (ar === 0 && ai === 0) continue;
+      const fr = (ar * pr + ai * pi) / den, fi = (ai * pr - ar * pi) / den; // a / pivot
+      for (let j = col; j < n; j++) {
+        const xr = A[idx(col, j)], xi = A[idx(col, j) + 1];
+        A[idx(r, j)]     -= fr * xr - fi * xi;
+        A[idx(r, j) + 1] -= fr * xi + fi * xr;
+      }
+    }
+  }
+  return [dr, di];
+}
+
 /** Inverse via complex Gauss–Jordan elimination with partial pivoting (by
  *  modulus); throws if singular. Dimension-generic, mirrors `matInverse`. */
 export function cmatInverse(M: CMat): CMat {

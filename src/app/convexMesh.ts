@@ -17,6 +17,8 @@
 import * as THREE from 'three';
 import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
 import type { ConvexCone } from '@/core/convex';
+import { convexHull3Sparse, type Vec3 } from '@/core/hull3';
+import { clipBoxFaces } from '@/core/convexChart';
 import type { SceneEmbedding } from '@/core/scene';
 import type { Orbit } from '@/core/orbit';
 
@@ -66,6 +68,7 @@ export function skeletonMesh(
   edges: readonly (readonly [number, number])[],
   style: SkeletonStyle,
   keep: (i: number) => boolean = () => true,
+  keepEdge: (a: number, b: number) => boolean = (a, b) => keep(a) && keep(b),
 ): ConeMesh {
   const group = new THREE.Group();
   const disposables: { dispose(): void }[] = [];
@@ -83,7 +86,7 @@ export function skeletonMesh(
     disposables.push(g, m);
   }
 
-  const live = edges.filter(([a, b]) => vertices[a] && vertices[b] && keep(a) && keep(b));
+  const live = edges.filter(([a, b]) => vertices[a] && vertices[b] && keepEdge(a, b));
   if (style.tubeRadius > 0 && live.length) {
     const g = new THREE.CylinderGeometry(style.tubeRadius, style.tubeRadius, 1, 8, 1);
     const m = new THREE.MeshBasicMaterial({ color: style.edgeColor });
@@ -125,7 +128,25 @@ export interface Silhouette {
  * surface (corners AND points on a flat face/edge), used to optionally hide
  * interior wireframe vertices.
  */
-export function coneSilhouette(points: readonly (THREE.Vector3 | null)[]): Silhouette {
+export function coneSilhouette(
+  points: readonly (THREE.Vector3 | null)[],
+  clipExtent?: number,
+): Silhouette {
+  // When the piece was truncated, the cut planes are π_a = ±M — axis-aligned in
+  // chart space. Anything lying on one of them is the flat lid the cut left, not
+  // boundary of the domain, and is left out so the body is OPEN there.
+  const lidFace = (vs: readonly THREE.Vector3[]): boolean => {
+    if (!clipExtent) return false;
+    const tol = 1e-3 * clipExtent;
+    const co = (p: THREE.Vector3, a: number): number => (a === 0 ? p.x : a === 1 ? p.y : p.z);
+    for (let a = 0; a < 3; a++) {
+      for (const sg of [1, -1]) {
+        if (vs.every((p) => Math.abs(co(p, a) - sg * clipExtent) < tol)) return true;
+      }
+    }
+    return false;
+  };
+
   const boundary = new Set<number>();
   const facePositions: number[] = [];
 
@@ -139,6 +160,7 @@ export function coneSilhouette(points: readonly (THREE.Vector3 | null)[]): Silho
     const vs: THREE.Vector3[] = [];
     let e = f.edge;
     do { vs.push(e.head().point); e = e.next; } while (e !== f.edge);
+    if (lidFace(vs)) continue;
     for (let i = 1; i + 1 < vs.length; i++) {
       facePositions.push(
         vs[0].x, vs[0].y, vs[0].z,
@@ -188,6 +210,19 @@ export interface ConeDomainOpts {
   showBody?: boolean;
   /** When false, hide wireframe vertices/edges interior to the silhouette. */
   showInterior?: boolean;
+  /**
+   * Derive the wireframe from the 3-D hull of the PROJECTED points instead of
+   * the cone's own 1-skeleton. For a piece cut out of a cone (a half of a domain
+   * that runs through infinity) the ambient 1-skeleton is not the piece's, so
+   * there is nothing else to draw.
+   */
+  hullEdges?: boolean;
+  /**
+   * Truncation half-width this piece was cut at, if it was. The flat lids left
+   * on that box are dropped — body, rim edges, and rim corners — so the piece
+   * reads as running off to infinity rather than ending at a wall.
+   */
+  clipExtent?: number;
 }
 
 /**
@@ -200,16 +235,52 @@ export function coneDomainMesh(
   embedding: SceneEmbedding,
   style: ConeDomainStyle,
   opts: ConeDomainOpts = {},
-): ConeMesh & { boundary: Set<number> } {
-  const { showVertices = true, showEdges = true, showBody = true, showInterior = false } = opts;
+): ConeMesh & { boundary: Set<number>; allLids: boolean } {
+  const {
+    showVertices = true, showEdges = true, showBody = true,
+    showInterior = false, hullEdges = false, clipExtent,
+  } = opts;
   const points = projectConeVertices(cone, embedding);
+
+  // A corner on the cut is a rim of the opening, not a vertex of the domain.
+  const tol = clipExtent ? 1e-3 * clipExtent : 0;
+  const onBox = (i: number): boolean => {
+    const p = points[i];
+    if (!clipExtent || !p) return false;
+    return Math.abs(Math.abs(p.x) - clipExtent) < tol
+      || Math.abs(Math.abs(p.y) - clipExtent) < tol
+      || Math.abs(Math.abs(p.z) - clipExtent) < tol;
+  };
+
+  // core/hull3 merges coplanar triangles, so a flat face contributes its own
+  // boundary rather than a fan of interior chords. Edges with BOTH ends on the
+  // cut are the lid's own rim and go; an edge with one end there is a real edge
+  // running out to where the body was truncated, and is kept — that is the cue
+  // that the piece continues. The hull is also needed for the vertex CORNER set
+  // (below), so compute it whenever vertices are drawn.
+  const h3 = (hullEdges || clipExtent || showVertices)
+    ? convexHull3Sparse(points.map((p) => (p ? [p.x, p.y, p.z] as Vec3 : null)))
+    : null;
+  const wireEdges = (h3 && hullEdges)
+    ? h3.edges.filter((e) => !(onBox(e.a) && onBox(e.b))).map((e) => [e.a, e.b] as [number, number])
+    : cone.edges;
+  // Vertex spheres sit ONLY at true hull corners (the vertices appearing in the
+  // face loops), never at a ray that merely lands on a face's interior. Null in
+  // the degenerate case ⇒ no restriction.
+  const cornerSet = h3 ? new Set<number>() : null;
+  if (h3 && cornerSet) for (const f of h3.faces) for (const i of f.loop) cornerSet.add(i);
+  // Every face a lid means the piece's SHADOW fills the truncation box: this
+  // projection collapses it completely, and once the lids go there is nothing
+  // left to draw. Reported so the caller can say so rather than show a blank.
+  const lids = (h3 && clipExtent) ? clipBoxFaces(h3, clipExtent) : null;
+  const allLids = !!(lids && h3 && h3.faces.length > 0 && lids.size === h3.faces.length);
 
   let boundary = new Set<number>();
   let facePositions: number[] = [];
   let hullOk = true;
   if (showBody || !showInterior) {
     try {
-      const s = coneSilhouette(points);
+      const s = coneSilhouette(points, clipExtent);
       boundary = s.boundary;
       facePositions = s.facePositions;
     } catch {
@@ -222,12 +293,17 @@ export function coneDomainMesh(
   const keep = (showInterior || !hullOk) ? () => true : (i: number) => boundary.has(i);
 
   if (showVertices || showEdges) {
-    const wire = skeletonMesh(points, cone.edges, {
+    // A corner ON the cut is the rim of the opening, not a vertex of the domain,
+    // so it gets no sphere; an edge running OUT to the cut is a real edge of the
+    // body and is kept — that is what shows it continuing past the truncation.
+    const keepVertex = (i: number): boolean =>
+      keep(i) && !onBox(i) && (!cornerSet || cornerSet.has(i));
+    const wire = skeletonMesh(points, wireEdges, {
       edgeColor: style.edgeColor,
       tubeRadius: showEdges ? style.tubeRadius : 0,
       vertexColor: style.vertexColor,
       vertexRadius: showVertices ? style.vertexRadius : 0,
-    }, keep);
+    }, keepVertex, (a, b) => keep(a) && keep(b));
     group.add(wire.group);
     disposables.push(wire);
   }
@@ -237,7 +313,7 @@ export function coneDomainMesh(
     disposables.push(body);
   }
 
-  return { group, boundary, dispose() { for (const d of disposables) d.dispose(); } };
+  return { group, boundary, allLids, dispose() { for (const d of disposables) d.dispose(); } };
 }
 
 // ── membership coloring ──────────────────────────────────────────────────────

@@ -23,3 +23,22 @@ export const su21GrayscalePalette: Palette = [
 ];
 
 export const paletteForScheme = makePaletteSelector(su21FamilyPalette, su21GrayscalePalette);
+
+/**
+ * Tetrahedron palette: basepoint + the 6 edge reflections in TETRA_EDGES
+ * order, with OPPOSITE-EDGE PAIRS in related hues — (ι₁₂, ι₃₄) reds,
+ * (ι₁₃, ι₂₄) blues, (ι₁₄, ι₂₃) greens — so the pairing that governs the
+ * dynamics (opposite-edge products are the loxodromic/elliptic gatekeepers)
+ * is readable directly in the limit set.
+ */
+export const su21TetraPalette: Palette = [
+  [0.95, 0.95, 0.95],  // 0: basepoint / underflow
+  [0.70, 0.15, 0.15],  // 1: ι₁₂ — deep red
+  [0.15, 0.25, 0.65],  // 2: ι₁₃ — deep blue
+  [0.10, 0.48, 0.22],  // 3: ι₁₄ — deep green
+  [0.45, 0.70, 0.35],  // 4: ι₂₃ — light green (pairs with ι₁₄)
+  [0.40, 0.60, 0.85],  // 5: ι₂₄ — light blue  (pairs with ι₁₃)
+  [0.90, 0.50, 0.35],  // 6: ι₃₄ — light red   (pairs with ι₁₂)
+];
+
+export const tetraPaletteForScheme = makePaletteSelector(su21TetraPalette, su21GrayscalePalette);

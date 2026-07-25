@@ -23,6 +23,7 @@ import type { GroupAction } from './group.ts';
 import { generateOrbit, type Orbit } from './orbit.ts';
 import { composeProjector, type Projector, type SceneEmbedding } from './scene.ts';
 import {
+  type Camera,
   type DimOptions,
   type PerspectiveSpec,
   fitViewBbox,
@@ -35,6 +36,10 @@ export interface ProjectorOutput {
   project: Projector;
   imgW: number;
   imgH: number;
+  /** The two halves `project` was composed from, for callers that need to place
+   *  extra GEOMETRY in the same view (e.g. a convex domain drawn over Λ). */
+  embedding: SceneEmbedding;
+  camera: Camera;
 }
 
 // ─── Preset projector (perspective) ─────────────────────────────────────────
@@ -65,7 +70,7 @@ export function makePresetProjector(opts: PresetProjectorOptions): ProjectorOutp
     imgW, imgH,
   });
 
-  return { project: composeProjector(opts.embedding, camera), imgW, imgH };
+  return { project: composeProjector(opts.embedding, camera), imgW, imgH, embedding: opts.embedding, camera };
 }
 
 // ─── Auto projector (pilot BFS + caller's fitter + percentile bbox) ────────
@@ -91,6 +96,12 @@ export interface AutoProjectorOptions extends DimOptions {
   maxAspect?: number;
   /** Fraction of the image the view rect should fill. Default 0.92. */
   fitFill?: number;
+  /**
+   * Extra ℝ³ scene points (packed xyz) to include in the autofit bbox, given the
+   * fitted embedding. Use when the picture contains geometry beyond the orbit —
+   * a convex domain, an axis frame — that would otherwise be cropped.
+   */
+  extraFitPoints?: (embedding: SceneEmbedding) => Float64Array;
   log?: (msg: string) => void;
 }
 
@@ -117,17 +128,34 @@ export function makeAutoProjector(opts: AutoProjectorOptions): ProjectorOutput {
     if (embedding.embed(pilot.vecs, i * pilot.stateDim, scenePoints, kept * 3)) kept++;
   }
   const bbox = fitViewBbox(scenePoints, kept, opts);
-  const { imgW, imgH } = resolveImageDims(bbox.aspect, opts.maxDim, opts);
+
+  // The percentile bbox is a statistic of the orbit, so extra geometry cannot be
+  // folded into it as more samples (a few hundred points never move a 20%
+  // percentile). Instead, GROW the fitted rect until it contains them.
+  let { xLo, xHi, yLo, yHi } = bbox;
+  const extra = opts.extraFitPoints?.(embedding);
+  if (extra && extra.length >= 3) {
+    for (let i = 0; i + 2 < extra.length; i += 3) {
+      const x = extra[i], y = extra[i + 1];
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      xLo = Math.min(xLo, x); xHi = Math.max(xHi, x);
+      yLo = Math.min(yLo, y); yHi = Math.max(yHi, y);
+    }
+    // Breathing room: geometry that exactly touches the frame reads as cropped,
+    // and its outline stroke would be half outside the image.
+    const padX = (xHi - xLo) * 0.03, padY = (yHi - yLo) * 0.03;
+    xLo -= padX; xHi += padX; yLo -= padY; yHi += padY;
+    log?.(`  grown for extra geometry: [${xLo.toFixed(3)}, ${xHi.toFixed(3)}] × [${yLo.toFixed(3)}, ${yHi.toFixed(3)}]`);
+  }
+
+  const aspect = (xHi - xLo) / (yHi - yLo);
+  const { imgW, imgH } = resolveImageDims(aspect, opts.maxDim, opts);
   log?.(`  bbox = [${bbox.rawXLo.toFixed(3)}, ${bbox.rawXHi.toFixed(3)}] × ` +
         `[${bbox.rawYLo.toFixed(3)}, ${bbox.rawYHi.toFixed(3)}]  ` +
         `aspect ${bbox.rawAspect.toFixed(2)} (capped at ${opts.maxAspect ?? 4})  →  ` +
         `image = ${imgW}×${imgH}  in ${Date.now() - tb} ms`);
 
-  const camera = makeOrthographicCamera({
-    xLo: bbox.xLo, xHi: bbox.xHi,
-    yLo: bbox.yLo, yHi: bbox.yHi,
-    imgW, imgH,
-  });
+  const camera = makeOrthographicCamera({ xLo, xHi, yLo, yHi, imgW, imgH });
 
-  return { project: composeProjector(embedding, camera), imgW, imgH };
+  return { project: composeProjector(embedding, camera), imgW, imgH, embedding, camera };
 }

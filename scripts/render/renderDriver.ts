@@ -12,6 +12,10 @@
  *          --color-scheme grayscale|last-gen|kth-last:k  --splat R
  *          --depth N  --no-preset  --refresh
  *
+ * A family may also paint geometry over the finished image (`overlay`) — that
+ * runs after tone-mapping and after the accumulator cache, so restyling an
+ * overlay is instant.
+ *
  * View-preset mode (default when outputs/presets/<family>-view-preset.json exists)
  * reproduces a framed perspective view exported from the demo; AUTO mode does a
  * PCA-pilot + percentile-bbox orthographic autofit. The preset's exampleId wins.
@@ -34,6 +38,7 @@ import { outputPath } from '../../src/render/outputPath.ts';
 import type { GroupAction } from '../../src/core/group.ts';
 import { streamOrbit, totalNodes, type Orbit } from '../../src/core/orbit.ts';
 import type { Projector, SceneEmbedding } from '../../src/core/scene.ts';
+import type { Camera } from '../../src/core/camera.ts';
 import { makeAutoProjector, makePresetProjector } from '../../src/core/projector.ts';
 
 /** What a family must provide; `E` is the family's example type. */
@@ -63,6 +68,37 @@ export interface RenderPlugin<E> {
   /** Scene embedding reconstructed from a saved preset, for PRESET mode. Omit if
    *  the family has no preset mode. */
   presetEmbedding?(preset: ViewPresetLike, e: E): SceneEmbedding;
+  /** Family-specific CLI flags that take a value (e.g. '--phase'), so the
+   *  driver does not mistake their values for the positional exampleId. */
+  extraValueFlags?: readonly string[];
+
+  /**
+   * Extra ℝ³ scene points to keep inside the AUTO-mode frame (packed xyz).
+   * Λ alone sets the framing otherwise, which would crop any companion geometry.
+   */
+  autofitExtras?(embedding: SceneEmbedding, e: E): Float64Array;
+
+  /**
+   * Draw over the tone-mapped image, before it is written. This is where a
+   * family paints geometry that is not part of the density accumulation — a
+   * convex domain, a fundamental polygon, an axis frame. The embedding and
+   * camera handed over are exactly the ones Λ was rasterized through, so the
+   * overlay lands in the same view; and it runs after the cache, so restyling
+   * an overlay never re-runs the DFS.
+   */
+  overlay?(ctx: OverlayContext, e: E): void;
+}
+
+/** What a plugin's `overlay` is handed: the finished pixels + the live view. */
+export interface OverlayContext {
+  rgba: Uint8Array;
+  imgW: number;
+  imgH: number;
+  embedding: SceneEmbedding;
+  camera: Camera;
+  /** The loaded view preset, or null in auto mode. */
+  preset: unknown;
+  log(msg: string): void;
 }
 
 /** The preset fields the driver reads (families add their own projection/embedding). */
@@ -86,7 +122,10 @@ export async function runRender<E>(plugin: RenderPlugin<E>): Promise<void> {
     const i = ARGS.indexOf(name);
     return i >= 0 && i + 1 < ARGS.length ? ARGS[i + 1] : null;
   };
-  const VALUE_FLAGS = new Set(['--max-dim', '--gamma', '--tone', '--bg', '--color-scheme', '--splat', '--depth']);
+  const VALUE_FLAGS = new Set([
+    '--max-dim', '--gamma', '--tone', '--bg', '--color-scheme', '--splat', '--depth',
+    ...(plugin.extraValueFlags ?? []),
+  ]);
   const positional = ARGS.filter((a, i) => !a.startsWith('--') && !VALUE_FLAGS.has(ARGS[i - 1] ?? ''));
 
   const MAX_DIM = flag('--max-dim') ? Math.max(256, parseInt(flag('--max-dim')!, 10)) : 6000;
@@ -129,19 +168,23 @@ export async function runRender<E>(plugin: RenderPlugin<E>): Promise<void> {
   // ─── projector ────────────────────────────────────────────────────────────────
   const dimOpts = { minDim: MIN_DIM, dimRound: DIM_ROUND };
   let project: Projector, imgW: number, imgH: number, outputSuffix = '';
+  let embedding: SceneEmbedding, camera: Camera;
   if (preset && plugin.presetEmbedding) {
     const o = makePresetProjector({
       embedding: plugin.presetEmbedding(preset, ex), cameraSpec: preset.camera,
       aspect: preset.viewport.width / preset.viewport.height, maxDim: MAX_DIM, ...dimOpts, log,
     });
     project = o.project; imgW = o.imgW; imgH = o.imgH; outputSuffix = '-view';
+    embedding = o.embedding; camera = o.camera;
   } else {
     const o = makeAutoProjector({
       action, basepoint: seed.basepoint, depth: DEPTH, pilotDepth: Math.min(DEPTH, 12),
       fitEmbedding: (pilot) => plugin.fitEmbedding(pilot, ex),
+      extraFitPoints: plugin.autofitExtras ? (emb) => plugin.autofitExtras!(emb, ex) : undefined,
       maxDim: MAX_DIM, ...dimOpts, bboxTrim: 0.20, maxAspect: 4, fitFill: 0.92, log,
     });
     project = o.project; imgW = o.imgW; imgH = o.imgH;
+    embedding = o.embedding; camera = o.camera;
   }
 
   // ─── accumulate (cache, or stream the DFS) ───────────────────────────────────
@@ -204,6 +247,12 @@ export async function runRender<E>(plugin: RenderPlugin<E>): Promise<void> {
   const palette: Palette | undefined = acc.channels > 1 ? plugin.paletteForScheme(COLOR_SCHEME) : undefined;
   const { rgba, scale } = accumulatorToRGBA(acc, { percentile: TONE_PERCENTILE, bg: BG, gamma: TONE_GAMMA, palette });
   log(`  nonzero ${scale.nzCount.toLocaleString()}  clip ${scale.clip.toFixed(3)}`);
+
+  if (plugin.overlay) {
+    const t0 = Date.now();
+    plugin.overlay({ rgba, imgW, imgH, embedding, camera, preset, log }, ex);
+    log(`  overlay drawn in ${Date.now() - t0} ms`);
+  }
 
   const splatTag = SPLAT_RADIUS > 0 ? `-splat${SPLAT_RADIUS}` : '';
   const variantTag = variant ? `-${variant}` : '';
