@@ -1,7 +1,7 @@
 /**
  * The Bajpai–Doña–Nitsche degree-6 symplectic hypergeometric tables — the data
  * behind the sp6-explorer demo, plus a small curated subset (with reference
- * |λ_max| values) used by the sp6-limit-sets and c32 demos.
+ * |λ_max| values) used by the sp6 and c32 demos.
  *
  * Source: J. Bajpai, D. Doña, M. Nitsche, "Thin monodromy in Sp(4) and Sp(6)"
  * (arXiv:2112.12111v3), Tables 1–3. Each group is a pair of rotation tuples
@@ -194,7 +194,7 @@ function rowToExample(row: CatalogRow): SymplecticExample {
 export const CATALOG_EXAMPLES: readonly SymplecticExample[] = CATALOG.map(rowToExample);
 
 // ─── Featured subset ────────────────────────────────────────────────────────
-// A hand-picked shortlist for the sp6-limit-sets / c32 demos — references into
+// A hand-picked shortlist for the sp6 / c32 demos — references into
 // the catalog by label (no data re-stored), with the historical id pinned (the
 // view-preset JSON keys off it) and an optional caption.
 

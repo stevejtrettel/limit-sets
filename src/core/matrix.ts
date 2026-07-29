@@ -154,6 +154,36 @@ export function matInverse(M: Mat): Mat {
 }
 
 /**
+ * Block-diagonal sum of square matrices: diag(B₀, B₁, …), of dimension
+ * Σ dim(Bᵢ). The block sum is a group homomorphism — diag(P,Q)·diag(P',Q') =
+ * diag(PP', QQ') — which is exactly what makes it useful for representations
+ * assembled from several factors (a rep and its Galois conjugates, a sum of
+ * irreducibles, …).
+ *
+ * NOTE for limit sets: the image group preserves each block's coordinate
+ * subspace, so a proximal element's attracting fixed point lies INSIDE the
+ * single block whose dominant eigenvalue is largest. Seeding a block-sum action
+ * from `seedFromLoxodromic` therefore traps the whole orbit in one block's
+ * projective subspace; use `seedFromBlockLoxodromic` (core/seed.ts) instead.
+ */
+export function matBlockDiag(blocks: readonly Mat[]): Mat {
+  if (blocks.length === 0) throw new Error('matBlockDiag: no blocks');
+  const dims = blocks.map(matDim);
+  const n = dims.reduce((s, d) => s + d, 0);
+  const M = new Float64Array(n * n);
+  let off = 0;
+  for (let b = 0; b < blocks.length; b++) {
+    const d = dims[b];
+    const B = blocks[b];
+    for (let i = 0; i < d; i++) {
+      for (let j = 0; j < d; j++) M[(off + i) * n + (off + j)] = B[i * d + j];
+    }
+    off += d;
+  }
+  return M;
+}
+
+/**
  * Companion matrix of a monic polynomial given high-degree-first coefficients
  *   coeff = [1, c_{n-1}, …, c₁, c₀]   (length n+1, leading entry 1),
  * i.e. p(x) = xⁿ + c_{n-1}x^{n-1} + … + c₁x + c₀. The returned C satisfies

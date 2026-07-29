@@ -1,6 +1,6 @@
 /**
  * Two-generator subgroups of GL(4,ℝ) acting on RP³ — the "pair" examples for the
- * sl4r-limit-sets viewer.
+ * sl4r viewer.
  *
  * A catalog: data + the small glue to build a GroupAction from it. Generators
  * are flat `Mat` (built with `mat([[…]])`); the action is
@@ -9,7 +9,7 @@
  * orthogonal families these live in plain GL(4,ℝ) — projectively only
  * invertibility matters, so det need not be ±1.
  *
- * (Migrated from demos/sl4r-limit-sets/pair1.ts into the library so the offline
+ * (Migrated from demos/sl4r/pair1.ts into the library so the offline
  * render script no longer reaches into a demo folder.)
  */
 

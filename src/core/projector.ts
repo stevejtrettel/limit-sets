@@ -133,8 +133,10 @@ export function makeAutoProjector(opts: AutoProjectorOptions): ProjectorOutput {
   // folded into it as more samples (a few hundred points never move a 20%
   // percentile). Instead, GROW the fitted rect until it contains them.
   let { xLo, xHi, yLo, yHi } = bbox;
+  let grewForExtras = false;
   const extra = opts.extraFitPoints?.(embedding);
   if (extra && extra.length >= 3) {
+    grewForExtras = true;
     for (let i = 0; i + 2 < extra.length; i += 3) {
       const x = extra[i], y = extra[i + 1];
       if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
@@ -150,9 +152,25 @@ export function makeAutoProjector(opts: AutoProjectorOptions): ProjectorOutput {
 
   const aspect = (xHi - xLo) / (yHi - yLo);
   const { imgW, imgH } = resolveImageDims(aspect, opts.maxDim, opts);
-  log?.(`  bbox = [${bbox.rawXLo.toFixed(3)}, ${bbox.rawXHi.toFixed(3)}] × ` +
-        `[${bbox.rawYLo.toFixed(3)}, ${bbox.rawYHi.toFixed(3)}]  ` +
-        `aspect ${bbox.rawAspect.toFixed(2)} (capped at ${opts.maxAspect ?? 4})  →  ` +
+
+  // Report the rect the CAMERA uses, and the aspect the image size came from.
+  // `bbox.raw*` is the percentile bbox before aspect-capping and before any
+  // growth for extra geometry — informative, but logging it as though it were
+  // the final view made the numbers contradict each other (a grown rect would
+  // print the pre-growth aspect next to an image sized from the grown one).
+  // So: the view actually used, preceded by the percentile bbox only when
+  // something notable moved it — the aspect was capped, or extra geometry grew
+  // it. (It always differs slightly through `fitFill`; saying so every time is
+  // noise, not information.)
+  const capped = Math.abs(bbox.rawAspect - bbox.aspect) > 1e-9;
+  if (capped || grewForExtras) {
+    log?.(`  percentile bbox = [${bbox.rawXLo.toFixed(3)}, ${bbox.rawXHi.toFixed(3)}] × ` +
+          `[${bbox.rawYLo.toFixed(3)}, ${bbox.rawYHi.toFixed(3)}]  ` +
+          `aspect ${bbox.rawAspect.toFixed(2)} (capped at ${opts.maxAspect ?? 4})`);
+  }
+  log?.(`  view = [${xLo.toFixed(3)}, ${xHi.toFixed(3)}] × ` +
+        `[${yLo.toFixed(3)}, ${yHi.toFixed(3)}]  ` +
+        `aspect ${aspect.toFixed(2)}  →  ` +
         `image = ${imgW}×${imgH}  in ${Date.now() - tb} ms`);
 
   const camera = makeOrthographicCamera({ xLo, xHi, yLo, yHi, imgW, imgH });

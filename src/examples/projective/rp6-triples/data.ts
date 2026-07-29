@@ -1,6 +1,6 @@
 /**
  * Three-involution subgroups of SL(7,ℝ) acting on RP⁶ — the "triple" examples
- * for the sl7-limit-sets viewer.
+ * for the sl7 viewer.
  *
  * A catalog: data + the small glue to build a GroupAction from it. Each
  * generator is an INVOLUTION (M² = I), so the action is

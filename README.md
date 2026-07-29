@@ -103,6 +103,14 @@ names specific groups.
   discriminant on ι₁ι₂ι₃, critical at A* = arctan√(125/3) (= Goldman–Parker's
   s̄² = 125/3 under s = tan A; pinned by gates). Two fixed embeddings:
   stereographic S³ → R³ and Heisenberg (ζ, v).
+- **`galois-sl3/`** — a one-parameter pair ⟨A(t), B(t)⟩ ⊂ SL(3, ℤ[t,1/t]) specialized
+  at real quadratic UNITS t (`quadratic.ts` rejects non-units, where 1/t would
+  leave 𝒪_K), then pushed into SL(3,ℝ)×SL(3,ℝ) ⊂ SL(6,ℝ) by the two real places,
+  γ ↦ diag(γ, γ^σ). Since the family is ℤ[t,1/t]-rational the Galois conjugate is
+  just t ↦ t^σ. The block sum preserves each factor's 3-plane, so the seed is the
+  JOIN of the two factors' attracting fixed points (`seedFromBlockLoxodromic`) —
+  the demo's `seed` dropdown also shows the degenerate single-factor basepoints,
+  whose orbits stay trapped in a plane.
 - **`james-marit/`** — an SL(4,ℝ) Hitchin/Anosov rep of the once-punctured torus
   group, built as an affine cohomological deformation of a fixed SO(2,1) base rep:
   `so21Rep` (base) + `cohomology` (φ-twist) + `cocycle` (solve `v_{[a,b]}=0`) +
@@ -127,16 +135,18 @@ rewrites the `<script>` tag in `index.html` to the chosen demo.
 - **`o5-explorer`** — the full degree-5 orthogonal atlas (77 Bajpai–Singh groups),
   filtered by status (thin / arithmetic / open / finite).
 - **`sp6-explorer`** — the 88-group Bajpai–Doña–Nitsche symplectic catalog.
-- **`sp6-limit-sets`** — featured symplectic examples with view export.
+- **`sp6`** — featured symplectic examples with view export.
 - **`c32`** — the C-32 limit set with the ping-pong convex domain ℙ(K) overlaid
   (projected 1-skeleton wireframe + translucent silhouette).
-- **`sl3r-limit-sets`** — convex projective Coxeter triangle groups on RP².
+- **`sl3r`** — convex projective Coxeter triangle groups on RP².
 - **`schwartz-pappus`** — modular-group Anosov reps swept along the duality curve;
   **`marked-boxes`** — the Pappus marked-box subdivision.
-- **`sl4r-limit-sets`** — GL(4,ℝ) pairs on RP³; **`james-marit`** — the SO(2,1)
+- **`sl4r`** — GL(4,ℝ) pairs on RP³; **`james-marit`** — the SO(2,1)
   Hitchin construction on RP³.
-- **`sl2c-limit-sets`** — Kleinian / quasifuchsian groups on CP¹.
-- **`su21-limit-sets`** — the Goldman–Parker ideal-triangle ladder (A = 0 up
+- **`galois-sl3`** — SL(3,ℤ[√d]) groups drawn in RP⁵ through the Galois embedding
+  into SL(3)×SL(3), with a seed-mode switch (joined vs. single-factor basepoint).
+- **`sl2c`** — Kleinian / quasifuchsian groups on CP¹.
+- **`su21`** — the Goldman–Parker ideal-triangle ladder (A = 0 up
   through the critical A* and beyond) + C-Fuchsian examples on ∂CH² = S³.
 
 ## Offline render
@@ -147,9 +157,9 @@ render script reproduces that exact view at higher depth and resolution
 (streaming DFS → accumulator → log/percentile tone-map → PNG):
 
 ```sh
-node scripts/sp6-render-limit-set.ts                 # default depth
-node scripts/sp6-render-limit-set.ts c32 14 --splat 1
-node scripts/o5-render-limit-set.ts g48 18           # auto-fit mode (no preset)
+node scripts/sp6.ts                 # default depth
+node scripts/sp6.ts c32 14 --splat 1
+node scripts/o5-explorer.ts g48 18           # auto-fit mode (no preset)
 ```
 
 PNGs land in `outputs/<family>/` (gitignored). Memory floor is ~48 bytes/BFS

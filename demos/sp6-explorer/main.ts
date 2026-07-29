@@ -5,7 +5,7 @@
  *
  * Data: `@/sp6/catalog` (CATALOG_EXAMPLES) — 40 maximally-unipotent A-groups
  * (17 thin, 23 arithmetic) + 45 thin C-groups, each derived from its (α, β)
- * rotation numbers. The render path is identical to the sp6-limit-sets viewer:
+ * rotation numbers. The render path is identical to the sp6 viewer:
  * proximal-basepoint power iteration → non-backtracking BFS orbit → projective
  * chart → instanced spheres. The only new UI is the two-level selection:
  *

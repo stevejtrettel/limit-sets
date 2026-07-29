@@ -21,9 +21,17 @@ export interface MobiusExample {
   /** Short human-readable description of the group's nature. */
   description: string;
   generators: readonly ComplexMat2[];
+  /** Preview depth to load this example at. Groups with more than two
+   *  generators need a shallower tree (branching is 2·gens − 1). Default 12. */
+  defaultDepth?: number;
+  /** Upper bound for the depth slider. With a wide alphabet the tree grows so
+   *  fast that the stock max of 14 would hang the tab. Default 14. */
+  maxDepth?: number;
 }
 
-const MOBIUS_LABELS = ['a', 'a⁻¹', 'b', 'b⁻¹', 'c', 'c⁻¹'];
+const MOBIUS_LABELS = [
+  'a', 'a⁻¹', 'b', 'b⁻¹', 'c', 'c⁻¹', 'd', 'd⁻¹', 'e', 'e⁻¹', 'f', 'f⁻¹',
+];
 
 /** Limit-set basepoint for a Möbius (Kleinian) group: the attracting fixed point
  *  of the shortest certified loxodromic word. Uses the COMPLEX dominant criterion
@@ -159,6 +167,76 @@ const maskitDoubleCusp: MobiusExample = {
   ],
 };
 
+// ─── Round Sierpiński carpet ───────────────────────────────────────────────
+//
+// A limit set whose complement is a countable union of round disks with
+// pairwise DISJOINT closures. That happens exactly when the group is convex
+// cocompact with totally geodesic boundary: the boundary surface lifts to
+// infinitely many disks, and having no parabolics is what keeps their closures
+// apart (a cusp would pinch two disks together, as in the Apollonian gasket).
+//
+// The group here is a reflection group in 7 circles:
+//   C1..C5  the RIGHT-ANGLED PENTAGON — all orthogonal to the unit circle,
+//           consecutive ones orthogonal to each other, non-consecutive disjoint.
+//           Centres at |z| = d on the 5th roots of unity, common radius r, with
+//           r² = (1 − cos 72°)/cos 72° = √5 and d² = 1 + r² = 1 + √5.
+//           (Five is forced: cos 2π/n > 0 needs n ≥ 5, the classical fact that
+//           the right-angled pentagon is the smallest right-angled polygon.)
+//   cap±    |z| = 1/4 and |z| = 4, disjoint from the pentagon and each other.
+//
+// On their own C1..C5 preserve the unit circle, so they generate a FUCHSIAN
+// group whose limit set is that circle. The caps break the invariance and close
+// the tube over the pentagon into a hyperideal right-angled polyhedron. Every
+// pair of circles is orthogonal (δ = 0) or disjoint (|δ| > 1) — never tangent —
+// where δ = (|c₁−c₂|² − r₁² − r₂²)/(2r₁r₂) is the inversive distance:
+//   C_i–C_{i±1}  0            C_i–C_{i±2}  1.618034
+//   C_i–cap∓     ±1.253888    cap⁻–cap⁺   −8.031250
+// so Poincaré gives discreteness with no parabolics, and each vertex (two
+// ultraparallel walls with a third orthogonal to both) is hyperideal. Truncating
+// those vertices is what produces the totally geodesic boundary; the truncation
+// circles and their translates are the carpet's round holes.
+//
+// Inversions are ANTI-holomorphic, so they are not SL(2,C) matrices. The
+// matrices below generate the index-2 orientation-preserving subgroup — same
+// limit set — as gⱼ = R(cap⁺)·R(Cⱼ). Taking cap⁺ as the base point of the
+// pencil matters: cap⁺ is disjoint from every other circle, so every gⱼ is
+// loxodromic (tr = 2.507776 for the walls, 16.0625 for cap⁻). Basing them at a
+// wall instead would make gⱼ an involution for the two orthogonal neighbours,
+// which the free-pair walker would then waste half its tree on.
+const roundCarpet: MobiusExample = {
+  id: 'round-carpet',
+  label: 'Round Sierpiński carpet (right-angled pentagon + caps)',
+  description:
+    'Reflection group in 7 circles (right-angled pentagon + two concentric caps), ' +
+    'orientation-preserving part. Every pair is orthogonal or disjoint — never tangent — so the ' +
+    'group is discrete with no parabolics. CAVEAT: the cap pair contributes the dilation z ↦ 256z, ' +
+    'so the peripheral circles spread over scales 256^k and the plane view shows only a few at once',
+  // 12 codes, branching 11: depth 5 ≈ 193k words, 6 ≈ 2.1M, 7 ≈ 23M. Cap at 7 —
+  // the stock max of 14 would be ≈3·10¹² nodes.
+  defaultDepth: 5,
+  maxDepth: 7,
+  generators: [
+    // g1 = R(cap⁺)·R(C1)
+    { a: [2.6749612199056880, 0], b: [-4.8120076400603660, 0],
+      c: [0.30075047750377287, 0], d: [-0.16718507624410558, 0] },
+    // g2 = R(cap⁺)·R(C2)
+    { a: [2.6749612199056880, 0], b: [-1.4869921378407382, -4.5764912225414740],
+      c: [0.092937008615046141, -0.28603070140884213], d: [-0.16718507624410550, 0] },
+    // g3 = R(cap⁺)·R(C3)
+    { a: [2.6749612199056880, 0], b: [3.8929959578709203, -2.8284271247461907],
+      c: [-0.24331224736693252, -0.17677669529663692], d: [-0.16718507624410558, 0] },
+    // g4 = R(cap⁺)·R(C4)
+    { a: [2.6749612199056880, 0], b: [3.8929959578709208, 2.8284271247461894],
+      c: [-0.24331224736693255, 0.17677669529663684], d: [-0.16718507624410545, 0] },
+    // g5 = R(cap⁺)·R(C5)
+    { a: [2.6749612199056880, 0], b: [-1.4869921378407371, 4.5764912225414749],
+      c: [0.092937008615046071, 0.28603070140884218], d: [-0.16718507624410558, 0] },
+    // g6 = R(cap⁺)·R(cap⁻) — the concentric pair, a pure dilation z ↦ 256 z
+    { a: [16, 0], b: [0, 0],
+      c: [0, 0], d: [0.062500000000000000, 0] },
+  ],
+};
+
 export const EXAMPLES: readonly MobiusExample[] = [
   // ── Curves ──
   // t = ±2i is the Riley-slice cusp: commutator [a,b] is parabolic, group
@@ -172,6 +250,8 @@ export const EXAMPLES: readonly MobiusExample[] = [
   figure8Knot,
   picardSubgroup,
   whiteheadLike,
+  // ── Round Sierpiński carpet (totally geodesic boundary) ──
+  roundCarpet,
   // ── Cantor (Schottky) ──
   rileyExample('schottky-4', 'Schottky-Fuchsian (t = 4)',
     'real t — Cantor subset of R̂ (NOT a curve); shows as a great circle with gaps',

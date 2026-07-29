@@ -340,7 +340,7 @@ async function exportView(): Promise<void> {
       saved = true;
       exportStatus.flash(
         'saved to scripts/marked-boxes-view-preset.json — run ' +
-        '`node scripts/marked-boxes-render-limit-set.ts`',
+        '`node scripts/marked-boxes.ts`',
         2500, '#9ec79e',
       );
     }

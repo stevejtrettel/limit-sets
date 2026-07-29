@@ -299,6 +299,75 @@ export function fitPCAChartEmbedding(
 // of M are mutually orthogonal, so v_2..v_4 already form an orthonormal
 // frame inside v_1⊥ — no mean-centring offset is needed in the rows.
 
+// ─── Frame charts (view the orbit through a linear frame) ──────────────────
+
+/**
+ * Fit a chart AFTER re-expressing the orbit in another linear frame.
+ *
+ * `covectors` is a list of k linear functionals on the state space — the rows of
+ * a change-of-basis matrix, a set of geometric pairings, whatever a family finds
+ * meaningful. We push the orbit through them, sphere-normalize, let
+ * {@link fitAutoChartEmbedding} fit a chart THERE, then compose the fitted chart
+ * back so the result is an ordinary ChartEmbedding acting on the original
+ * states. Downstream — mesh builder, autofit camera, view-preset export — sees a
+ * plain chart and needs no special case.
+ *
+ * The division of labour is the point: the FRAME carries whatever geometry the
+ * family wants to impose and is typically the same construction at every
+ * parameter value, while the fit only picks which three of the k directions to
+ * show — a choice no fixed rule makes well in high dimension.
+ */
+export function fitFrameChart(
+  orbit: Orbit,
+  covectors: readonly (readonly number[])[],
+  label: string,
+  pretty: string,
+): ChartEmbedding {
+  const d = orbit.stateDim;
+  const k = covectors.length;
+  if (k < 4) throw new Error(`fitFrameChart: need at least 4 covectors, got ${k}`);
+  for (const c of covectors) {
+    if (c.length !== d) {
+      throw new Error(`fitFrameChart: covector length ${c.length} != stateDim ${d}`);
+    }
+  }
+  const vecs = new Float64Array(orbit.count * k);
+  for (let i = 0; i < orbit.count; i++) {
+    const off = i * d, out = i * k;
+    let n = 0;
+    for (let r = 0; r < k; r++) {
+      let s = 0;
+      for (let j = 0; j < d; j++) s += covectors[r][j] * orbit.vecs[off + j];
+      vecs[out + r] = s;
+      n += s * s;
+    }
+    n = Math.sqrt(n);
+    if (n > 0) for (let r = 0; r < k; r++) vecs[out + r] /= n;
+  }
+  const framed: Orbit = {
+    stateDim: k, vecs, lastGen: orbit.lastGen, parents: orbit.parents, count: orbit.count,
+  };
+  const fitted = fitAutoChartEmbedding(framed);
+  // A covector `a` in frame coordinates pulls back to Σ_r a_r · covector_r.
+  const pull = (a: readonly number[]): number[] => {
+    const out = new Array<number>(d).fill(0);
+    for (let r = 0; r < k; r++) {
+      const c = a[r];
+      if (c === 0) continue;
+      for (let j = 0; j < d; j++) out[j] += c * covectors[r][j];
+    }
+    return out;
+  };
+  return makeChartFromData({
+    stateDim: d,
+    denom: pull(fitted.denom),
+    rows: [pull(fitted.rows[0]), pull(fitted.rows[1]), pull(fitted.rows[2])],
+    label,
+    pretty,
+    isPca: true,
+  });
+}
+
 export function fitAutoChartEmbedding(orbit: Orbit): ChartEmbedding {
   const { vecs, count, stateDim } = orbit;
 

@@ -88,7 +88,7 @@ ladder, accumulating at φ\*:
 
 These are the parameters of Rich's R-circle-closure regime. Tools: the
 `su21-triangle-groups` demo has "go to critical φ\*" and "go to 1213 elliptic
-of order n" buttons; offline, `scripts/render/su21-tri-render-limit-set.ts
+of order n" buttons; offline, `scripts/render/su21-triangle-groups.ts
 --critical | --order n` renders directly at the solved parameter, and
 `scripts/research/su21-tri-rcircles.ts` / `su21-tri-rcircle-picture.ts` hunt
 for and draw the certified R-circle families there.

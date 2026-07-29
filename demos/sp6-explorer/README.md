@@ -36,7 +36,7 @@ rows, not hand-typed coefficient lists.
   A-11's β. Omitted pending confirmation — see `C15_TYPO` in `catalog.ts`.
 
 This catalog is **independent** of [`examples.ts`](../../src/sp6/examples.ts)
-(used by the `sp6-limit-sets` and `c32` demos). Note: that legacy list's old
+(used by the `sp6` and `c32` demos). Note: that legacy list's old
 "A-15" row actually carried A-17's β and has been relabeled A-17.
 
 ## UI
@@ -65,7 +65,7 @@ warnings print to the console.
 
 ## Render path
 
-Identical to `sp6-limit-sets`: proximal-basepoint power iteration on γ = TBT →
+Identical to `sp6`: proximal-basepoint power iteration on γ = TBT →
 non-backtracking BFS orbit → projective chart π(v) = (R·v)/(d·v) → instanced
 spheres, with percentile-bbox autofit. All of it is the dimension-agnostic core
 in [`src/core`](../../src/core) and [`src/render`](../../src/render).

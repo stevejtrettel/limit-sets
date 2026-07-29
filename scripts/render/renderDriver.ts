@@ -7,7 +7,7 @@
  * its mathematics through a `RenderPlugin`: how to look up an example, build the
  * action, find a seed, fit/reconstruct the projective chart, and pick a palette.
  *
- *   node scripts/<family>-render-limit-set.ts [exampleId] [depth] [flags...]
+ *   node scripts/render/<demo>.ts [exampleId] [depth] [flags...]
  *   flags: --max-dim N  --gamma G  --tone P  --bg white|black
  *          --color-scheme grayscale|last-gen|kth-last:k  --splat R
  *          --depth N  --no-preset  --refresh

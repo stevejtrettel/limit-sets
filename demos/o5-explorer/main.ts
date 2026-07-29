@@ -9,7 +9,7 @@
  * loxodromic seed (`@/o5/seed`) → non-backtracking BFS over the {T, B, B⁻¹}
  * free-product alphabet → projective chart → instanced spheres. Validation is
  * lazy (per selection). The "save framing for render" button exports the framed
- * perspective view for scripts/o5-render-limit-set.ts. The sole O(5) demo.
+ * perspective view for scripts/o5-explorer.ts. The sole O(5) demo.
  */
 
 import * as THREE from 'three';

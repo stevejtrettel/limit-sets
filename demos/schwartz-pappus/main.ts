@@ -357,7 +357,7 @@ async function exportView(): Promise<void> {
       saved = true;
       exportStatus.flash(
         'saved to scripts/schwartz-pappus-view-preset.json — run ' +
-        '`node scripts/schwartz-pappus-render-limit-set.ts`',
+        '`node scripts/schwartz-pappus.ts`',
         2500, '#9ec79e',
       );
     }

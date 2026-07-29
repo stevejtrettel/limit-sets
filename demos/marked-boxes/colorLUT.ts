@@ -7,7 +7,7 @@
  * fractal" rather than rainbow noise.
  *
  * Shared between demos/marked-boxes/main.ts (live preview) and
- * scripts/marked-boxes-render-limit-set.ts (offline PNG) so the two
+ * scripts/marked-boxes.ts (offline PNG) so the two
  * always agree. HSL math is inlined here so the offline-render path
  * doesn't pull in Three.js.
  */

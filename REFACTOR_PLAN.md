@@ -69,7 +69,7 @@ src/
       validate.ts         structural (self-reciprocal / palindromic) + dynamical (← merge o5+sp6 validate)
     projective/           explicit-matrix groups acting on RP^{n-1}
       triangle-groups/    coxeter-334.ts, four-reflection.ts, EXAMPLES          (← sl3r/examples.ts)
-      rp3-pairs/          pair data + custom charts, EXAMPLES                     (← demos/sl4r-limit-sets/pair1.ts + sl4r/types.ts)
+      rp3-pairs/          pair data + custom charts, EXAMPLES                     (← demos/sl4r/pair1.ts + sl4r/types.ts)
       embeddings.ts       sphere + affine-plane (RP² fixed embeddings)           (← sl3r/embedding.ts, generalized)
     kleinian/             Möbius on CP¹ (keeps bespoke complex apply)
       action.ts           makeMobiusAction, ComplexMat2                          (← sl2c/action.ts)
@@ -314,7 +314,7 @@ Catalog data:
   `EXAMPLES`), `four-reflection.ts`, plus `makeLiveTri334(d)` for the browser slider.
   Generators are now `Mat` (flat), built with `mat([[…]])`.
 - **rp3-pairs/** — the `SL4RExample` data currently stranded in
-  `demos/sl4r-limit-sets/pair1.ts`, plus the `CustomChart` type. Moves into the library
+  `demos/sl4r/pair1.ts`, plus the `CustomChart` type. Moves into the library
   so the render script no longer reaches into `demos/`.
 - **embeddings.ts** — RP² `sphereEmbedding` (identity) and `planeEmbedding`
   (affine `x/z,y/z`). The sphere case is generic; `planeEmbedding` is
@@ -495,7 +495,7 @@ Legend: **MOVE** (relocate ~verbatim) · **MERGE** (fold into a shared module) �
 | sl3r/viewPreset.ts | MERGE | core NamedViewPreset |
 | sl4r/action.ts (`makeMat4Action`, `mat4Det/Mul/Inverse`) | MERGE → core | core/matrix.ts + core/matrixAction.ts |
 | sl4r/types.ts (`SL4RExample`,`CustomChart`) | MOVE | examples/projective/rp3-pairs/* |
-| demos/sl4r-limit-sets/pair1.ts (EXAMPLES) | MOVE into library | examples/projective/rp3-pairs/examples.ts |
+| demos/sl4r/pair1.ts (EXAMPLES) | MOVE into library | examples/projective/rp3-pairs/examples.ts |
 | sl4r/embedding.ts (`SL4R_STATE_DIM`) | DELETE | core/viewPreset |
 | sl4r/validate.ts | MERGE → shared matrix-group validator | examples/projective/validate.ts |
 | sl4r/palettes.ts | MOVE | examples/projective/palette.ts (or app/palettes) |
@@ -530,11 +530,11 @@ swap to `makeMatrixAction`/recipe. No demo's *behavior* changes.
 - `demos/o5-explorer/main.ts`: `makeO5Action` + `CATALOG_EXAMPLES` + `loxodromicSeed` →
   `hypergeometricAction(row.alpha,row.beta,ORTHOGONAL_DEGREE5.defaultWalk)` +
   `ORTHOGONAL_DEGREE5` + `seedFromLoxodromic`; validate/palette/viewPreset paths updated.
-- `scripts/o5-render-limit-set.ts`, `scripts/o5-check-bs.ts`, `scripts/o5-verify-matrices.ts`,
+- `scripts/o5-explorer.ts`, `scripts/o5-check-bs.ts`, `scripts/o5-verify-matrices.ts`,
   `scripts/gen-o5-catalog.ts`: swap `makeO5Action`/`buildO5Matrices`/`mul5` → recipe +
   `core/matrix` (`companion`,`matMul`,`matInverse`); `embeddingFromPreset` from core;
   `polynomialFromRotationStrings` → `cyclotomicProduct` from core.
-- `demos/sp6-explorer/main.ts`, `demos/sp6-limit-sets/main.ts`, `scripts/sp6-render-limit-set.ts`:
+- `demos/sp6-explorer/main.ts`, `demos/sp6/main.ts`, `scripts/sp6.ts`:
   `makeSp6Action(ex)` → `hypergeometricAction(row.alpha,row.beta,'free')`; `EXAMPLES`/
   `CATALOG_EXAMPLES`/`exampleById` → `SYMPLECTIC_DEGREE6` rows + a local `byId` helper.
 - `demos/c32/main.ts`, `demos/sp6-c32/main.ts`, `scripts/sp6-c32-render-hull.ts`,
@@ -544,29 +544,29 @@ swap to `makeMatrixAction`/recipe. No demo's *behavior* changes.
   matrix-identical to old `makeSp6Action` (parity test) before touching c32.
 
 **Projective (sl3r) — 4 consumers.**
-- `demos/sl3r-limit-sets/main.ts`, `scripts/sl3r-render-limit-set.ts`: `makeMat3Action` →
+- `demos/sl3r/main.ts`, `scripts/sl3r.ts`: `makeMat3Action` →
   `makeMatrixAction(asInvolutions(ex.generators))`; examples + embeddings + palette paths
   updated.
-- `demos/schwartz-pappus/main.ts`, `scripts/schwartz-pappus-render-limit-set.ts` (mixed
+- `demos/schwartz-pappus/main.ts`, `scripts/schwartz-pappus.ts` (mixed
   sl3r + schwartz-pappus): `makeMat3Action` + sl3r sphere/plane embeddings → new
   projective paths; `validatePappus` path updated.
 
 **Projective (sl4r) — 6 consumers.**
-- `demos/sl4r-limit-sets/main.ts`, `scripts/sl4r-render-limit-set.ts`: `makeMat4Action` →
+- `demos/sl4r/main.ts`, `scripts/sl4r.ts`: `makeMat4Action` →
   `makeMatrixAction(... pairWithInverses/asInvolutions)`; **EXAMPLES import moves from
-  `demos/sl4r-limit-sets/pair1` → `examples/projective/rp3-pairs`** (fixes the script
+  `demos/sl4r/pair1` → `examples/projective/rp3-pairs`** (fixes the script
   reaching into a demo dir).
-- `demos/james-marit/main.ts`, `scripts/james-marit-render-limit-set.ts`,
-  `demos/james-marit-new/main.ts`, `scripts/james-marit-new-render-limit-set.ts`: use
+- `demos/james-marit/main.ts`, `scripts/render/james-marit.ts`,
+  `demos/james-marit-new/main.ts`, `scripts/james-marit.ts`: use
   `makeMat4Action` + `mat4Mul` + `mat4Inverse` directly → `makeMatrixAction` +
   `matMul`/`matInverse` from core; `SL4RExample` type from new location.
 
 **Kleinian (sl2c) — 2 consumers.**
-- `demos/sl2c-limit-sets/main.ts`, `scripts/sl2c-render-limit-set.ts`: import paths only
+- `demos/sl2c/main.ts`, `scripts/sl2c.ts`: import paths only
   (`@/sl2c/*` → `@/examples/kleinian/*`); API unchanged.
 
 **Marked boxes — 2 consumers.**
-- `demos/marked-boxes/main.ts`, `scripts/marked-boxes-render-limit-set.ts`: only
+- `demos/marked-boxes/main.ts`, `scripts/marked-boxes.ts`: only
   `@/schwartz-pappus/box` → `@/examples/schwartz-pappus/box`. No action factory involved.
 
 **Shared script util.** `scripts/renderDriver.ts` — re-point any family imports; otherwise
@@ -587,7 +587,7 @@ single late phase (Phase 7, §12).
   across o5/sp6/sl3r.
 - **Phase 1 — Triangle groups (sl3r → `examples/projective/triangle-groups`).** ✅
   `data.ts`/`embeddings.ts`/`palette.ts`/`validate.ts`/`viewPreset.ts` built on core;
-  `sl3r-limit-sets` demo + render script migrated; bit-identical parity (apply + seed).
+  `sl3r` demo + render script migrated; bit-identical parity (apply + seed).
   **`src/sl3r/` NOT deleted** — schwartz-pappus still depends on it (deletion deferred to
   Phase 5).
 - **Phase 2 — Hypergeometric (o5 + sp6), split into reviewable check-ins:**
@@ -596,19 +596,19 @@ single late phase (Phase 7, §12).
     retargeted; all 5 o5 consumers migrated; bit-identical across all 77 groups.
   - **2b — sp6 (degree-6 symplectic).** ✅ `degree6-symplectic.ts` (88 catalog + 6 curated)
     + `symplecticAction` adapter + symplectic validator; palette matched; `sp6-explorer`,
-    `sp6-limit-sets`, `sp6-render` migrated; bit-identical across 88 + 6.
+    `sp6`, `sp6-render` migrated; bit-identical across 88 + 6.
   - **2c — c32 family + dir deletion.** ⏸ DEFERRED (user's call). The c32/sp6-c32 demos
     + hull scripts are bespoke, actively-developed work; the user will first decide which
     c32 variants to keep, then migrate. `src/o5/` and `src/sp6/` stay in place meanwhile —
     harmless (all demos build), still imported only by the c32 family + parity tests. The
     o5/sp6 dir deletion waits on this.
 - **Phase 3 — Projective RP³ (sl4r), CLEAN part only.** ✅ `examples/projective/rp3-pairs/`
-  (data moved out of `demos/sl4r-limit-sets/pair1.ts` + validate + palette + viewPreset);
-  `sl4r-limit-sets` demo + render script migrated to `makeMatrixAction`; bit-identical parity
+  (data moved out of `demos/sl4r/pair1.ts` + validate + palette + viewPreset);
+  `sl4r` demo + render script migrated to `makeMatrixAction`; bit-identical parity
   (apply within 1e-13, seed exact); fixed the pre-existing `SL4RExample`-export error.
   **`src/sl4r/` NOT deleted** — `james-marit` ×2 (+ scripts) are bespoke nested-`Mat4R`
   research demos (their own repBuilder/cohomology/cocycle libraries), structurally like
-  schwartz-pappus. `demos/sl4r-limit-sets/pair1.ts` is now dead (unimported), safe to delete.
+  schwartz-pappus. `demos/sl4r/pair1.ts` is now dead (unimported), safe to delete.
   → **james-marit migration + `sl4r/` deletion deferred to the bespoke-demos pass (with c32).**
 - **Phase 4 — Kleinian (sl2c).** ✅ Relocated to `examples/kleinian/` (action kept its
   bespoke complex `apply`, now using core `normalizeSphere`; embedding/examples/validate/
@@ -788,7 +788,7 @@ So only the standard sp6 demo coupling changes; the hull code is untouched.
 
 ### Step 4 — verify
 - `tsc` clean (only the 3 pre-existing errors remain); `npm run build c32` +
-  `o5-explorer` + `sp6-explorer` + `sl2c-limit-sets` green.
+  `o5-explorer` + `sp6-explorer` + `sl2c` green.
 - Orbit + hull sanity: c32 builds the action, seeds (now auto `BA`), walks NaN-free;
   the hull wireframe + silhouette still render. Spot-check the limit set is the
   same Λ (auto-seed shifts the basepoint, same set — the hull `P(K)` is

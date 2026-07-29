@@ -1,6 +1,6 @@
 /**
  * On-disk contract between the marked-boxes browser viewer and the offline
- * render script (`scripts/marked-boxes-render-limit-set.ts`). The bundle
+ * render script (`scripts/marked-boxes.ts`). The bundle
  * is JSON at `scripts/marked-boxes-view-preset.json`, written by the
  * vite dev-server middleware when the demo POSTs to /__save-view/marked-boxes.
  *

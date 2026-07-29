@@ -148,7 +148,14 @@ export interface ProximalBasepoint {
   basepoint: Float64Array;
   /** Operator norm of γ after the final iterate (informative iff normalize is set). */
   lambdaMax: number;
-  /** Distance from one more normalized γ-step to the fixed iterate. */
+  /**
+   * PROJECTIVE distance from one more normalized γ-step to the fixed iterate:
+   * min(‖γ̂ξ − ξ‖, ‖γ̂ξ + ξ‖). The ± is essential — when the dominant eigenvalue
+   * is NEGATIVE (e.g. the −t of the galois-sl3 family, or the hypergeometric
+   * companions) the iterate lands on the antipode each step, which is the SAME
+   * point of RP^{n-1}; measuring linearly would report a converged seed as
+   * drift ≈ 2.
+   */
   drift:     number;
 }
 
@@ -206,11 +213,14 @@ export function computeProximalBasepoint(
 
   const tmp2 = new Float64Array(tmp);
   if (action.normalize) action.normalize(tmp2, 0);
-  let drift = 0;
+  let plus = 0, minus = 0;
   for (let i = 0; i < stateDim; i++) {
-    const d = tmp2[i] - v[i];
-    drift += d * d;
+    const a = tmp2[i] - v[i];
+    const b = tmp2[i] + v[i];
+    plus += a * a;
+    minus += b * b;
   }
+  const drift = Math.sqrt(Math.min(plus, minus));
 
-  return { basepoint: v, lambdaMax, drift: Math.sqrt(drift) };
+  return { basepoint: v, lambdaMax, drift };
 }

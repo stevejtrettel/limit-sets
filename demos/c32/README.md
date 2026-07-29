@@ -14,7 +14,7 @@ the offline figure renderer; everything else is generic machinery. This README
 records that math.
 
 For paper figures there is an offline path that draws the same picture as a
-shaded convex solid: `node scripts/render/c32-render-limit-set.ts` (see
+shaded convex solid: `node scripts/render/c32.ts` (see
 **Figures** at the end).
 
 ## The group and the limit set
@@ -119,7 +119,7 @@ one-signedness exactly (BigInt) over all 6 × 254 rays. In this chart K, all six
 Sᵏ·K, and all six nested images are simultaneously bounded:
 
 ```sh
-node scripts/render/c32-render-limit-set.ts --copies rotated \
+node scripts/render/c32.ts --copies rotated \
      --coords rosette --patch 1 --axes 2,3,6 --domain-opacity 0.45
 ```
 
@@ -147,7 +147,7 @@ geometry, so the truncation lands off-frame.
 
 ```sh
 # ℙ(K) itself splits in the u-basis z₂ patch — the clearest example
-node scripts/render/c32-render-limit-set.ts --copies base \
+node scripts/render/c32.ts --copies base \
      --coords u --patch 2 --axes 1,3,5 --clip-extent 8
 ```
 
@@ -233,13 +233,13 @@ examples/hypergeometric/
   c32-domain.ts            P, the coordinate systems, c32Chart, S/T⁻¹/E, the copies
   c32-cone.ts              the 254 rays (data) → c32Cone()
   c32-certificate/         the GᵢK ⊆ K ping-pong / thinness proof (npm run verify-c32)
-scripts/render/c32-render-limit-set.ts    the offline figure renderer
+scripts/render/c32.ts    the offline figure renderer
 scripts/tests/c32-figure-gates.ts         hull3 / camera / overlay gates
 ```
 
 ## Figures
 
-`scripts/render/c32-render-limit-set.ts` renders Λ at figure depth and resolution
+`scripts/render/c32.ts` renders Λ at figure depth and resolution
 with the domain painted over it. The domain is drawn as a **two-layer translucent
 solid**: every face is depth-buffered keeping the nearest and the farthest hit,
 then the far layer and the near layer are composited once each. A convex body has
@@ -269,12 +269,12 @@ Two ways to frame one:
 ```sh
 # 1. interactively: frame it in the demo, press "save view", then render it
 npm run dev c32                         # → outputs/presets/c32-view-preset.json
-node scripts/render/c32-render-limit-set.ts --max-dim 4000
+node scripts/render/c32.ts --max-dim 4000
 
 # 2. straight from the CLI (auto-fits Λ *and* the domain, so nothing is cropped)
-node scripts/render/c32-render-limit-set.ts --copies base    --max-dim 4000
-node scripts/render/c32-render-limit-set.ts --copies nested  --max-dim 4000
-node scripts/render/c32-render-limit-set.ts --copies rotated --coords companion --patch 2
+node scripts/render/c32.ts --copies base    --max-dim 4000
+node scripts/render/c32.ts --copies nested  --max-dim 4000
+node scripts/render/c32.ts --copies rotated --coords companion --patch 2
 ```
 
 A saved preset carries the copies and the style as well as the camera, so a

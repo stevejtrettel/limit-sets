@@ -19,7 +19,7 @@
  * Thin wiring. The coordinate systems, the copy presets, the cone and its
  * facets/edges are the `c32-domain` / `c32-cone` examples; the drawing is
  * core/convex + app/convexMesh. "save view" exports the framing to
- * outputs/presets/c32-view-preset.json for scripts/render/c32-render-limit-set.ts.
+ * outputs/presets/c32-view-preset.json for scripts/render/c32.ts.
  * See README.md for the math and module map.
  */
 
@@ -610,7 +610,7 @@ panel.button({
 // ─── Export view for the offline figure renderer ─────────────────────────────
 //
 // The chart (denom + 3 rows) AND the domain layer are captured, so
-// scripts/render/c32-render-limit-set.ts reproduces this exact framing — same
+// scripts/render/c32.ts reproduces this exact framing — same
 // copies, same style — at figure depth and resolution.
 
 const exportStatus = panel.text({ variant: 'meta' });

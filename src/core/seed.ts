@@ -21,6 +21,9 @@
  *
  * `seedFromLoxodromic` is the one-call front door: find the word, power-iterate
  * to its fixed point, return a Seed (with an optional parabolic-word fallback).
+ * `seedFromBlockLoxodromic` is its counterpart for BLOCK-SUM actions (ρ₀ ⊕ ρ₁ ⊕
+ * …), where the plain front door would trap the orbit inside one block; it seeks
+ * a word proximal in every factor and joins the per-factor fixed points.
  *
  * (This file was `loxodromic.ts`; `core/loxodromic.ts` is now a re-export shim
  * for the duration of the refactor. It also absorbs the genericized version of
@@ -220,6 +223,147 @@ export function seedFromLoxodromic(
     lambdaMax: lox ? lox.lambdaMax : r.lambdaMax,
     drift: r.drift,
     fallback: !lox,
+  };
+}
+
+// ─── Block-sum seeding ───────────────────────────────────────────────────────
+//
+// A representation assembled as a block sum ρ₀ ⊕ ρ₁ ⊕ … (see `matBlockDiag`)
+// preserves each block's coordinate subspace. So the attracting fixed point of a
+// proximal element of the SUM lies entirely inside ONE block — whichever has the
+// largest dominant eigenvalue — and seeding from it traps the orbit in that
+// block's projective subspace, silently redrawing a single factor's limit set.
+//
+// The fix is to seed block by block: find one word that is proximal in EVERY
+// factor, take each factor's attracting fixed point, and JOIN them (concatenate,
+// then normalize). The result lies on no block subspace; its orbit accumulates on
+// the join of the factors' limit sets, which is the limit set of the sum.
+//
+// Note the search is genuinely easier this way: a word can be proximal in each
+// factor while the SUM is non-proximal (the factors' dominant moduli tie), so the
+// per-block criterion succeeds on short words where the sum's fails.
+
+export interface BlockLoxodromicWord {
+  /** Apply-order generator codes. */
+  word: number[];
+  /** |λ_dominant| in each block, in block order. */
+  lambdaMax: number[];
+  /** Smallest relative spectral gap (|λ₀|−|λ₁|)/|λ₀| over the blocks. */
+  minGap: number;
+}
+
+/**
+ * Shortest word that is loxodromic in EVERY block, under `criterion` applied to
+ * each block separately; among words of equal length the one with the largest
+ * `minGap` wins (the most robust for power iteration in its weakest factor).
+ * All blocks must share one alphabet — same `numGenerators` and `inverse`.
+ */
+export function findBlockLoxodromicWord(
+  blocks: readonly GroupAction[],
+  { maxLen = 10, criterion = realDominantCriterion }: { maxLen?: number; criterion?: LoxodromicCriterion } = {},
+): BlockLoxodromicWord | null {
+  if (blocks.length === 0) throw new Error('findBlockLoxodromicWord: no blocks');
+  const k = blocks[0].numGenerators;
+  for (const b of blocks) {
+    if (b.numGenerators !== k) {
+      throw new Error('findBlockLoxodromicWord: blocks must share one alphabet (numGenerators differ)');
+    }
+    for (let g = 0; g < k; g++) {
+      if (b.inverse[g] !== blocks[0].inverse[g]) {
+        throw new Error('findBlockLoxodromicWord: blocks must share one alphabet (inverse[] differs)');
+      }
+    }
+  }
+
+  for (let len = 1; len <= maxLen; len++) {
+    let best: BlockLoxodromicWord | null = null;
+    for (const word of wordsOfLength(blocks[0], len)) {
+      const lambdaMax: number[] = [];
+      let minGap = Infinity;
+      let ok = true;
+      for (const b of blocks) {
+        const eigs = wordEigenvalues(b, word);
+        const lam = criterion(eigs);
+        if (lam === null) { ok = false; break; }
+        lambdaMax.push(lam);
+        const next = eigs.length > 1 ? cAbs(eigs[1]) : 0;
+        minGap = Math.min(minGap, (lam - next) / lam);
+      }
+      if (!ok) continue;
+      if (best === null || minGap > best.minGap) best = { word, lambdaMax, minGap };
+    }
+    if (best) return best;
+  }
+  return null;
+}
+
+/** A {@link Seed} for a block-sum action, with the per-block diagnostics. */
+export interface BlockSeed extends Seed {
+  /** |λ_dominant| of the seed word in each block. */
+  blockLambdaMax: number[];
+  /** Power-iteration drift in each block. */
+  blockDrift: number[];
+  /** Smallest relative spectral gap over the blocks (see BlockLoxodromicWord). */
+  minGap: number;
+}
+
+/**
+ * One-call seeding for a block-sum action: find a word proximal in every block
+ * (see {@link findBlockLoxodromicWord}), power-iterate it to the attracting fixed
+ * point WITHIN each block, and join those into one unit vector of the ambient
+ * space. Each block contributes its unit fixed point, so the join is the
+ * balanced point of the fibre over (ξ₊⁰, ξ₊¹, …) — no factor is weighted ahead of
+ * another.
+ *
+ * `blocks` are the factor actions (ρ₀, ρ₁, …), NOT the block-sum action; the
+ * returned basepoint has dimension Σ blockᵢ.stateDim, matching the sum.
+ * `Seed.lambdaMax` reports the weakest block's |λ| and `Seed.drift` the worst
+ * block's drift, so the usual "is this seed good?" checks stay meaningful.
+ */
+export function seedFromBlockLoxodromic(
+  blocks: readonly GroupAction[],
+  opts: {
+    iters?: number;
+    maxLen?: number;
+    criterion?: LoxodromicCriterion;
+    fallbackWord?: readonly number[];
+    labels?: readonly string[];
+  } = {},
+): BlockSeed {
+  const { iters = 400, maxLen = 10, criterion = realDominantCriterion, fallbackWord, labels } = opts;
+  const lox = findBlockLoxodromicWord(blocks, { maxLen, criterion });
+  const word: number[] | null = lox ? lox.word : (fallbackWord ? [...fallbackWord] : null);
+  if (word === null) {
+    throw new Error('seedFromBlockLoxodromic: no word loxodromic in every block, and no fallbackWord provided');
+  }
+
+  const parts = blocks.map((b) => computeProximalBasepoint(b, word, iters));
+  const total = blocks.reduce((s, b) => s + b.stateDim, 0);
+  const basepoint = new Float64Array(total);
+  let off = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    basepoint.set(parts[i].basepoint, off);
+    off += blocks[i].stateDim;
+  }
+  let s = 0;
+  for (let i = 0; i < total; i++) s += basepoint[i] * basepoint[i];
+  if (s > 0) {
+    const inv = 1 / Math.sqrt(s);
+    for (let i = 0; i < total; i++) basepoint[i] *= inv;
+  }
+
+  const blockLambdaMax = lox ? lox.lambdaMax : parts.map((p) => p.lambdaMax);
+  const blockDrift = parts.map((p) => p.drift);
+  return {
+    basepoint,
+    word,
+    name: labels ? formatWord(word, labels) : word.join(','),
+    lambdaMax: Math.min(...blockLambdaMax),
+    drift: Math.max(...blockDrift),
+    fallback: !lox,
+    blockLambdaMax,
+    blockDrift,
+    minGap: lox ? lox.minGap : 0,
   };
 }
 
