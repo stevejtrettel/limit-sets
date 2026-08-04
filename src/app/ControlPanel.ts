@@ -37,9 +37,18 @@ const PANEL_CSS = `
   .${PANEL_CLASS} input[type=range] { width: 100%; margin: 2px 0 4px; }
   .${PANEL_CLASS} select {
     width: 100%; margin: 2px 0 4px;
-    background: rgba(255,255,255,0.06); color: #e8e8e8;
+    background: #262930; color: #e8e8e8;
     border: 1px solid rgba(255,255,255,0.15); border-radius: 3px;
     padding: 3px 4px; font: inherit;
+  }
+  /* Grouped selects: alternating bands so each optgroup block is one shade.
+     Set opaquely (and with the text colour) so the popup is legible in the
+     browsers that honour option styling. */
+  .${PANEL_CLASS} option { background: #262930; color: #e8e8e8; }
+  .${PANEL_CLASS} option.band1 { background: #31353d; }
+  .${PANEL_CLASS} optgroup {
+    background: #1b1e23; color: #9fb3c8;
+    font-style: normal; font-weight: 600;
   }
   .${PANEL_CLASS} input[type=number] {
     width: 100%; margin: 2px 0 4px; box-sizing: border-box;
@@ -96,6 +105,36 @@ function ensureCss(): void {
   cssInjected = true;
 }
 
+/** (Re)build a select's options: one `<optgroup>` per run of equal `group`,
+ *  each run tagged `band0`/`band1` so adjacent blocks read as distinct shades. */
+function fillSelect(
+  select: HTMLSelectElement, options: readonly SelectOption[], value: string,
+): void {
+  select.innerHTML = '';
+  let group: string | undefined | null = null;   // null ≠ any option's group
+  let host: HTMLElement = select;
+  let band = 1;
+  for (const o of options) {
+    if (o.group !== group) {
+      group = o.group;
+      band ^= 1;
+      host = select;
+      if (o.group !== undefined) {
+        const og = document.createElement('optgroup');
+        og.label = o.group;
+        select.appendChild(og);
+        host = og;
+      }
+    }
+    const optEl = document.createElement('option');
+    optEl.value = o.value;
+    optEl.textContent = o.label;
+    optEl.className = band ? 'band1' : 'band0';
+    host.appendChild(optEl);
+  }
+  select.value = value;
+}
+
 export interface ControlPanelOptions {
   title?: string;
   /** Parent to append the panel to. Defaults to document.body. */
@@ -105,6 +144,9 @@ export interface ControlPanelOptions {
 export interface SelectOption {
   value: string;
   label: string;
+  /** Optgroup heading. Consecutive options sharing a `group` form one block;
+   *  blocks are shaded in alternating bands. Omit for a flat list. */
+  group?: string;
 }
 
 export interface SelectControlOptions {
@@ -119,6 +161,9 @@ export interface SelectControl {
   readonly value: string;
   /** Programmatically set the value. Does not fire onChange. */
   set(value: string): void;
+  /** Replace the option list. Keeps the current selection if it survives,
+   *  else falls back to `value` (else the first option). No onChange. */
+  setOptions(options: readonly SelectOption[], value?: string): void;
   readonly element: HTMLSelectElement;
 }
 
@@ -259,14 +304,7 @@ export class WidgetContainer {
     }
 
     const select = document.createElement('select');
-    for (const o of opts.options) {
-      const optEl = document.createElement('option');
-      optEl.value = o.value;
-      optEl.textContent = o.label;
-      select.appendChild(optEl);
-    }
-    const initial = opts.value ?? opts.options[0]?.value ?? '';
-    select.value = initial;
+    fillSelect(select, opts.options, opts.value ?? opts.options[0]?.value ?? '');
     this.host.appendChild(select);
 
     select.addEventListener('change', () => opts.onChange(select.value));
@@ -274,6 +312,13 @@ export class WidgetContainer {
     return {
       get value() { return select.value; },
       set(v: string) { select.value = v; },
+      setOptions(options: readonly SelectOption[], value?: string) {
+        const cur = select.value;
+        const keep = options.some((o) => o.value === cur)
+          ? cur
+          : value ?? options[0]?.value ?? '';
+        fillSelect(select, options, keep);
+      },
       element: select,
     };
   }

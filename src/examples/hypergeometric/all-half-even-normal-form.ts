@@ -1,6 +1,6 @@
 /**
  * The even all-half tower's normal form and its alternating invariant form —
- * exact and integral, following `even-all-half-limit-set-implementation.md`.
+ * exact and integral.
  *
  *   u   = (G − F)e_{d−1},  with u_i = −2·C(d,i) for ODD i and 0 for even i.
  *         (The odd tower's u is the same formula with the parities swapped —

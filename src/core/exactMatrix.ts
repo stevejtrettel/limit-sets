@@ -189,6 +189,54 @@ export function fclearDenominators(X: FMat): { M: IMat; scale: bigint } {
   return { M: X.map((row) => row.map((v) => v.num * (l / v.den))), scale: l };
 }
 
+/**
+ * Exact kernel (null space) of an integer matrix, as a basis of PRIMITIVE
+ * integer vectors: Gauss-Jordan RREF over ℚ, one basis vector per free column,
+ * denominators cleared and content divided out. Empty array ⟺ injective.
+ */
+export function ikernel(M: IMat): bigint[][] {
+  const rows = M.length;
+  if (rows === 0) throw new Error('ikernel: no rows (kernel dimension is unconstrained)');
+  const cols = M[0].length;
+  const A: FMat = M.map((r) => r.map((v) => frac(v)));
+
+  // RREF, recording the pivot column of each pivot row.
+  const pivotCol: number[] = [];
+  let r = 0;
+  for (let c = 0; c < cols && r < rows; c++) {
+    let p = -1;
+    for (let i = r; i < rows; i++) if (!fisZero(A[i][c])) { p = i; break; }
+    if (p === -1) continue;
+    [A[r], A[p]] = [A[p], A[r]];
+    const piv = A[r][c];
+    for (let j = 0; j < cols; j++) A[r][j] = fdiv(A[r][j], piv);
+    for (let i = 0; i < rows; i++) {
+      if (i === r || fisZero(A[i][c])) continue;
+      const f = A[i][c];
+      for (let j = 0; j < cols; j++) A[i][j] = fsub(A[i][j], fmul(f, A[r][j]));
+    }
+    pivotCol.push(c);
+    r++;
+  }
+
+  // One kernel vector per free column: free coordinate 1, pivots back-filled.
+  const isPivot = new Set(pivotCol);
+  const basis: bigint[][] = [];
+  for (let c = 0; c < cols; c++) {
+    if (isPivot.has(c)) continue;
+    const v: Frac[] = Array.from({ length: cols }, () => frac(0n));
+    v[c] = frac(1n);
+    for (let i = 0; i < pivotCol.length; i++) v[pivotCol[i]] = fsub(frac(0n), A[i][c]);
+    let l = 1n;
+    for (const x of v) l = (l / gcdB(l, x.den)) * x.den;
+    const ints = v.map((x) => x.num * (l / x.den));
+    let g = 0n;
+    for (const x of ints) g = gcdB(g, x);
+    basis.push(g > 1n ? ints.map((x) => x / g) : ints);
+  }
+  return basis;
+}
+
 /** Exact inverse by Gauss-Jordan over ℚ. Returns null if singular. */
 export function finverse(X: FMat): FMat | null {
   const n = X.length;

@@ -218,7 +218,9 @@ function fitPCAInChart(
 
   const rows: number[][] = [];
   for (let r = 0; r < 3; r++) {
-    const e = eigvecs[order[r]];
+    // Fewer than 3 PCA axes (stateDim < 4): pad with zero rows — the picture
+    // honestly collapses to a plane (RP²) or line (RP¹).
+    const e = r < stateDim ? eigvecs[order[r]] : new Array<number>(stateDim).fill(0);
     let eDotMean = 0;
     for (let j = 0; j < stateDim; j++) eDotMean += e[j] * mean[j];
     const row = new Array<number>(stateDim);
@@ -392,10 +394,14 @@ export function fitAutoChartEmbedding(orbit: Orbit): ChartEmbedding {
     .sort((a, b) => b.v - a.v)
     .map((x) => x.i);
 
-  const v1 = eigvecs[order[0]].slice();
-  const v2 = eigvecs[order[1]].slice();
-  const v3 = eigvecs[order[2]].slice();
-  const v4 = eigvecs[order[3]].slice();
+  // Fewer than 4 eigenvectors (stateDim < 4): pad with zero rows — the picture
+  // honestly collapses to a plane (RP²) or line (RP¹).
+  const evec = (k: number): number[] =>
+    k < stateDim ? eigvecs[order[k]].slice() : new Array<number>(stateDim).fill(0);
+  const v1 = evec(0);
+  const v2 = evec(1);
+  const v3 = evec(2);
+  const v4 = evec(3);
 
   // Flip v1's sign so the centroid lies on the positive half — keeps the
   // chart denom oriented so π(centroid) is in front of the camera.

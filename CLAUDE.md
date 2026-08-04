@@ -76,10 +76,8 @@ npx tsc --noEmit          # typecheck (3 known pre-existing errors: limitSetMesh
 node scripts/tests/<gate>.ts
 ```
 
-## Status (mid-refactor)
+## Status
 
-A large clarity refactor is nearly complete; see `REFACTOR_PLAN.md`. Migrated
-families live in `examples/`. **Leftover old dirs still being removed:**
-`src/o5/`, `src/sp6/` (used only by the `c32` demo + parity scaffolds — deleted
-once c32 migrates), and `src/sl2c/` (fully dead, deletable with its parity test).
-Do not build new work on those dirs.
+The clarity refactor is complete: every family lives in `examples/`, and the
+old per-group dirs (`src/o5/`, `src/sp6/`, `src/sl2c/`) are gone. The layering
+above is the whole story — there are no legacy paths left to avoid.

@@ -25,9 +25,6 @@
  * …), where the plain front door would trap the orbit inside one block; it seeks
  * a word proximal in every factor and joins the per-factor fixed points.
  *
- * (This file was `loxodromic.ts`; `core/loxodromic.ts` is now a re-export shim
- * for the duration of the refactor. It also absorbs the genericized version of
- * the old o5/seed.ts.)
  */
 
 import type { GroupAction } from './group.ts';

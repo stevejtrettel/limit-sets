@@ -26,7 +26,7 @@ import { formatWord } from '../../src/core/seed.ts';
 import {
   type CMat, cmatMul, cmatInverse, cmatVec, cmat,
 } from '../../src/core/complexMatrix.ts';
-import { type CVec3, cvec3, herm, cartanInvariant, nullResidual } from '../../src/examples/complex-hyperbolic/hermitian.ts';
+import { type CVec3, herm, cartanInvariant, nullResidual } from '../../src/examples/complex-hyperbolic/hermitian.ts';
 import {
   classifyElement, wordProduct, cyclicWordClasses,
 } from '../../src/examples/complex-hyperbolic/diagnostics.ts';
