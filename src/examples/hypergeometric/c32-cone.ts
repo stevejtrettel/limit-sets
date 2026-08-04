@@ -5,7 +5,7 @@
  * exactly by core/convex (double-description), so this module is pure data.
  *
  * cone(rays) has 33 facets (the complete minimal description) and 680 edges; see
- * NOTE-c32-facet-count.md for why the certificate's separate 77-row inequality
+ * notes/NOTE-c32-facet-count.md for why the certificate's separate 77-row inequality
  * list (demos/c32 / the verifier) is over-complete.
  */
 

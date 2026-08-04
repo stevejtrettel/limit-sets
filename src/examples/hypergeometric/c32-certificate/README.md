@@ -102,7 +102,7 @@ Ping-pong (1–2) ⇒ `Γ'` is discrete of infinite index; symplectic (3) puts i
 subgroup. Infinite index + Zariski dense = **thin**.
 
 This is *complementary* to `core/convex`'s check on the cone itself: core certifies
-`K** = K` (the rays and facets are honest duals — see `NOTE-c32-facet-count.md`),
+`K** = K` (the rays and facets are honest duals — see `notes/NOTE-c32-facet-count.md`),
 while this certifies the group's ping-pong *dynamics* on `K`.
 
 ## Files

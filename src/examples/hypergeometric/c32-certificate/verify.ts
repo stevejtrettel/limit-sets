@@ -6,7 +6,7 @@
  * The thinness certificate for the C-32 hypergeometric group. Its inputs come from
  * the `c32` catalog example (α/β → the defining polynomials f, g) and the example
  * cone (its 254 extremal rays); the 77-row `FACETS_H` is the (over-complete)
- * H-description the certificate carries — see NOTE-c32-facet-count.md. This is the
+ * H-description the certificate carries — see notes/NOTE-c32-facet-count.md. This is the
  * GᵢK ⊆ K ping-pong proof, complementary to core/convex's K**=K duality check.
  *
  * Ingredients (all from the group's defining polynomials f, g; group.ts):

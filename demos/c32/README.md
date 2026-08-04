@@ -45,7 +45,7 @@ the rest **exactly** with `core/convex` (BigInt double description):
 
 `ℙ(K)` is the projectivization. (On why the certificate's separate 77-row
 inequality list is *over*-complete — 33 facets + 44 redundant inequalities — see
-`NOTE-c32-facet-count.md`.)
+`notes/NOTE-c32-facet-count.md`.)
 
 ## The coordinate pipeline
 
